@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'auth/connexion.dart';
-import 'auth/pays.dart';
 import 'composants/components.dart';
 import 'package:http/http.dart' as http;
 

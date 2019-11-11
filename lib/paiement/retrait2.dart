@@ -62,8 +62,8 @@ class _Retrait2State extends State<Retrait2> {
     double fromHeight = 200;
     switch(indik){
       case 1:aj=100; ajj=100;break;
-      case 4:aj=100; ajj=200; break;
-      default:aj=0;ajj=0;
+      case 3:aj=100; ajj=200; break;
+      default:aj=100;ajj=0;
     }
     if(_large<=320){
       hauteurcouverture = 150;
@@ -561,7 +561,7 @@ class _Retrait2State extends State<Retrait2> {
                     ),
                   ),
 
-                  indik==1||indik==4?Padding(
+                  indik==1||indik==3?Padding(
                     padding: EdgeInsets.only(top: 395+aj, left: gauch, right: droit),
                     child: Text("Informations sur le bénéficiaire",
                       style: TextStyle(
@@ -572,7 +572,7 @@ class _Retrait2State extends State<Retrait2> {
                     ),
                   ):Container(),
 
-                  indik==1||indik==4?Padding(
+                  indik==1||indik==3?Padding(
                     padding: EdgeInsets.only(top: 425+aj, left: gauch, right: droit),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -630,7 +630,7 @@ class _Retrait2State extends State<Retrait2> {
                     ),
                   ):Container(),
 
-                  indik==4?Padding(
+                  indik==3?Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 475+aj),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -687,7 +687,7 @@ class _Retrait2State extends State<Retrait2> {
                       ),
                     ),
                   ):Container(),
-                  indik==4?Padding(
+                  indik==3?Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 525+aj),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -855,11 +855,9 @@ class _Retrait2State extends State<Retrait2> {
     switch(index){
       case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
       break;
-      case 2: text = "PORTE MONEY";img = 'wallet.png';
+      case 2: text = "CARTE BANCAIRE";img = 'carte.jpg';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
-      break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 3: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
       break;
     }
     return Container(

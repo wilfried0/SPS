@@ -5,11 +5,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/composants/services.dart';
+import 'package:services/monprofile.dart';
 import 'package:services/paiement/encaisser1.dart';
 import 'package:services/paiement/historique.dart';
 import 'package:services/paiement/payst.dart';
 import 'package:services/paiement/retrait1.dart';
-import 'package:align_positioned/align_positioned.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'pays.dart';
 import 'package:flutter/material.dart';
@@ -198,7 +198,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
-    double fromHeight, leftcagnotte, rightcagnotte, topcagnotte, bottomcagnotte;
+    double fromHeight, leftcagnotte, rightcagnotte, topcagnotte, bottomcagnotte, ad=100;
     if(_large<=320){
       fromHeight = 120;
       leftcagnotte = 20;
@@ -208,12 +208,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ-2;
-      top1 = 65;
+      top1 = 65+ad;
       top = 100;
       topo1 = 133;
-      top2 = 142;
+      top2 = 142+ad;
       top3 = 297;
-      top4 = 220;
+      top4 = 220+ad;
       top33 = 211;
       topo2 = 70;
       topo22 = 100;
@@ -231,12 +231,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ-1;
-      top1 = 75;
+      top1 = 75+ad;
       top = 100;
       topo1 = 172;
-      top2 = 190;
+      top2 = 190+ad;
       top3 = 410;
-      top4 = 300;
+      top4 = 300+ad;
       top33 = 285;
       top34 = 395;
       topo2 = 90;
@@ -254,12 +254,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ-1;
-      top1 = 75;
+      top1 = 75+ad;
       top = 100;
       topo1 = 155;
-      top2 = 165;
+      top2 = 165+ad;
       top3 = 345;
-      top4 = 255;
+      top4 = 255+ad;
       top33 = 245;
       top34 = 335;
       topo2 = 80;
@@ -277,12 +277,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ;
-      top1 = 75;
+      top1 = 75+ad;
       top = 100;
       topo1 = 172;
-      top2 = 190;
+      top2 = 190+ad;
       top3 = 410;
-      top4 = 300;
+      top4 = 300+ad;
       top33 = 285;
       top34 = 395;
       topo2 = 90;
@@ -300,12 +300,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ;
-      top1 = 75;
+      top1 = 75+ad;
       top = 100;
       topo1 = 172;
-      top2 = 190;
+      top2 = 190+ad;
       top3 = 410;
-      top4 = 300;
+      top4 = 300+ad;
       top33 = 285;
       top34 = 395;
       topo2 = 90;
@@ -323,12 +323,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ;
-      top1 = 75;
+      top1 = 75+ad;
       top = 100;
       topo1 = 172;
-      top2 = 190;
+      top2 = 190+ad;
       top3 = 410;
-      top4 = 300;
+      top4 = 300+ad;
       top33 = 285;
       top34 = 395;
       topo2 = 90;
@@ -389,11 +389,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
        body: Stack(
          children: <Widget>[
            Padding(
-             padding: EdgeInsets.only(right: 20, left: MediaQuery.of(context).size.width-70,),
+             padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width/2)-50, right: (MediaQuery.of(context).size.width/2)-50,top: 10),
              child: SizedBox(
                child: Container(
-                 height: 50,
-                 width: 50,
+                 height: 100,
+                 width: 100,
                  decoration: BoxDecoration(
                      shape: BoxShape.circle,
                      image: DecorationImage(
@@ -405,14 +405,14 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
              ),
            ),
            Padding(
-             padding: EdgeInsets.only(left: 80, top: 10),//solde du compte
+             padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width/2)-75, right: (MediaQuery.of(context).size.width/2)-75, top: 110),//solde du compte
              child: Text('SOLDE DU COMPTE', style: TextStyle(
                color: Colors.white,
                fontSize: taille_libelle_etape
              ),),
            ),
            Padding(
-             padding: EdgeInsets.only(left: 80, top: 25),
+             padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width/2)-85, right: (MediaQuery.of(context).size.width/2)-85, top: 125),
              child: Row(
                children: <Widget>[
                  Text(solde==null?"1.500,0":getMillis('$solde'), style: TextStyle(//Montant du solde
@@ -429,11 +429,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
              ),
            ),
            Padding(
-             padding: EdgeInsets.only(top: 100),
+             padding: EdgeInsets.only(top: 200),
              child: Container(
                height: MediaQuery.of(context).size.height,
                width: MediaQuery.of(context).size.width,
-               color: couleur_champ,
+               color: Colors.white,
                ),
            ),
            Row(
@@ -532,13 +532,13 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
              ],
            ),
 
-           Padding(
+           /*Padding(
              padding: EdgeInsets.only(top: topo1, left: 20, right: 20),
              child: Divider(
                color:bleu_F,
                height: 10,
              ),
-           ),
+           ),*/
 
            Row(
              children: <Widget>[
@@ -637,13 +637,13 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
              ],
            ),
 
-           Padding(
+           /*Padding(
              padding: EdgeInsets.only(top: top33, left: 20, right: 20),
              child: Divider(
                color:bleu_F,
                height: 10,
              ),
-           ),
+           ),*/
 
            Row(
              children: <Widget>[
@@ -839,14 +839,14 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                  ),
                ),
              ],
-           ),*/
+           ),
            Padding(
              padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2-5, top: top),
              child: VerticalDivider(
                color:bleu_F,
                width: 10,
              ),
-           )
+           )*/
          ],
        ),
        bottomNavigationBar: bottomNavigate(context, enl),
@@ -920,8 +920,43 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Pays()));
-              Navigator.pop(context);
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Monprofile("")));
+            },
+          ),
+
+          Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: new Divider(
+              color: couleur_champ,
+            ),
+          ),
+
+
+          new ListTile(
+            title: Padding(
+              padding: EdgeInsets.only(left: 0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex:1,
+                    child: Icon(Icons.shopping_cart, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
+                  ),
+                  Expanded(
+                    flex:11,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: new Text('Recharger mon compte',style: TextStyle(
+                          color: couleur_fond_bouton,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: police_titre
+                      ),),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            onTap: () {
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1(_code)));
             },
           ),
 
@@ -939,46 +974,13 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                 children: <Widget>[
                   Expanded(
                     flex:1,
-                    child: Icon(Icons.description, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
+                    child: Icon(Icons.remove_shopping_cart, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
                   ),
                   Expanded(
                     flex:11,
                     child: Padding(
                       padding: EdgeInsets.only(left: 20),
-                      child: new Text('Conditions & politiques',style: TextStyle(
-                          color: couleur_fond_bouton,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {},
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex:1,
-                    child: Icon(Icons.location_on, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
-                  ),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Localiser un agent',style: TextStyle(
+                      child: new Text('Faire un retrait',style: TextStyle(
                           color: couleur_fond_bouton,
                           fontWeight: FontWeight.bold,
                           fontFamily: police_titre
@@ -989,74 +991,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
-            },
-          ),
-
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex:1,
-                    child: Icon(Icons.group_add, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
-                  ),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Réseau social',style: TextStyle(
-                          color: couleur_fond_bouton,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {
-            },
-          ),
-
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex:1,
-                    child: Icon(Icons.monetization_on, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
-                  ),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Paiement et encaissement',style: TextStyle(
-                          color: couleur_fond_bouton,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1(_code)));
             },
           ),
 
@@ -1080,7 +1015,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex:11,
                     child: Padding(
                       padding: EdgeInsets.only(left: 20),
-                      child: new Text('Achat de crédit',style: TextStyle(
+                      child: new Text('Transfert d\'argent',style: TextStyle(
                           color: couleur_fond_bouton,
                           fontWeight: FontWeight.bold,
                           fontFamily: police_titre
@@ -1091,6 +1026,42 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+            },
+          ),
+
+          Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: new Divider(
+              color: couleur_champ,
+            ),
+          ),
+
+          new ListTile(
+            title: Padding(
+              padding: EdgeInsets.only(left: 0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex:1,
+                    child: Icon(Icons.monetization_on, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
+                  ),
+                  Expanded(
+                    flex:11,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: new Text('Mes transactions',style: TextStyle(
+                          color: couleur_fond_bouton,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: police_titre
+                      ),),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            onTap: () {
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique(_code)));
             },
           ),
 
@@ -1125,6 +1096,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
+              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
             },
           ),
 
@@ -1159,6 +1131,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
+              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
             },
           ),
 
@@ -1196,6 +1169,40 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
             },
           ),
 
+          Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: new Divider(
+              color: couleur_champ,
+            ),
+          ),
+
+          new ListTile(
+            title: Padding(
+              padding: EdgeInsets.only(left: 0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex:1,
+                    child: Icon(Icons.description, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
+                  ),
+                  Expanded(
+                    flex:11,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: new Text('Conditions & politiques',style: TextStyle(
+                          color: couleur_fond_bouton,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: police_titre
+                      ),),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            onTap: () {
+              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+            },
+          ),
           Padding(
             padding: EdgeInsets.only(left: 20),
             child: new Divider(

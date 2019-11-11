@@ -67,8 +67,8 @@ class _Retrait1State extends State<Retrait1> {
   Widget build(BuildContext context) {
     final _large = MediaQuery.of(context).size.width;
     double fromHeight = 200;
-    indik==0||indik==3? aj = 120:aj=0;
-    indik == 3?ajj=100:ajj=0.0;
+    indik==0||indik==2? aj = 120:aj=0;
+    indik == 2?ajj=100:ajj=0.0;
     if(_large<=320){
       hauteurcouverture = 150;
       nomright = 0;
@@ -276,7 +276,7 @@ class _Retrait1State extends State<Retrait1> {
                         });
                       },
                       height: 135.0,
-                      items: [1,2,3,4].map((i) {
+                      items: [1,2,3].map((i) {
                         return Builder(
                           builder: (BuildContext context) {
                             return getMoyen(i);
@@ -338,7 +338,7 @@ class _Retrait1State extends State<Retrait1> {
                                   }
                                 },
                                 decoration: InputDecoration.collapsed(
-                                  hintText: 'Montant de la recharger',
+                                  hintText: 'Montant à retirer',
                                   hintStyle: TextStyle(
                                       color: couleur_libelle_champ,
                                       fontSize: taille_champ,
@@ -355,7 +355,7 @@ class _Retrait1State extends State<Retrait1> {
                   ),
 
                   /* ici hein!*/
-                  indik==0||indik==3?Padding(
+                  indik==0||indik==2?Padding(
                     padding: EdgeInsets.only(top: 230+aj, left: gauch, right: droit),
                     child: Text(getText(indik),
                       style: TextStyle(
@@ -366,7 +366,7 @@ class _Retrait1State extends State<Retrait1> {
                     ),
                   ):Container(),
 
-                  indik==0||indik==3?Padding(
+                  indik==0||indik==2?Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 260+aj),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -436,7 +436,7 @@ class _Retrait1State extends State<Retrait1> {
                     ),
                   ):Container(),
 
-                  indik==3?Padding(
+                  indik==2?Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 260+aj+50),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -493,7 +493,7 @@ class _Retrait1State extends State<Retrait1> {
                       ),
                     ),
                   ):Container(),
-                  indik==3?Padding(
+                  indik==2?Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 260+aj+100),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -637,11 +637,9 @@ class _Retrait1State extends State<Retrait1> {
     switch(index){
       case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
       break;
-      case 2: text = "PORTE MONEY";img = 'wallet.png';
+      case 2: text = "CARTE BANCAIRE";img = 'carte.jpg';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
-      break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 3: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
       break;
     }
     return Container(
@@ -715,7 +713,7 @@ class _Retrait1State extends State<Retrait1> {
     String text;
     switch(ind){
       case 0:text="Téléphone du bénéficiaire";break;
-      case 3:text="Coordonnées du bénéficiaire";break;
+      case 2:text="Coordonnées du bénéficiaire";break;
     }
   return text;
   }

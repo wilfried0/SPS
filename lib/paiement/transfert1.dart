@@ -70,7 +70,7 @@ class _Transfert1State extends State<Transfert1> {
   Widget build(BuildContext context) {
     final _large = MediaQuery.of(context).size.width;
     double fromHeight = 200;
-    ad = 200;
+    ad = 0;
     if(_large<=320){
       hauteurcouverture = 150;
       nomright = 0;
@@ -251,7 +251,7 @@ class _Transfert1State extends State<Transfert1> {
               key: _formKey,
               child: Stack(
                 children: <Widget>[
-                  Padding(
+                  /*Padding(
                     padding: EdgeInsets.only(top: 20, left: gauch, right: droit),
                     child: Text('Vous souhaitez transférer vers',
                       style: TextStyle(
@@ -282,7 +282,7 @@ class _Transfert1State extends State<Transfert1> {
                         );
                       }).toList(),
                     ),
-                  ),
+                  ),*/
 
                   Padding(
                     padding: EdgeInsets.only(top: 25+ad, left: gauch, right: droit),

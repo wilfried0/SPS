@@ -270,8 +270,8 @@ class _Encaisser1State extends State<Encaisser1> {
                               _code = "$indik";
                             });
                           },
-                          height: 135.0,
-                          items: [1,2,3,4].map((i) {
+                          height: 136.0,
+                          items: [1,2,3].map((i) {
                             return Builder(
                               builder: (BuildContext context) {
                                 return getMoyen(i);
@@ -437,11 +437,9 @@ class _Encaisser1State extends State<Encaisser1> {
     switch(index){
       case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
       break;
-      case 2: text = "PORTE MONEY";img = 'wallet.png';
+      case 2: text = "CARTE BANCAIRE";img = 'carte.jpg';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
-      break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 3: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
       break;
     }
     return Container(

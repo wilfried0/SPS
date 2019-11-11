@@ -138,7 +138,7 @@ class _Transfert3State extends State<Transfert3> {
             key: _formKey,
             child: Column(
               children: <Widget>[
-                Padding(
+                /*Padding(
                   padding: EdgeInsets.only(left: 20, right: 20),
                   child: Text('Moyen vers lequel vous effectuez le transfert',
                     style: TextStyle(
@@ -165,7 +165,7 @@ class _Transfert3State extends State<Transfert3> {
                       );
                     }).toList(),
                   ),
-                ),
+                ),*/
 
                 Padding(
                   padding: EdgeInsets.only(left: 20, right: 20),

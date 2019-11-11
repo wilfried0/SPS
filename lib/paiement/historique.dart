@@ -242,7 +242,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       if(_height <= 568)
         fromHeight = 204.333333333333333333334;
       else
-        fromHeight = 200;
+        fromHeight = 215;
       leftcagnotte = 30;
       rightcagnotte = 30;
       topcagnotte = 10; //espace entre mes tabs et le slider

@@ -339,7 +339,7 @@ class _Encaisser2State extends State<Encaisser2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 510, left: gauch, right: droit),
-                    child: Text("Téléphone du MoMo/OM à débiter",
+                    child: Text(indik==1?"Téléphone du MoMo/OM à débiter":"Téléphone bénéficiaire",
                       style: TextStyle(
                           color: couleur_titre,
                           fontSize: taille_libelle_etape,
@@ -398,7 +398,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                   }
                                 },
                                 decoration: InputDecoration.collapsed(
-                                  hintText: 'Contact téléphonique',
+                                  hintText: 'Contact du débiteur',
                                   hintStyle: TextStyle(
                                       color: couleur_libelle_champ,
                                       fontSize: taille_libelle_champ
@@ -521,11 +521,9 @@ class _Encaisser2State extends State<Encaisser2> {
     switch(index){
       case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
       break;
-      case 2: text = "PORTE MONEY";img = 'wallet.png';
+      case 2: text = "CARTE BANCAIRE";img = 'carte.jpg';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
-      break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 3: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
       break;
     }
     return Container(
