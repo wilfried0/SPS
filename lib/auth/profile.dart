@@ -339,517 +339,529 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       ad = 3;
     }
 
-    return new Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: bleu_F,
-      appBar: new AppBar(
+    return MaterialApp(
+      /*routes:<String, WidgetBuilder>{
+      "/connexion": (BuildContext context) =>new Profile(_code)
+    },*/
+      debugShowCheckedModeBanner: false,
+      home: new Scaffold(
+        key: _scaffoldKey,
         backgroundColor: bleu_F,
-        elevation: 0.0,
-        title: Padding(
-          padding: EdgeInsets.only(top: 22),
-          child: Column(
-            children: <Widget>[
-              Text("Wilfried ASSAM ENGOZO'O", style: TextStyle(
-                color: Colors.white,
-                fontSize: taille_champ
-              ),),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Icon(Icons.location_on,color: orange_F,size: 15,),
-                  Text(" Yaoundé - Cameroun", style: TextStyle(
-                      color: orange_F,
-                      fontSize: taille_champ-2
-                  ),),
-                ],
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          Stack(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(left: 8, top: 8),
-                child: Text("0",style: TextStyle(
+        appBar: new AppBar(
+          backgroundColor: bleu_F,
+          elevation: 0.0,
+          title: Padding(
+            padding: EdgeInsets.only(top: 22),
+            child: Column(
+              children: <Widget>[
+                Text("Wilfried ASSAM ENGOZO'O", style: TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold
+                  fontSize: taille_champ
                 ),),
-              ),
-              Padding(
-                padding: EdgeInsets.only(right: 20,top: 20),
-                child: Icon(Icons.email,color: orange_F),
-              ),
-            ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(Icons.location_on,color: orange_F,size: 15,),
+                    Text(" Yaoundé - Cameroun", style: TextStyle(
+                        color: orange_F,
+                        fontSize: taille_champ-2
+                    ),),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-        iconTheme: new IconThemeData(color: Colors.white),
-      ),
-      drawer: _drawer(context),
-       body: Stack(
-         children: <Widget>[
-           Padding(
-             padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width/2)-50, right: (MediaQuery.of(context).size.width/2)-50,top: 10),
-             child: SizedBox(
-               child: Container(
-                 height: 100,
-                 width: 100,
-                 decoration: BoxDecoration(
-                     shape: BoxShape.circle,
-                     image: DecorationImage(
-                         image: AssetImage("images/ellipse1.png"),
-                         fit: BoxFit.cover
-                     )
+          actions: <Widget>[
+            Stack(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(left: 8, top: 8),
+                  child: Text("0",style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold
+                  ),),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(right: 20,top: 20),
+                  child: Icon(Icons.email,color: orange_F),
+                ),
+              ],
+            ),
+          ],
+          iconTheme: new IconThemeData(color: Colors.white),
+        ),
+        drawer: _drawer(context),
+         body: Stack(
+           children: <Widget>[
+             Padding(
+               padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width/2)-50, right: (MediaQuery.of(context).size.width/2)-50,top: 10),
+               child: SizedBox(
+                 child: Container(
+                   height: 100,
+                   width: 100,
+                   decoration: BoxDecoration(
+                       shape: BoxShape.circle,
+                       image: DecorationImage(
+                           image: AssetImage("images/ellipse1.png"),
+                           fit: BoxFit.cover
+                       )
+                   ),
                  ),
                ),
              ),
-           ),
-           Padding(
-             padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width/2)-75, right: (MediaQuery.of(context).size.width/2)-75, top: 110),//solde du compte
-             child: Text('SOLDE DU COMPTE', style: TextStyle(
-               color: Colors.white,
-               fontSize: taille_libelle_etape
-             ),),
-           ),
-           Padding(
-             padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width/2)-85, right: (MediaQuery.of(context).size.width/2)-85, top: 125),
-             child: Row(
-               children: <Widget>[
-                 Text(solde==null?"1.500,0":getMillis('$solde'), style: TextStyle(//Montant du solde
-                   color: orange_F,
-                   fontSize: taille_titre+5,
-                   fontWeight: FontWeight.bold
-                 ),),
-                 Text(solde==null?" XAF":getMillis('$solde'), style: TextStyle(//Montant du solde
+             Padding(
+               padding: EdgeInsets.only(top: 110, ),//solde du compte
+               child: Row(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: <Widget>[
+                   Text('SOLDE DU COMPTE', style: TextStyle(
+                     color: Colors.white,
+                     fontSize: taille_libelle_etape
+                   ),),
+                 ],
+               ),
+             ),
+             Padding(
+               padding: EdgeInsets.only(top: 125),
+               child: Row(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: <Widget>[
+                   Text(solde==null?"1.500,0":getMillis('$solde'), style: TextStyle(//Montant du solde
                      color: orange_F,
                      fontSize: taille_titre+5,
                      fontWeight: FontWeight.bold
-                 ),),
+                   ),),
+                   Text(solde==null?" XAF":getMillis('$solde'), style: TextStyle(//Montant du solde
+                       color: orange_F,
+                       fontSize: taille_titre+5,
+                       fontWeight: FontWeight.bold
+                   ),),
+                 ],
+               ),
+             ),
+             Padding(
+               padding: EdgeInsets.only(top: 200),
+               child: Container(
+                 height: MediaQuery.of(context).size.height,
+                 width: MediaQuery.of(context).size.width,
+                 color: Colors.white,
+                 ),
+             ),
+             Row(
+               children: <Widget>[
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top: top1, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
+                           borderRadius: BorderRadius.only(
+                             topLeft: Radius.circular(10.0),
+                             topRight: Radius.circular(10.0),
+                             bottomRight: Radius.circular(10.0),
+                             bottomLeft: Radius.circular(10.0),
+                           ),
+                         border: Border.all(
+                           color: bleu_F
+                         ),
+                         color: Colors.white,
+                       ),
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: (){
+                             setState(() {
+                               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1('$_code')));
+                             });
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 50,
+                                   child: new Image.asset('images/import_down_blue.png')),
+                               Text('Recharger mon compte',
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
+                         ),
+                       ),
+                     ),
+                   ),
+                 ),
+
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top:top1, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
+                           borderRadius: BorderRadius.only(
+                             topLeft: Radius.circular(10.0),
+                             topRight: Radius.circular(10.0),
+                             bottomRight: Radius.circular(10.0),
+                             bottomLeft: Radius.circular(10.0),
+                           ),
+                         border: Border.all(
+                             color: bleu_F
+                         ),
+                         color: Colors.white,
+                       ),
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: (){
+                             setState(() {
+                               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
+                             });
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 50,
+                                   child: new Image.asset('images/import_up_blue.png')),
+                               Text('Faire un retrait',
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
+                         ),
+                       ),
+                     ),
+                   ),
+                 ),
                ],
              ),
-           ),
-           Padding(
-             padding: EdgeInsets.only(top: 200),
-             child: Container(
-               height: MediaQuery.of(context).size.height,
-               width: MediaQuery.of(context).size.width,
-               color: Colors.white,
+
+             /*Padding(
+               padding: EdgeInsets.only(top: topo1, left: 20, right: 20),
+               child: Divider(
+                 color:bleu_F,
+                 height: 10,
                ),
-           ),
-           Row(
-             children: <Widget>[
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top: top1, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
+             ),*/
+
+             Row(
+               children: <Widget>[
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top:top2, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
                          borderRadius: BorderRadius.only(
                            topLeft: Radius.circular(10.0),
                            topRight: Radius.circular(10.0),
                            bottomRight: Radius.circular(10.0),
                            bottomLeft: Radius.circular(10.0),
                          ),
-                       border: Border.all(
-                         color: bleu_F
+                         border: Border.all(
+                             color: bleu_F
+                         ),
+                         color: Colors.white,
                        ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: (){
-                           setState(() {
-                             Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1('$_code')));
-                           });
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 50,
-                                 child: new Image.asset('images/import_down_blue.png')),
-                             Text('Recharger mon compte',
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: (){
+                             setState(() {
+                               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique(_code)));
+                             });
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 50,
+                                   child: new Image.asset('images/Groupe3.png')),
+                               Text('Mes transactions',
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
                          ),
                        ),
                      ),
                    ),
                  ),
-               ),
 
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top:top1, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top:top2, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
                          borderRadius: BorderRadius.only(
                            topLeft: Radius.circular(10.0),
                            topRight: Radius.circular(10.0),
                            bottomRight: Radius.circular(10.0),
                            bottomLeft: Radius.circular(10.0),
                          ),
-                       border: Border.all(
-                           color: bleu_F
+                         border: Border.all(
+                             color: bleu_F
+                         ),
+                         color: Colors.white,
                        ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: (){
-                           setState(() {
-                             Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
-                           });
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 50,
-                                 child: new Image.asset('images/import_up_blue.png')),
-                             Text('Faire un retrait',
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: (){
+                             setState(() {
+                               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+                               //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Profile('')));
+                             });
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 50,
+                                   child: new Image.asset('images/Groupe6.png')),
+                               Text('Transfert d\'argent',
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
                          ),
                        ),
                      ),
                    ),
                  ),
-               ),
-             ],
-           ),
-
-           /*Padding(
-             padding: EdgeInsets.only(top: topo1, left: 20, right: 20),
-             child: Divider(
-               color:bleu_F,
-               height: 10,
+               ],
              ),
-           ),*/
 
-           Row(
-             children: <Widget>[
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top:top2, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.only(
-                         topLeft: Radius.circular(10.0),
-                         topRight: Radius.circular(10.0),
-                         bottomRight: Radius.circular(10.0),
-                         bottomLeft: Radius.circular(10.0),
+             /*Padding(
+               padding: EdgeInsets.only(top: top33, left: 20, right: 20),
+               child: Divider(
+                 color:bleu_F,
+                 height: 10,
+               ),
+             ),*/
+
+             Row(
+               children: <Widget>[
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top: top4, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.only(
+                           topLeft: Radius.circular(10.0),
+                           topRight: Radius.circular(10.0),
+                           bottomRight: Radius.circular(10.0),
+                           bottomLeft: Radius.circular(10.0),
+                         ),
+                         border: Border.all(
+                             color: bleu_F
+                         ),
+                         color: Colors.white,
                        ),
-                       border: Border.all(
-                           color: bleu_F
-                       ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: (){
-                           setState(() {
-                             Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique(_code)));
-                           });
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 50,
-                                 child: new Image.asset('images/Groupe3.png')),
-                             Text('Mes transactions',
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: (){
+                             print("Hello: ${MediaQuery.of(context).size.width}");
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 100,
+                                   child: new Image.asset('images/logo_sprint.png')),
+                               Text("Community",
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
                          ),
                        ),
                      ),
                    ),
                  ),
-               ),
 
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top:top2, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.only(
-                         topLeft: Radius.circular(10.0),
-                         topRight: Radius.circular(10.0),
-                         bottomRight: Radius.circular(10.0),
-                         bottomLeft: Radius.circular(10.0),
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top:top4, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.only(
+                           topLeft: Radius.circular(10.0),
+                           topRight: Radius.circular(10.0),
+                           bottomRight: Radius.circular(10.0),
+                           bottomLeft: Radius.circular(10.0),
+                         ),
+                         border: Border.all(
+                             color: bleu_F
+                         ),
+                         color: Colors.white,
                        ),
-                       border: Border.all(
-                           color: bleu_F
-                       ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: (){
-                           setState(() {
-                             Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
-                             //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Profile('')));
-                           });
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 50,
-                                 child: new Image.asset('images/Groupe6.png')),
-                             Text('Transfert d\'argent',
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: () {
+                             //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: _Drawer()));
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 100,
+                                   child: new Icon(Icons.add_shopping_cart, color: couleur_fond_bouton,size: 50,)),//Image.asset('images/ellipse1.png')),
+                               Text('Market Place',
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
                          ),
                        ),
                      ),
                    ),
                  ),
-               ),
-             ],
-           ),
-
-           /*Padding(
-             padding: EdgeInsets.only(top: top33, left: 20, right: 20),
-             child: Divider(
-               color:bleu_F,
-               height: 10,
+               ],
              ),
-           ),*/
 
-           Row(
-             children: <Widget>[
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top: top4, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.only(
-                         topLeft: Radius.circular(10.0),
-                         topRight: Radius.circular(10.0),
-                         bottomRight: Radius.circular(10.0),
-                         bottomLeft: Radius.circular(10.0),
-                       ),
-                       border: Border.all(
-                           color: bleu_F
-                       ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: (){
-                           print("Hello: ${MediaQuery.of(context).size.width}");
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 100,
-                                 child: new Image.asset('images/logo_sprint.png')),
-                             Text("Community",
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
-                         ),
-                       ),
-                     ),
-                   ),
-                 ),
+            /*Padding(
+               padding: EdgeInsets.only(top: top33, left: 20, right: 20),
+               child: Divider(
+                 color:bleu_F,
+                 height: 10,
                ),
-
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top:top4, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.only(
-                         topLeft: Radius.circular(10.0),
-                         topRight: Radius.circular(10.0),
-                         bottomRight: Radius.circular(10.0),
-                         bottomLeft: Radius.circular(10.0),
-                       ),
-                       border: Border.all(
-                           color: bleu_F
-                       ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: () {
-                           //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: _Drawer()));
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 100,
-                                 child: new Icon(Icons.add_shopping_cart, color: couleur_fond_bouton,size: 50,)),//Image.asset('images/ellipse1.png')),
-                             Text('Market Place',
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
-                         ),
-                       ),
-                     ),
-                   ),
-                 ),
-               ),
-             ],
-           ),
-
-          /*Padding(
-             padding: EdgeInsets.only(top: top33, left: 20, right: 20),
-             child: Divider(
-               color:bleu_F,
-               height: 10,
              ),
-           ),
 
 
-           Row(
-             children: <Widget>[
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top: top4, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.only(
-                         topLeft: Radius.circular(10.0),
-                         topRight: Radius.circular(10.0),
-                         bottomRight: Radius.circular(10.0),
-                         bottomLeft: Radius.circular(10.0),
+             Row(
+               children: <Widget>[
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top: top4, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.only(
+                           topLeft: Radius.circular(10.0),
+                           topRight: Radius.circular(10.0),
+                           bottomRight: Radius.circular(10.0),
+                           bottomLeft: Radius.circular(10.0),
+                         ),
+                         border: Border.all(
+                             color: bleu_F
+                         ),
+                         color: Colors.white,
                        ),
-                       border: Border.all(
-                           color: bleu_F
-                       ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: (){
-                           setState(() {
-                             print("Apropos");
-                           });
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 50,
-                                 child: new Image.asset('images/Groupe12.png')),
-                             Text('Achat de crédit',
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: (){
+                             setState(() {
+                               print("Apropos");
+                             });
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 50,
+                                   child: new Image.asset('images/Groupe12.png')),
+                               Text('Achat de crédit',
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
                          ),
                        ),
                      ),
                    ),
                  ),
-               ),
-               Expanded(
-                 flex: 6,
-                 child: Padding(
-                   padding: new EdgeInsets.only(top: top4, right: 20.0, left: 20.0),
-                   child: Container(
-                     height: topo2,
-                     decoration: BoxDecoration(
-                       borderRadius: BorderRadius.only(
-                         topLeft: Radius.circular(10.0),
-                         topRight: Radius.circular(10.0),
-                         bottomRight: Radius.circular(10.0),
-                         bottomLeft: Radius.circular(10.0),
+                 Expanded(
+                   flex: 6,
+                   child: Padding(
+                     padding: new EdgeInsets.only(top: top4, right: 20.0, left: 20.0),
+                     child: Container(
+                       height: topo2,
+                       decoration: BoxDecoration(
+                         borderRadius: BorderRadius.only(
+                           topLeft: Radius.circular(10.0),
+                           topRight: Radius.circular(10.0),
+                           bottomRight: Radius.circular(10.0),
+                           bottomLeft: Radius.circular(10.0),
+                         ),
+                         border: Border.all(
+                             color: bleu_F
+                         ),
+                         color: Colors.white,
                        ),
-                       border: Border.all(
-                           color: bleu_F
-                       ),
-                       color: Colors.white,
-                     ),
-                     child: Padding(
-                       padding: EdgeInsets.only(top: haut),
-                       child: GestureDetector(
-                         onTap: (){
-                           setState(() {
-                             print("Apropos");
-                           });
-                         },
-                         child: Column(
-                           children: <Widget>[
-                             Container(
-                                 height: 50,
-                                 width: 50,
-                                 child: new Image.asset('images/Groupe15.png')),
-                             Text('Localiser un agent',
-                               style: TextStyle(
-                                   color: couleur_libelle_etape,
-                                   fontSize: _taill,
-                                   fontWeight: FontWeight.bold
-                               ),)
-                           ],
+                       child: Padding(
+                         padding: EdgeInsets.only(top: haut),
+                         child: GestureDetector(
+                           onTap: (){
+                             setState(() {
+                               print("Apropos");
+                             });
+                           },
+                           child: Column(
+                             children: <Widget>[
+                               Container(
+                                   height: 50,
+                                   width: 50,
+                                   child: new Image.asset('images/Groupe15.png')),
+                               Text('Localiser un agent',
+                                 style: TextStyle(
+                                     color: couleur_libelle_etape,
+                                     fontSize: _taill,
+                                     fontWeight: FontWeight.bold
+                                 ),)
+                             ],
+                           ),
                          ),
                        ),
                      ),
                    ),
                  ),
-               ),
-             ],
-           ),
-           Padding(
-             padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2-5, top: top),
-             child: VerticalDivider(
-               color:bleu_F,
-               width: 10,
+               ],
              ),
-           )*/
-         ],
-       ),
-       bottomNavigationBar: bottomNavigate(context, enl),
+             Padding(
+               padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2-5, top: top),
+               child: VerticalDivider(
+                 color:bleu_F,
+                 width: 10,
+               ),
+             )*/
+           ],
+         ),
+         bottomNavigationBar: bottomNavigate(context, enl),
+      ),
     );
   }
 

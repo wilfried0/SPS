@@ -221,21 +221,52 @@ class _MonprofileState extends State<Monprofile> {
             ),
             child: Stack(
               children: <Widget>[
-                Padding(
-                  padding: EdgeInsets.only(top: 20, left: 20, right: 20),
-                  child: Container(
-                    height: 300,
+                Container(
+                  height: 330,
+                  child: DrawerHeader(
                     decoration: BoxDecoration(
-                        color: couleur_champ,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(10.0),
-                          topRight: Radius.circular(10.0),
-                        ),
-                        image: DecorationImage(
-                            image: _image == null?AssetImage("images/ellipse1.png"):Image.file(_image),
-                            fit: BoxFit.cover
-                        )
-                    ),),
+                        color: couleur_fond_bouton
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 30),
+                      child: Column(
+                        //crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          SizedBox(
+                            child: Container(
+                              height: 150,
+                              width: 150,
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                      image: AssetImage("images/ellipse1.png"),
+                                      fit: BoxFit.cover
+                                  )
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: Text("Wilfried ASSAM ENGOZO'O", style: TextStyle(
+                                color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: taille_libelle_etape
+                            ),),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Icon(Icons.location_on, size: 20,color: bleu_F,),
+                              Text("Cameroun", style: TextStyle(
+                                  color: couleur_champ,
+                                  fontSize: taille_champ
+                              ),),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 new Container(
                   child: new Row(
@@ -243,12 +274,12 @@ class _MonprofileState extends State<Monprofile> {
                     children: <Widget>[
                       Padding(
                         padding: new EdgeInsets.only(
-                            top: 20,
+                            top: 270,
                             right:0.0,
                             left: MediaQuery.of(context).size.width-70),
                         child: SizedBox(
                           child: Container(
-                            child: Icon(Icons.camera_alt,size: 50, color: couleur_fond_bouton,),
+                            child: Icon(Icons.camera_alt,size: 50, color: bleu_F,),
                           ),
                         ),
                       ),
@@ -460,10 +491,10 @@ class _MonprofileState extends State<Monprofile> {
           bottomRight: Radius.circular(10.0),
           bottomLeft: Radius.circular(10.0),
         ),
-        color: couleur_champ,
+        //color: couleur_fond_bouton,
         border: Border.all(
             color: couleur_fond_bouton,
-            width: 1
+            width: 2
         ),
       ),
       child: Column(
@@ -474,9 +505,9 @@ class _MonprofileState extends State<Monprofile> {
           ),
           Text("$text",
             style: TextStyle(
-                color:couleur_fond_bouton,
+                color:orange_F,
                 fontSize: _tail,
-                fontWeight: FontWeight.normal
+                fontWeight: FontWeight.bold
             ),)
         ],
       ),
@@ -487,17 +518,17 @@ class _MonprofileState extends State<Monprofile> {
     switch(index){
       case 0: return Icon(
         Icons.person,
-        color: couleur_fond_bouton,
+        color: orange_F,
         size: 40,
       );
       case 1: return Icon(
         Icons.supervised_user_circle,
-        color: couleur_fond_bouton,
+        color: orange_F,
         size: 40,
       );
       case 2: return Icon(
         Icons.security,
-        color: couleur_fond_bouton,
+        color: orange_F,
         size: 40,
       );
     }
@@ -506,7 +537,7 @@ class _MonprofileState extends State<Monprofile> {
   Widget getView(){
     if(choice == 0){
       return Padding(
-          padding: EdgeInsets.only(top: 320, left: 0, right: 0),
+          padding: EdgeInsets.only(top: 300, left: 0, right: 0),
           child: ListView(
             children: <Widget>[
               Padding(
@@ -943,7 +974,7 @@ class _MonprofileState extends State<Monprofile> {
       );
     }else if(choice == 1){
       return Padding(
-          padding: EdgeInsets.only(top: 320, left: 0, right: 0),
+          padding: EdgeInsets.only(top: 300, left: 0, right: 0),
           child: ListView(
             children: <Widget>[
               Padding(
@@ -1116,7 +1147,7 @@ class _MonprofileState extends State<Monprofile> {
     }else{
       return
       Padding(
-          padding: EdgeInsets.only(top: 320, left: 0, right: 0),
+          padding: EdgeInsets.only(top: 300, left: 0, right: 0),
           child: ListView(
             children: <Widget>[
               Padding(

@@ -2,6 +2,7 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/connexion.dart';
+import 'package:services/auth/inscrip.dart';
 import 'package:services/composants/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:services/composants/components.dart';
@@ -29,6 +30,7 @@ class _ActivationState extends State<Activation> {
   String  code, _text1, _text2, text1, text2, text, textID, _text, iso="+237";
   bool _enable;
   var _userTextController = new TextEditingController();
+  int ad = 3;
 
   var _header = {
     "content-type": "application/json",
@@ -139,7 +141,7 @@ class _ActivationState extends State<Activation> {
                     child: new Text(_text,
                       style: TextStyle(
                           color: couleur_decription_page,
-                          fontSize: taille_description_page,
+                          fontSize: taille_description_champ+ad,
                       ),),
                   ),
 
@@ -180,7 +182,7 @@ class _ActivationState extends State<Activation> {
                               keyboardType: TextInputType.number,
                               style: TextStyle(
                                   color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+ad,
                               ),
                               validator: (String value){
                                 if(value.isEmpty){
@@ -204,7 +206,7 @@ class _ActivationState extends State<Activation> {
                     padding: EdgeInsets.only(top: pas/2),
                     child: new GestureDetector(
                       onTap: () {
-                        Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
+                        Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Inscrip()));
                       },
                       child: new Container(
                         height: hauteur_champ,
@@ -217,7 +219,27 @@ class _ActivationState extends State<Activation> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: Center(child: new Text("Activer mon compte", style: new TextStyle(fontSize: taille_text_bouton, color: Colors.white),)),
+                        child: Center(child: new Text("Activer mon compte", style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),)),
+                      ),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(top:20.0),
+                    child: GestureDetector(
+                      onTap: (){
+                        setState(() {
+                          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
+                          //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
+                        });
+                        //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
+                      },
+                      child: Text('Contactez-nous',
+                        style: TextStyle(
+                            color: couleur_fond_bouton,
+                            fontSize: taille_champ+ad,
+                            fontWeight: FontWeight.bold
+                        ),textAlign: TextAlign.center,
                       ),
                     ),
                   ),

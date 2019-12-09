@@ -118,6 +118,8 @@ class _Verification1State extends State<Verification1> {
                         borderRadius: new BorderRadius.only(
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
+                          bottomRight: Radius.circular(10.0),
+                          bottomLeft: Radius.circular(10.0),
                         ),
                         color: Colors.transparent,
                         border: Border.all(
@@ -129,9 +131,9 @@ class _Verification1State extends State<Verification1> {
                       child: Row(
                         children: <Widget>[
                           Expanded(
-                              flex: 2,
+                              flex: 5,
                               child: CountryCodePicker(
-                                showFlag: false,
+                                showFlag: true,
                                 onChanged: (CountryCode code){
                                   _mySelection = code.dialCode.toString();
                                 },
@@ -141,13 +143,27 @@ class _Verification1State extends State<Verification1> {
                           Expanded(
                             flex:10,
                             child: Padding(
-                                padding: const EdgeInsets.only(left:10.0,),
-                                child: new Text("code",
-                                  style: TextStyle(
-                                    color: couleur_champ,
+                              padding: EdgeInsets.only(left:0.0),
+                              child: new TextFormField(
+                                keyboardType: TextInputType.phone,
+                                style: TextStyle(
                                     fontSize: taille_champ,
+                                    color: couleur_description_champ,
                                     fontFamily: police_champ
-                                  ),)
+                                ),
+                                validator: (String value){
+                                  if(value.isEmpty){
+                                    return "Champ téléphone vide !";
+                                  }
+                                  return null;
+                                },
+                                decoration: InputDecoration.collapsed(
+                                  hintText: "Téléphone",
+                                  hintStyle: TextStyle(color: couleur_description_champ,
+                                    fontFamily: police_champ,fontSize: taille_champ,),
+                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -155,7 +171,7 @@ class _Verification1State extends State<Verification1> {
                     ),
                   ),
 
-                  Padding(
+                  /*Padding(
                     padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                     child: Container(
                       margin: EdgeInsets.only(top: 0.0),
@@ -209,7 +225,7 @@ class _Verification1State extends State<Verification1> {
                         ],
                       ),
                     ),
-                  ),
+                  ),*/
                   Padding(
                     padding: EdgeInsets.only(top: marge_champ_libelle),
                     child: new GestureDetector(

@@ -115,7 +115,7 @@ final marge_libelle_champ = 5.0;
 // ignore: non_constant_identifier_names
 double marge_champ_libelle = 20.0;
 // ignore: non_constant_identifier_names
-final base_url = "http://negprod-env.c7qjxf2msg.eu-west-3.elasticbeanstalk.com/api";//"http://192.168.45.145:8080/negprod/api";
+final base_url = "http://74.208.183.205:8086/corebanking/rest/member";//"http://192.168.45.145:8080/negprod/api";
 final baseUrl = "http://serveless-spc-app.s3-website.eu-west-3.amazonaws.com/detailcagnottepart";
 
 bool search = false;

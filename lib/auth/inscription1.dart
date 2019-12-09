@@ -45,7 +45,7 @@ Future<String> createPost(var body, var _header, String url, String _code, Build
 class _Inscription1State extends State<Inscription1> {
   _Inscription1State(this._code);
   String _code;
-  bool _check=false;
+  bool _check1=false, _check2=false;
   String _firstname, _lastname, _ville, _country, _birthday, _password, _verfiPassword, _email, _mySelection;
   bool boolFirstname=false, boolLastname=false, boolEmail=false, boolPassword=false, boolVille=false, boolbirthday=false, boolUsername=false;
 
@@ -89,6 +89,8 @@ class _Inscription1State extends State<Inscription1> {
     return regExp.hasMatch(em);
   }
 
+  int ad = 3;
+
   @override
   Widget build(BuildContext context) {
     final marge = (5*MediaQuery.of(context).size.width)/414;
@@ -127,27 +129,12 @@ class _Inscription1State extends State<Inscription1> {
             padding: EdgeInsets.only(left: 20.0),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  new Text("Inscrivez-vous.\nC'est gratuit",
-                      style: TextStyle(
-                          color: couleur_titre,
-                          fontSize: taille_titre,
-                          fontWeight: FontWeight.bold
-                      )),
-
-                  Padding(
-                    padding: EdgeInsets.only(top: 10),
-                    child: new Text("Etape 2 sur 2",
-                        style: TextStyle(
-                            color: couleur_libelle_etape,
-                            fontSize: taille_libelle_etape,
-                            fontWeight: FontWeight.bold
-                        )),
-                  ),
-                ],
-              ),
+              child: new Text("Inscrivez-vous.\nC'est gratuit",
+                  style: TextStyle(
+                      color: couleur_titre,
+                      fontSize: taille_titre,
+                      fontWeight: FontWeight.bold
+                  )),
             ),
           ),
 
@@ -164,7 +151,7 @@ class _Inscription1State extends State<Inscription1> {
                     child: Text("Coordonnées de connexion",
                       style: TextStyle(
                           color: couleur_libelle_champ,
-                          fontSize: taille_libelle_champ,
+                          fontSize: taille_libelle_champ+ad,
                           fontWeight: FontWeight.bold
                       ),),
                   ),
@@ -178,7 +165,7 @@ class _Inscription1State extends State<Inscription1> {
                     child: Text('Votre mot de passe doit comporter au moins 8 caractères',
                       style: TextStyle(
                           color: couleur_description_champ,
-                          fontSize: taille_description_champ
+                          fontSize: taille_description_champ+ad
                       ),),
                   ),
                 ),
@@ -218,7 +205,7 @@ class _Inscription1State extends State<Inscription1> {
                               //controller: _userTextController3,
                               keyboardType: TextInputType.phone,
                               style: TextStyle(
-                                  fontSize: taille_libelle_champ,
+                                  fontSize: taille_libelle_champ+ad,
                                   color: couleur_libelle_champ,
                               ),
                               validator: (String value){
@@ -234,7 +221,7 @@ class _Inscription1State extends State<Inscription1> {
                                 hintText: 'Contact téléphonique',
                                 hintStyle: TextStyle(
                                     color: couleur_libelle_champ,
-                                    fontSize: taille_libelle_champ
+                                    fontSize: taille_libelle_champ+ad
                                 ),
                               ),
                             ),
@@ -244,67 +231,6 @@ class _Inscription1State extends State<Inscription1> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        topLeft: Radius.circular(0.0),
-                        topRight: Radius.circular(0.0),
-                      ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 10.0, right: 10.0),
-                            child: new Image.asset('images/Groupe179.png'),
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: Padding(
-                            padding: EdgeInsets.only(left:0.0),
-                            child: new TextFormField(
-                              keyboardType: TextInputType.text,
-                              style: TextStyle(
-                                  fontSize: taille_champ,
-                                  color: couleur_libelle_champ,
-                              ),
-                              validator: (String value){
-                                if(value.isEmpty){
-                                  return 'Adresse email vide';
-                                }else if(isEmail(value) == false){
-                                  return 'Adresse email invalide';
-                                }else{
-                                  boolEmail = true;
-                                  _birthday = value;
-                                  return null;
-                                }
-                              },
-                              decoration: InputDecoration.collapsed(
-                                hintText: 'Adresse email',
-                                hintStyle: TextStyle(color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
-                                ),
-                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
 
                 Padding(
                   padding: const EdgeInsets.only(left: 20.0, right: 20.0),
@@ -336,7 +262,7 @@ class _Inscription1State extends State<Inscription1> {
                               child: new TextFormField(
                                 keyboardType: TextInputType.text,
                                 style: TextStyle(
-                                    fontSize: taille_champ,
+                                    fontSize: taille_champ+ad,
                                     color: couleur_libelle_champ,
                                 ),
                                 validator: (String value){
@@ -351,7 +277,7 @@ class _Inscription1State extends State<Inscription1> {
                                 },
                                 decoration: InputDecoration.collapsed(
                                   hintText: 'Mot de passe',
-                                  hintStyle: TextStyle(color: couleur_libelle_champ, fontSize: taille_champ,),
+                                  hintStyle: TextStyle(color: couleur_libelle_champ, fontSize: taille_champ+ad,),
                                   //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                 ),
                                 obscureText: _isHidden,
@@ -381,8 +307,8 @@ class _Inscription1State extends State<Inscription1> {
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
                       borderRadius: new BorderRadius.only(
-                        bottomLeft: Radius.circular(0.0),
-                        bottomRight: Radius.circular(0.0),
+                        bottomLeft: Radius.circular(10.0),
+                        bottomRight: Radius.circular(10.0),
                       ),
                       color: Colors.transparent,
                       border: Border.all(
@@ -409,7 +335,7 @@ class _Inscription1State extends State<Inscription1> {
                               child: new TextFormField(
                                 keyboardType: TextInputType.text,
                                 style: TextStyle(
-                                    fontSize: taille_champ,
+                                    fontSize: taille_champ+ad,
                                     color: couleur_libelle_champ,
                                 ),
                                 validator: (String value){
@@ -427,7 +353,7 @@ class _Inscription1State extends State<Inscription1> {
                                 },
                                 decoration: InputDecoration.collapsed(
                                   hintText: 'Vérification du mot de passe',
-                                  hintStyle: TextStyle(color: couleur_libelle_champ,fontSize: taille_champ,),
+                                  hintStyle: TextStyle(color: couleur_libelle_champ,fontSize: taille_champ+ad,),
                                   //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                 ),
                                 obscureText: _isHidden,
@@ -450,67 +376,6 @@ class _Inscription1State extends State<Inscription1> {
                   ),
                 ),
 
-                Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20),
-                  child: Container(
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        bottomLeft: Radius.circular(10.0),
-                        bottomRight: Radius.circular(10.0),
-                      ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                          width: bordure,
-                          color: couleur_bordure
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 0),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                              flex: 2,
-                              child: CountryCodePicker(
-                                showFlag: false,
-                                onChanged: (CountryCode code){
-                                  _mySelection = code.dialCode.toString();
-                                },
-                              )
-                          ),
-                          Expanded(
-                            flex: 10,
-                            child: TextFormField(
-                              //controller: _userTextController3,
-                              keyboardType: TextInputType.phone,
-                              style: TextStyle(
-                                  fontSize: taille_libelle_champ,
-                                  color: couleur_libelle_champ,
-                              ),
-                              validator: (String value){
-                                if(value.isEmpty){
-                                  return 'Téléphone vide !';
-                                }else{
-                                  //tel = '$value';
-                                  //_userTextController3.text = tel;
-                                  return null;
-                                }
-                              },
-                              decoration: InputDecoration.collapsed(
-                                hintText: 'Contact du parrain (facultatif)',
-                                hintStyle: TextStyle(
-                                    color: couleur_libelle_champ,
-                                    fontSize: taille_libelle_champ
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
                 Padding(padding: EdgeInsets.only(top: marge_champ_libelle),),
 
                 Padding(
@@ -519,10 +384,10 @@ class _Inscription1State extends State<Inscription1> {
                     children: <Widget>[
                       Checkbox(
                           activeColor: couleur_fond_bouton,
-                          value: _check,
+                          value: _check1,
                           onChanged: (bool val){
                             setState(() {
-                              _check = val;
+                              _check1 = val;
                             });
                           }
                       ),
@@ -565,10 +430,10 @@ class _Inscription1State extends State<Inscription1> {
                     children: <Widget>[
                       Checkbox(
                           activeColor: couleur_fond_bouton,
-                          value: _check,
+                          value: _check2,
                           onChanged: (bool val){
                             setState(() {
-                              _check = val;
+                              _check2 = val;
                             });
                           }
                       ),
@@ -590,7 +455,7 @@ class _Inscription1State extends State<Inscription1> {
                   onTap: () async {
                     Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation()));
                     if (_formKey.currentState.validate()) {
-                      if(_check == true){
+                      if(_check1 == true){
                         if(boolFirstname==true && boolLastname==true && boolEmail==true && boolUsername==true && boolPassword==true) {
                           Role role = new Role(
                               idRole: 2,
@@ -634,7 +499,7 @@ class _Inscription1State extends State<Inscription1> {
                       ),
                       borderRadius: new BorderRadius.circular(10.0),
                     ),
-                    child: Center(child: new Text('Je m\'inscris', style: new TextStyle(fontSize: taille_text_bouton, color: Colors.white, fontFamily: police_bouton),)),
+                    child: Center(child: new Text('Je m\'inscris', style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),)),
                   ),
                 ),
               ],
@@ -642,32 +507,21 @@ class _Inscription1State extends State<Inscription1> {
           ),
           Padding(
             padding: EdgeInsets.only(top:20.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text('Vous avez déjà un compte? ',
-                  style: TextStyle(
-                      color: couleur_description_champ,
-                      fontSize: taille_description_champ,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: (){
-                    setState(() {
-                      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
-                      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
-                    });
-                    //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
-                  },
-                  child: Text('Connectez-vous !',
-                    style: TextStyle(
-                        color: couleur_fond_bouton,
-                        fontSize: taille_description_champ,
-                      fontWeight: FontWeight.bold
-                    ),
-                  ),
-                ),
-              ],
+            child: GestureDetector(
+              onTap: (){
+                setState(() {
+                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
+                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
+                });
+                //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
+              },
+              child: Text('Contactez-nous',
+                style: TextStyle(
+                    color: couleur_fond_bouton,
+                    fontSize: taille_description_champ+ad,
+                  fontWeight: FontWeight.bold
+                ),textAlign: TextAlign.center,
+              ),
             ),
           ),
         ],

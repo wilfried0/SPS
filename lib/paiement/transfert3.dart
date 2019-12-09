@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:services/composants/components.dart';
 import 'package:services/composants/services.dart';
-
 import 'confirma.dart';
-import 'transfert1.dart';
 import 'transfert2.dart';
 
 // ignore: must_be_immutable

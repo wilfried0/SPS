@@ -95,8 +95,7 @@ class _InscriptionState extends State<Inscription> {
         leading: GestureDetector(
             onTap: (){
               setState(() {
-                Navigator.pop(context);
-                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion(_code)));
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Inscription1('')));
                 //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
               });
             },

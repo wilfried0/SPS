@@ -532,7 +532,7 @@ class _Transfert1State extends State<Transfert1> {
                                   ),
                                   borderRadius: new BorderRadius.circular(10.0),
                                 ),
-                                child: new Center(child: new Text('Cash EU', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),),),
+                                child: new Center(child: new Text('Direct to cash', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),),),
                               ),
                             ),
                           ),

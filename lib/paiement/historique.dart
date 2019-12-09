@@ -41,7 +41,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
   String _token;
   DateTime date;
   bool isLoding = true;
-  int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, xval, choix=1, indik=1, enlvb, enlevt;
+  int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, xval, choix=1, indik=1, enlvb, enlevt, ind=2017;
   int flex4, flex6, taille, enlev, rest, enlev1, idUser, grand;
   double _width,r,l,_height, filtre,rating,star, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, _larg;
   var _cagnottes= [], cagnottes = [], _trans = [], _liste = [];
@@ -550,7 +550,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                           textAlign: TextAlign.right,)),
 
                     Padding(
-                      padding: const EdgeInsets.only(top:0, left: 50, right: 50),
+                      padding: const EdgeInsets.only(top:0, left: 40, right: 40),
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.only(
@@ -561,19 +561,36 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                           ),
                           color: couleur_fond_bouton,
                         ),
-                        child: CarouselSlider(
-                          enlargeCenterPage: true,
-                          autoPlay: false,
-                          enableInfiniteScroll: true,
-                          onPageChanged: (value){},
-                          height: 35.0,
-                          items: _liste.map((i) {
-                            return Builder(
-                              builder: (BuildContext context) {
-                                return getMoyen(i);
-                              },
-                            );
-                          }).toList(),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                                flex: 3,
+                                child: Icon(Icons.refresh, color: orange_F,)),
+                            Expanded(
+                              flex: 6,
+                              child: CarouselSlider(
+                                enlargeCenterPage: true,
+                                autoPlay: false,
+                                enableInfiniteScroll: true,
+                                onPageChanged: (value){
+                                  print(value);
+                                },
+                                height: 35.0,
+                                items: _liste.map((i) {
+                                  return Builder(
+                                    builder: (BuildContext context) {
+                                      ind = int.parse(i);
+                                      print("voilà $ind");
+                                      return getMoyen(i);
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                            Expanded(
+                                flex: 3,
+                                child: Icon(Icons.refresh, color: orange_F,)),
+                          ],
                         ),
                       ),
                     ),
@@ -595,83 +612,14 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                                     height: 4,
                                   ),
                                   const SizedBox(
-                                    height: 28,
+                                    height: 15,
                                   ),
                                   Expanded(
                                     child: BarChart(mainBarData(),
                                       swapAnimationDuration: animDuration,
                                     ),
                                   ),
-
                                 ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Container(
-                      color: Colors.white,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(
-                              flex: 4,
-                              child: GestureDetector(
-                                onTap: (){
-                                  setState(() {
-                                    choix = 0;
-                                  });
-                                },
-                                child: Center(
-                                  child: Text("Récentes",style: TextStyle(
-                                      fontSize: filtre+grand,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: police_titre,
-                                      color: choix==0?bleu_F:couleur_description_champ
-                                  ),),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: GestureDetector(
-                                onTap: (){
-                                  setState(() {
-                                    choix = 1;
-                                    print(MediaQuery.of(context).size.width);
-                                    print(MediaQuery.of(context).size.height);
-                                  });
-                                },
-                                child: Center(
-                                  child: Text("Réussies",style: TextStyle(
-                                      fontSize: filtre+grand,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: police_titre,
-                                      color: choix==1?bleu_F:couleur_description_champ
-                                  ),),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: GestureDetector(
-                                onTap: (){
-                                  setState(() {
-                                    choix = 2;
-                                  });
-                                },
-                                child: Center(
-                                  child: Text("Echouées",style: TextStyle(
-                                      fontSize: filtre+grand,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: police_titre,
-                                      color: choix==2?bleu_F:couleur_description_champ
-                                  ),),
-                                ),
                               ),
                             ),
                           ],
@@ -682,159 +630,229 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                 ),
               ),
           ),
-          body:ListView(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                child: GestureDetector(
-                  onTap: (){
-                    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                  },
-                  child: Card(
-                    elevation: .5,
-                    color: couleur_appbar,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 5, bottom: 5),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                              flex: 6,
-                              child: Row(
-                                children: <Widget>[
-                                  Container(
-                                    width: 5,
-                                    height: 30.0,
-                                    decoration: BoxDecoration(
-                                      color: Colors.green,
-                                      borderRadius: BorderRadius.only(
-                                        bottomRight: Radius.circular(10),
-                                        topRight: Radius.circular(10)
-                                      )
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 10),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text("Transfert d'argent", style: TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: taille_champ
-                                        ),),
-                                        Text("Approuvé", style: TextStyle(
-                                          color: couleur_description_champ,
-                                          fontSize: taille_champ-2
-                                        ),),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              )
+          body:SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                Container(
+                  color: Colors.white,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: 20, right: 20, top: 20),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          flex: 4,
+                          child: GestureDetector(
+                            onTap: (){
+                              setState(() {
+                                choix = 0;
+                              });
+                            },
+                            child: Center(
+                              child: Text("Récentes",style: TextStyle(
+                                  fontSize: filtre+grand,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: police_titre,
+                                  color: choix==0?bleu_F:couleur_description_champ
+                              ),),
+                            ),
                           ),
-
-                          Expanded(
-                              flex: 6,
-                              child: Padding(
-                                padding: EdgeInsets.only(right: 10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: <Widget>[
-                                    Text("-10.000,0 XAF", style: TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: taille_champ
-                                    ),),
-                                    Text("10 juillet 2019", style: TextStyle(
-                                      color: couleur_description_champ,
-                                        fontSize: taille_champ-2
-                                    ),),
-                                  ],
-                                ),
-                              )
-                          )
-                        ],
-                      ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: GestureDetector(
+                            onTap: (){
+                              setState(() {
+                                choix = 1;
+                                print(MediaQuery.of(context).size.width);
+                                print(MediaQuery.of(context).size.height);
+                              });
+                            },
+                            child: Center(
+                              child: Text("Réussies",style: TextStyle(
+                                  fontSize: filtre+grand,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: police_titre,
+                                  color: choix==1?bleu_F:couleur_description_champ
+                              ),),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: GestureDetector(
+                            onTap: (){
+                              setState(() {
+                                choix = 2;
+                              });
+                            },
+                            child: Center(
+                              child: Text("Echouées",style: TextStyle(
+                                  fontSize: filtre+grand,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: police_titre,
+                                  color: choix==2?bleu_F:couleur_description_champ
+                              ),),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                child: GestureDetector(
-                  onTap: (){
-                    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                  },
-                  child: Card(
-                    elevation: .5,
-                    color: couleur_appbar,
-                    child: Padding(
-                      padding: EdgeInsets.only(top: 5, bottom: 5),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                              flex: 6,
-                              child: Row(
-                                children: <Widget>[
-                                  Container(
-                                    width: 5,
-                                    height: 30.0,
-                                    decoration: BoxDecoration(
-                                        color: orange_F,
+                Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20, top: 20),
+                  child: GestureDetector(
+                    onTap: (){
+                      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
+                    },
+                    child: Card(
+                      elevation: .5,
+                      color: couleur_appbar,
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 5, bottom: 5),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                                flex: 6,
+                                child: Row(
+                                  children: <Widget>[
+                                    Container(
+                                      width: 5,
+                                      height: 30.0,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
                                         borderRadius: BorderRadius.only(
-                                            bottomRight: Radius.circular(10),
-                                            topRight: Radius.circular(10)
+                                          bottomRight: Radius.circular(10),
+                                          topRight: Radius.circular(10)
                                         )
+                                      ),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 10),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        Text("Retrait d'argent", style: TextStyle(
-                                            color: orange_F,
-                                            fontWeight: FontWeight.bold,
-                                          fontSize: taille_champ
-                                        ),),
-                                        Text("En attente de validation", style: TextStyle(
+                                    Padding(
+                                      padding: EdgeInsets.only(left: 10),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text("Transfert d'argent", style: TextStyle(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: taille_champ
+                                          ),),
+                                          Text("Approuvé", style: TextStyle(
                                             color: couleur_description_champ,
                                             fontSize: taille_champ-2
-                                        ),),
-                                      ],
+                                          ),),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              )
-                          ),
-
-                          Expanded(
-                              flex: 6,
-                              child: Padding(
-                                padding: EdgeInsets.only(right: 10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: <Widget>[
-                                    Text("-5.200,0 XAF", style: TextStyle(
-                                        color: orange_F,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: taille_champ
-                                    ),),
-                                    Text("8 juillet 2019", style: TextStyle(
-                                        color: couleur_description_champ,
-                                        fontSize: taille_champ-2
-                                    ),),
                                   ],
-                                ),
-                              )
-                          )
-                        ],
+                                )
+                            ),
+
+                            Expanded(
+                                flex: 6,
+                                child: Padding(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: <Widget>[
+                                      Text("-10.000,0 XAF", style: TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: taille_champ
+                                      ),),
+                                      Text("10 juillet 2019", style: TextStyle(
+                                        color: couleur_description_champ,
+                                          fontSize: taille_champ-2
+                                      ),),
+                                    ],
+                                  ),
+                                )
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20, top: 20),
+                  child: GestureDetector(
+                    onTap: (){
+                      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
+                    },
+                    child: Card(
+                      elevation: .5,
+                      color: couleur_appbar,
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 5, bottom: 5),
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                                flex: 6,
+                                child: Row(
+                                  children: <Widget>[
+                                    Container(
+                                      width: 5,
+                                      height: 30.0,
+                                      decoration: BoxDecoration(
+                                          color: orange_F,
+                                          borderRadius: BorderRadius.only(
+                                              bottomRight: Radius.circular(10),
+                                              topRight: Radius.circular(10)
+                                          )
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: EdgeInsets.only(left: 10),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Text("Retrait d'argent", style: TextStyle(
+                                              color: orange_F,
+                                              fontWeight: FontWeight.bold,
+                                            fontSize: taille_champ
+                                          ),),
+                                          Text("En attente de validation", style: TextStyle(
+                                              color: couleur_description_champ,
+                                              fontSize: taille_champ-2
+                                          ),),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )
+                            ),
+
+                            Expanded(
+                                flex: 6,
+                                child: Padding(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: <Widget>[
+                                      Text("-5.200,0 XAF", style: TextStyle(
+                                          color: orange_F,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: taille_champ
+                                      ),),
+                                      Text("8 juillet 2019", style: TextStyle(
+                                          color: couleur_description_champ,
+                                          fontSize: taille_champ-2
+                                      ),),
+                                    ],
+                                  ),
+                                )
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
   }
@@ -986,7 +1004,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
         bottomTitles: SideTitles(
             showTitles: true,
             textStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.normal, fontSize: taille_description_champ),
-            margin: 10,
+            margin: 5,
             getTitles: (double value) {
               switch (value.toInt()) {
                 case 0:

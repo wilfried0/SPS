@@ -4,10 +4,14 @@ import 'package:flutter/rendering.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/composants/services.dart';
+import 'package:services/paiement/encaisser1.dart';
 import 'package:services/paiement/historique.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:services/paiement/retrait1.dart';
 import 'dart:async';
+
+import 'package:services/paiement/transfert3.dart';
 
 
 // ignore: must_be_immutable
@@ -33,6 +37,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   int flex4, flex6, taille, enlev, rest, enlev1, enl;
   double haut, _taill,topi, bottomsolde,sold,topo22,top33, top34, top1, top, top2, top3,top4, topo1, topo2, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext;
   var _liste = [];
+  final navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState(){
@@ -186,489 +191,498 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       enl = 2;
     }
 
-    return new Scaffold(
-      key: _scaffoldKey,
-      resizeToAvoidBottomPadding: false,
-      backgroundColor: bleu_F,
-      appBar: new PreferredSize(
-          preferredSize: Size.fromHeight(fromHeight), //200
-          child: new Container(
-            color: bleu_F,
-            child: Column(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(top: 30, left: 20, right: 20),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        flex: 1,
-                        child: GestureDetector(
+    return MaterialApp(
+      navigatorKey: navigatorKey,
+      routes: <String, WidgetBuilder>{
+        "/transfert": (BuildContext context) =>new Transfert3("+33^FR^France^FRA^0"),
+        "/retrait": (BuildContext context) =>new Retrait1(_code),
+        "/encaisser": (BuildContext context) =>new Encaisser1(_code)
+      },
+      debugShowCheckedModeBanner: false,
+      home: new Scaffold(
+        key: _scaffoldKey,
+        resizeToAvoidBottomPadding: false,
+        backgroundColor: bleu_F,
+        appBar: new PreferredSize(
+            preferredSize: Size.fromHeight(fromHeight), //200
+            child: new Container(
+              color: bleu_F,
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 30, left: 20, right: 20),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          flex: 1,
+                          child: GestureDetector(
+                              onTap: (){
+                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique('$_code')));
+                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Detail(_code)));
+                              },
+                              child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                          ),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: GestureDetector(
                             onTap: (){
                               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique('$_code')));
                               //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Detail(_code)));
                             },
-                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                            child: Text('Retour',
+                              style: TextStyle(color: Colors.white, fontSize: taille_champ),),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: GestureDetector(
-                          onTap: (){
-                            Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique('$_code')));
-                            //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Detail(_code)));
-                          },
-                          child: Text('Retour',
+                        Expanded(
+                          flex: 8,
+                          child: Text('détail de la transaction',
                             style: TextStyle(color: Colors.white, fontSize: taille_champ),),
                         ),
-                      ),
-                      Expanded(
-                        flex: 8,
-                        child: Text('détail de la transaction',
-                          style: TextStyle(color: Colors.white, fontSize: taille_champ),),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top:40, left: 50, right: 50),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: couleur_fond_bouton,
-                        borderRadius: BorderRadius.only(
-                            bottomRight: Radius.circular(15),
-                            topRight: Radius.circular(15),
-                          bottomLeft: Radius.circular(15),
-                          topLeft: Radius.circular(15),
-                        )
-                    ),
-                    child: CarouselSlider(
-                      enlargeCenterPage: true,
-                      autoPlay: false,
-                      enableInfiniteScroll: true,
-                      viewportFraction: 1.0,
-                      onPageChanged: (value){},
-                      height: 35.0,
-                      items: _liste.map((i) {
-                        return Builder(
-                          builder: (BuildContext context) {
-                            return getMoyen(i);
-                          },
-                        );
-                      }).toList(),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          )
-      ),
-      body: SingleChildScrollView(
-        child: Stack(
-          children: <Widget>[
-            Padding(
-              padding: EdgeInsets.only(top: 50),
-              child: Container(
-                height: MediaQuery.of(context).size.height,
-                width: MediaQuery.of(context).size.width,
-                color: couleur_champ,
+                  Padding(
+                    padding: const EdgeInsets.only(top:40, left: 50, right: 50),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: couleur_fond_bouton,
+                          borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(15),
+                              topRight: Radius.circular(15),
+                            bottomLeft: Radius.circular(15),
+                            topLeft: Radius.circular(15),
+                          )
+                      ),
+                      child: CarouselSlider(
+                        enlargeCenterPage: true,
+                        autoPlay: false,
+                        enableInfiniteScroll: true,
+                        viewportFraction: 1.0,
+                        onPageChanged: (value){},
+                        height: 35.0,
+                        items: _liste.map((i) {
+                          return Builder(
+                            builder: (BuildContext context) {
+                              return getMoyen(i);
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Padding(
-              padding: new EdgeInsets.only(top: top1-60, right: 20.0, left: 20.0),
-              child: Card(
-                elevation: 5,
+            )
+        ),
+        body: SingleChildScrollView(
+          child: Stack(
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.only(top: 50),
                 child: Container(
-                  height: topo2+30,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      topRight: Radius.circular(10.0),
-                      bottomRight: Radius.circular(10.0),
-                      bottomLeft: Radius.circular(10.0),
+                  height: MediaQuery.of(context).size.height,
+                  width: MediaQuery.of(context).size.width,
+                  color: couleur_champ,
+                ),
+              ),
+              Padding(
+                padding: new EdgeInsets.only(top: top1-60, right: 20.0, left: 20.0),
+                child: Card(
+                  elevation: 5,
+                  child: Container(
+                    height: topo2+30,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(10.0),
+                        topRight: Radius.circular(10.0),
+                        bottomRight: Radius.circular(10.0),
+                        bottomLeft: Radius.circular(10.0),
+                      ),
+                      color: Colors.white,
                     ),
-                    color: Colors.white,
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.only(top: haut),
-                    child: GestureDetector(
-                      onTap: (){
-                        setState(() {
-                        });
-                      },
-                      child: Row(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(left: 0, bottom: 10, right: 20),
-                            child: Container(
-                              width: 5,
-                              height: topo2+25,
-                              decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius: BorderRadius.only(
-                                      bottomRight: Radius.circular(10),
-                                      topRight: Radius.circular(10)
-                                  )
-                              ),
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text('Transfert d\'argent',
-                                style: TextStyle(
-                                    color: couleur_titre,
-                                    fontSize: taille_champ,
-                                    fontWeight: FontWeight.bold
-                                ),),
-                              Row(
-                                children: <Widget>[
-                                  Text('10.000 XAF',
-                                    style: TextStyle(
-                                        color: Colors.green,
-                                        fontSize: taille_champ,
-                                        fontWeight: FontWeight.bold
-                                    ),),
-                                  GestureDetector(
-                                    onTap: (){
-
-                                    },
-                                    child: Padding(
-                                      padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2),
-                                      child: Icon(Icons.cached, color: orange_F,size: 30,),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 15),
-                                child: Container(
-                                  height: 2,
-                                  width: MediaQuery.of(context).size.width-80,
-                                  decoration: BoxDecoration(
-                                    color: couleur_appbar,
-                                  ),
+                    child: Padding(
+                      padding: EdgeInsets.only(top: haut),
+                      child: GestureDetector(
+                        onTap: (){
+                          setState(() {
+                          });
+                        },
+                        child: Row(
+                          children: <Widget>[
+                            Padding(
+                              padding: EdgeInsets.only(left: 0, bottom: 10, right: 20),
+                              child: Container(
+                                width: 5,
+                                height: topo2+25,
+                                decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.only(
+                                        bottomRight: Radius.circular(10),
+                                        topRight: Radius.circular(10)
+                                    )
                                 ),
                               ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 20),
-                                child: Row(
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text('Transfert d\'argent',
+                                  style: TextStyle(
+                                      color: couleur_titre,
+                                      fontSize: taille_champ,
+                                      fontWeight: FontWeight.bold
+                                  ),),
+                                Row(
                                   children: <Widget>[
-                                    Text('Ref: TR1OKO71O19',
+                                    Text('10.000 XAF',
                                       style: TextStyle(
-                                          color: couleur_champ,
-                                          fontSize: _taill,
+                                          color: Colors.green,
+                                          fontSize: taille_champ,
                                           fontWeight: FontWeight.bold
                                       ),),
-                                    Padding(
-                                      padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width-80)/2-10),
-                                      child: Text('10 Juillet 2019',
+                                    GestureDetector(
+                                      onTap: (){
+                                        navigatorKey.currentState.pushNamed("/transfert");
+                                      },
+                                      child: Padding(
+                                        padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2-10),
+                                        child: Icon(Icons.cached, color: orange_F,size: 30,),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(top: 15),
+                                  child: Container(
+                                    height: 2,
+                                    width: MediaQuery.of(context).size.width-80,
+                                    decoration: BoxDecoration(
+                                      color: couleur_appbar,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(top: 0),
+                                  child: Row(
+                                    children: <Widget>[
+                                      Text('Ref: TR1OKO71O19',
                                         style: TextStyle(
                                             color: couleur_champ,
                                             fontSize: _taill,
                                             fontWeight: FontWeight.bold
                                         ),),
-                                    )
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ],
+                                      Padding(
+                                        padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width-80)/2-10),
+                                        child: Text('10 Juillet 2019',
+                                          style: TextStyle(
+                                              color: couleur_champ,
+                                              fontSize: _taill,
+                                              fontWeight: FontWeight.bold
+                                          ),),
+                                      )
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: top1+70, left: 50, right: 20),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 3,
-                    child: Text("Pays", style: TextStyle(
-                    fontSize: taille_champ
-                    ),),
-                  ),
-                  Expanded(
-                    flex: 9,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 20),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: <Widget>[
-                          Text("France ", style: TextStyle(
-                            color: couleur_fond_bouton,
-                            fontSize: taille_champ
-                          ),),
-                          Text("vers ", style: TextStyle(
+              Padding(
+                padding: EdgeInsets.only(top: top1+70, left: 50, right: 20),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 3,
+                      child: Text("Pays", style: TextStyle(
+                      fontSize: taille_champ
+                      ),),
+                    ),
+                    Expanded(
+                      flex: 9,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            Text("France ", style: TextStyle(
+                              color: couleur_fond_bouton,
                               fontSize: taille_champ
-                          ),),
-                          Text("Cameroun ", style: TextStyle(
+                            ),),
+                            Text("vers ", style: TextStyle(
+                                fontSize: taille_champ
+                            ),),
+                            Text("Cameroun ", style: TextStyle(
+                                color: couleur_fond_bouton,
+                                fontSize: taille_champ
+                            ),),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: top1+100, left: 30, right: 30),
+                child: Container(
+                  height: 1,
+                  width: MediaQuery.of(context).size.width-40,
+                  decoration: BoxDecoration(
+                    color: couleur_decription_page,
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(top: top1+120, left: 50, right: 20),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 5,
+                      child: Align(
+                        alignment: Alignment.topLeft,
+                        child: Text("Moyen de paiement", style: TextStyle(
+                            fontSize: taille_champ
+                        ),),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 7,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Text("MTN Mobile Money", style: TextStyle(
                               color: couleur_fond_bouton,
                               fontSize: taille_champ
                           ),),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: top1+100, left: 30, right: 30),
-              child: Container(
-                height: 1,
-                width: MediaQuery.of(context).size.width-40,
-                decoration: BoxDecoration(
-                  color: couleur_decription_page,
+                  ],
                 ),
               ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.only(top: top1+120, left: 50, right: 20),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 5,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text("Moyen de paiement", style: TextStyle(
-                          fontSize: taille_champ
-                      ),),
-                    ),
+              Padding(
+                padding: EdgeInsets.only(top: top1+160, left: 30, right: 30),
+                child: Container(
+                  height: 1,
+                  width: MediaQuery.of(context).size.width-40,
+                  decoration: BoxDecoration(
+                    color: couleur_decription_page,
                   ),
-                  Expanded(
-                    flex: 7,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 20),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(top: top1+180, left: 50, right: 20),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 6,
                       child: Align(
-                        alignment: Alignment.topRight,
-                        child: Text("MTN Mobile Money", style: TextStyle(
-                            color: couleur_fond_bouton,
+                        alignment: Alignment.topLeft,
+                        child: Text("Destinataire", style: TextStyle(
                             fontSize: taille_champ
                         ),),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: top1+160, left: 30, right: 30),
-              child: Container(
-                height: 1,
-                width: MediaQuery.of(context).size.width-40,
-                decoration: BoxDecoration(
-                  color: couleur_decription_page,
+                    Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Text("Wilfried ASSAM", style: TextStyle(
+                              color: couleur_fond_bouton,
+                              fontSize: taille_champ
+                          ),),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.only(top: top1+180, left: 50, right: 20),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text("Destinataire", style: TextStyle(
-                          fontSize: taille_champ
-                      ),),
-                    ),
+              Padding(
+                padding: EdgeInsets.only(top: top1+220, left: 30, right: 30),
+                child: Container(
+                  height: 1,
+                  width: MediaQuery.of(context).size.width-40,
+                  decoration: BoxDecoration(
+                    color: couleur_decription_page,
                   ),
-                  Expanded(
-                    flex: 6,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 20),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(top: top1+240, left: 50, right: 20),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 6,
                       child: Align(
-                        alignment: Alignment.topRight,
-                        child: Text("Wilfried ASSAM", style: TextStyle(
-                            color: couleur_fond_bouton,
+                        alignment: Alignment.topLeft,
+                        child: Text("Montant envoyé", style: TextStyle(
                             fontSize: taille_champ
                         ),),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: top1+220, left: 30, right: 30),
-              child: Container(
-                height: 1,
-                width: MediaQuery.of(context).size.width-40,
-                decoration: BoxDecoration(
-                  color: couleur_decription_page,
+                    Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Text("10.000,0 XAF", style: TextStyle(
+                              color: couleur_fond_bouton,
+                              fontSize: taille_champ
+                          ),),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.only(top: top1+240, left: 50, right: 20),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text("Montant envoyé", style: TextStyle(
-                          fontSize: taille_champ
-                      ),),
-                    ),
+              Padding(
+                padding: EdgeInsets.only(top: top1+280, left: 30, right: 30),
+                child: Container(
+                  height: 1,
+                  width: MediaQuery.of(context).size.width-40,
+                  decoration: BoxDecoration(
+                    color: couleur_decription_page,
                   ),
-                  Expanded(
-                    flex: 6,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 20),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(top: top1+300, left: 50, right: 20),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 6,
                       child: Align(
-                        alignment: Alignment.topRight,
-                        child: Text("10.000,0 XAF", style: TextStyle(
-                            color: couleur_fond_bouton,
+                        alignment: Alignment.topLeft,
+                        child: Text("Commission", style: TextStyle(
                             fontSize: taille_champ
                         ),),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: top1+280, left: 30, right: 30),
-              child: Container(
-                height: 1,
-                width: MediaQuery.of(context).size.width-40,
-                decoration: BoxDecoration(
-                  color: couleur_decription_page,
+                    Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Text("0,0 XAF", style: TextStyle(
+                              color: couleur_fond_bouton,
+                              fontSize: taille_champ
+                          ),),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            Padding(
-              padding: EdgeInsets.only(top: top1+300, left: 50, right: 20),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text("Commission", style: TextStyle(
-                          fontSize: taille_champ
-                      ),),
-                    ),
+              Padding(
+                padding: EdgeInsets.only(top: top1+340, left: 30, right: 30),
+                child: Container(
+                  height: 1,
+                  width: MediaQuery.of(context).size.width-40,
+                  decoration: BoxDecoration(
+                    color: couleur_decription_page,
                   ),
-                  Expanded(
-                    flex: 6,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 20),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(top: top1+360, left: 50, right: 20),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 6,
                       child: Align(
-                        alignment: Alignment.topRight,
-                        child: Text("0,0 XAF", style: TextStyle(
-                            color: couleur_fond_bouton,
+                        alignment: Alignment.topLeft,
+                        child: Text("Montant total de la transaction", style: TextStyle(
                             fontSize: taille_champ
                         ),),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.only(top: top1+340, left: 30, right: 30),
-              child: Container(
-                height: 1,
-                width: MediaQuery.of(context).size.width-40,
-                decoration: BoxDecoration(
-                  color: couleur_decription_page,
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.only(top: top1+360, left: 50, right: 20),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text("Montant total de la transaction", style: TextStyle(
-                          fontSize: taille_champ
-                      ),),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 6,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 20),
-                      child: Align(
-                        alignment: Alignment.topRight,
-                        child: Text("10.000,0 XAF", style: TextStyle(
-                            color: couleur_fond_bouton,
-                            fontSize: taille_champ
-                        ),),
+                    Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Text("10.000,0 XAF", style: TextStyle(
+                              color: couleur_fond_bouton,
+                              fontSize: taille_champ
+                          ),),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.only(top: top1+400, left: 30, right: 30),
-              child: Container(
-                height: 1,
-                width: MediaQuery.of(context).size.width-40,
-                decoration: BoxDecoration(
-                  color: couleur_decription_page,
+                  ],
                 ),
               ),
-            ),
 
-            Padding(
-              padding: EdgeInsets.only(top: top1+420, left: 50, right: 20),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex: 6,
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text("Statut de la requête", style: TextStyle(
-                          fontSize: taille_champ,
-                      ),),
-                    ),
+              Padding(
+                padding: EdgeInsets.only(top: top1+400, left: 30, right: 30),
+                child: Container(
+                  height: 1,
+                  width: MediaQuery.of(context).size.width-40,
+                  decoration: BoxDecoration(
+                    color: couleur_decription_page,
                   ),
-                  Expanded(
-                    flex: 6,
-                    child: Padding(
-                      padding: EdgeInsets.only(right: 20),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(top: top1+420, left: 50, right: 20),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 6,
                       child: Align(
-                        alignment: Alignment.topRight,
-                        child: Text("Aprouvé", style: TextStyle(
-                            color: Colors.green,
+                        alignment: Alignment.topLeft,
+                        child: Text("Statut de la requête", style: TextStyle(
                             fontSize: taille_champ,
-                          fontWeight: FontWeight.bold
                         ),),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: top1+460, left: 30, right: 30),
-              child: Container(
-                height: 1,
-                width: MediaQuery.of(context).size.width-40,
-                decoration: BoxDecoration(
-                  color: couleur_decription_page,
+                    Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 20),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Text("Aprouvé", style: TextStyle(
+                              color: Colors.green,
+                              fontSize: taille_champ,
+                            fontWeight: FontWeight.bold
+                          ),),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              Padding(
+                padding: EdgeInsets.only(top: top1+460, left: 30, right: 30),
+                child: Container(
+                  height: 1,
+                  width: MediaQuery.of(context).size.width-40,
+                  decoration: BoxDecoration(
+                    color: couleur_decription_page,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
