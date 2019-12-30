@@ -1,16 +1,15 @@
+import 'dart:convert';
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
+import 'package:services/paiement/getsoldewidget.dart';
+import 'package:services/paiement/payst.dart';
 import 'package:services/paiement/transfert22.dart';
-import 'encaisser2.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-
-import 'retrait2.dart';
+import 'package:http/http.dart' as http;
 import 'transfert2.dart';
 
 
@@ -25,45 +24,277 @@ class Transfert1 extends StatefulWidget {
 class _Transfert1State extends State<Transfert1> {
   _Transfert1State(this._code);
   String _code;
-  TabController _tabController;
-  PageController pageController;
   int currentPage = 0;
   int choice = 0;
-  var _userTextController;
-  GlobalKey<ScaffoldState> _scaffoldKey;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   // ignore: non_constant_identifier_names
   int recenteLenght, archiveLenght, populaireLenght, id_kitty;
   var _formKey = GlobalKey<FormState>();
-  var _categorie = ['A', 'B', 'C', 'D'];
-  int flex4, flex6, taille, enlev, rest, enlev1, indik=0;
-  double ad,_taill,gauch, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
-  File _image;
+  var _categorie = ['Soutien familial', 'Frais médicaux', 'Achat marchandise', 'Financement projet', 'Investissement', 'Autre'];
+  int flex4, flex6, taille, enlev, rest, enlev1, indik=0, lieu, selectedRadio;
+  double ad,_taill,gauch,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
+  final navigatorKey = GlobalKey<NavigatorState>();
   List data, list;
   Color color;
+  bool isLoadClient = false, isLoadDirect = false;
   // ignore: non_constant_identifier_names
-  String kittyImage,_current, firstnameBenef,solde,kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="";
+  String kittyImage,_motif, from, firstnameBenef,solde,kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
 
   @override
   void initState() {
+    from = _code.split('^')[4];
     super.initState();
-    print(_code);
+    print("Zone pays d'envoi $from");
     _code = "$_code^$indik";
     this.read();
-    _userTextController = new MoneyMaskedTextController(decimalSeparator: '', thousandSeparator: '.', precision: 0);
-//_code = '$index ${_cagnottes[index]["kittyImage"]} ${_cagnottes[index]["firstnameBenef"]} ${_cagnottes[index]["endDate"]} ${_cagnottes[index]["startDate"]} ${_cagnottes[index]["title"]} ${_cagnottes[index]["suggested_amount"]} ${_cagnottes[index]["amount"]} ${_cagnottes[index]["description"]}';
+    //_userTextController = new MoneyMaskedTextController(decimalSeparator: '', thousandSeparator: '.', precision: 0);
+  }
 
-    pageController = PageController(
-        initialPage: currentPage,
-        keepPage: false,
-        viewportFraction: 0.8
-    );
+
+  void checkConnection(var body, int q) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      //print("Connected to Mobile");
+      setState(() {
+        if(q == 0){
+          isLoadClient = true;
+          getSoldeCommission(body, q);
+        }else{
+          isLoadDirect = true;
+          getSoldeCommission(body, q);
+        }
+      });
+      //this.getUser();
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
+      setState(() {
+        if(q == 0){
+          isLoadClient = true;
+          getSoldeCommission(body, q);
+        }else{
+          isLoadDirect = true;
+          getSoldeCommission(body, q);
+        }
+      });
+      //this.getUser();
+    } else {
+     _ackAlert(context);
+    }
+  }
+
+  void showInSnackBar(String value) {
+    _scaffoldKey.currentState.showSnackBar(
+        new SnackBar(content: new Text(value,style:
+        TextStyle(
+            color: Colors.white,
+            fontSize: taille_description_champ+3
+        ),
+          textAlign: TextAlign.center,),
+          backgroundColor: couleur_fond_bouton,
+          duration: Duration(seconds: 5),));
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
-    _userTextController.dispose();
+    //_userTextController.dispose();
     super.dispose();
+  }
+
+  Future<String> getSoldeCommission(var body, int q) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    String fee = "$base_url/transaction/getFeesTransaction";
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+    return await http.post("$fee", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print('voici le statusCode $statusCode');
+      print('voici le body ${response.body}');
+      if (statusCode < 200 || json == null) {
+        setState(() {
+          if(q == 0){
+            isLoadClient = false;
+          }else{
+            isLoadDirect = false;
+          }
+        });
+        throw new Exception("Error while fetching data");
+      }else if(statusCode == 200){
+        var responseJson = json.decode(response.body);
+        fees = responseJson['fees'];
+        newSolde = double.parse(montant)+fees;
+        print(newSolde.toString());
+        print(double.parse(local));
+        if(newSolde<=double.parse(local)){
+          lieu = q;
+          this._save();
+          setState(() {
+            if(q == 0){
+              isLoadClient = false;
+              navigatorKey.currentState.pushNamed("/transfert22");
+            }else{
+              isLoadDirect = false;
+              navigatorKey.currentState.pushNamed("/transfert2");
+            }
+          });
+        }else{
+          setState(() {
+            if(q == 0){
+              isLoadClient = false;
+            }else{
+              isLoadDirect = false;
+            }
+          });
+          showInSnackBar("Solde insuffisant pour effectuer cette opération!");
+        }
+      }else {
+        setState(() {
+          if(q == 0){
+            isLoadClient = false;
+          }else{
+            isLoadDirect = false;
+          }
+        });
+        showInSnackBar("$statusCode ${response.body}");
+      }
+      return response.body;
+    });
+  }
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _Alert(BuildContext context, int q) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(
+          child: SingleChildScrollView(
+            child: AlertDialog(
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: (){
+                      if(q == 0){
+                        Navigator.pop(context);
+                        var getcommission = getCommission(
+                            typeOperation: "EU_TO_WALLET",
+                            country: "$country",
+                            amount: int.parse(this.montant),
+                            deviseLocale: deviseLocale
+                        );
+                        print(json.encode(getcommission));
+                        checkConnection(json.encode(getcommission), 1);
+                      }else{
+                        Navigator.pop(context);//Vers un compte mobile WARI
+                        showInSnackBar("Pas encore disponible.");
+                        /*var getcommission = getCommission(
+                            typeOperation: "WARI_TO_WALLET",
+                            country: "$country",
+                            amount: int.parse(this.montant),
+                            deviseLocale: deviseLocale
+                        );
+                        print(json.encode(getcommission));
+                        checkConnection(json.encode(getcommission), 3);*/
+                      }
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.only(right: 10),
+                      child: Container(
+                        height: hauteur_bouton,
+                        width: MediaQuery.of(context).size.width/2-gauch,
+                        decoration: new BoxDecoration(
+                          color: couleur_fond_bouton,
+                          border: new Border.all(
+                            color: Colors.transparent,
+                            width: 0.0,
+                          ),
+                          borderRadius: new BorderRadius.circular(10.0),
+                        ),
+                        child: new Center(child:new Text(from=="UEMOA"?"Vers un compte mobile WARI":'Vers EU sans compte', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: GestureDetector(
+                      onTap: (){
+                        if(q == 0){
+                          Navigator.pop(context);
+                          var getcommission = getCommission(
+                              typeOperation: "EU_TO_WALLET",
+                              country: "$country",
+                              amount: int.parse(this.montant),
+                              deviseLocale: deviseLocale
+                          );
+                          print(json.encode(getcommission));
+                          checkConnection(json.encode(getcommission), 2);
+                        }else{
+                          Navigator.pop(context);//Vers un compte bancaire WARI
+                          showInSnackBar("Pas encore disponible.");
+                          /*var getcommission = getCommission(
+                              typeOperation: "WARI_TO_WALLET",
+                              country: "$country",
+                              amount: int.parse(this.montant),
+                              deviseLocale: deviseLocale
+                          );
+                          print(json.encode(getcommission));
+                          checkConnection(json.encode(getcommission), 4);*/
+                        }
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 10),
+                        child: Container(
+                          height: hauteur_bouton,
+                          width: MediaQuery.of(context).size.width/2-gauch,
+                          decoration: new BoxDecoration(
+                            color: couleur_fond_bouton,
+                            border: new Border.all(
+                              color: Colors.transparent,
+                              width: 0.0,
+                            ),
+                            borderRadius: new BorderRadius.circular(10.0),
+                          ),
+                          child: new Center(child:new Text(from=="UEMOA"?"Vers un compte bancaire WARI":'Vers un compte EU', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -139,10 +370,18 @@ class _Transfert1State extends State<Transfert1> {
       droit = 20;
     }
     return new MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
+      routes: <String, WidgetBuilder>{
+        "/transfert2": (BuildContext context) =>new Transfert2(_code),
+        "/transfert22": (BuildContext context) =>new Transfert22(_code),
+        "/pays": (BuildContext context) =>new Payst(),
+      },
       home: new DefaultTabController(
         length: 1,
         child: new Scaffold(
+          key: _scaffoldKey,
             appBar: PreferredSize(
               preferredSize: Size.fromHeight(fromHeight),
               child: new Container(
@@ -156,7 +395,7 @@ class _Transfert1State extends State<Transfert1> {
                           GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
+                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
                                 });
                               },
                               child: Icon(Icons.arrow_back_ios,color: Colors.white,)
@@ -165,7 +404,7 @@ class _Transfert1State extends State<Transfert1> {
                             onTap: (){
                               setState(() {
                                 //Navigator.pop(context);
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
+                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
                                 //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
                               });
                             },
@@ -201,28 +440,7 @@ class _Transfert1State extends State<Transfert1> {
                         ),
                       ),
                     ),
-
-                    Padding(
-                      padding: EdgeInsets.only(left: 80, top: 20),//solde du compte
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text('SOLDE DU COMPTE', style: TextStyle(
-                            color: Colors.white,
-                            fontSize: taille_libelle_etape-2
-                        ),),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(left: 80, top: 10),
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(solde==null?"1.500,0 XAF":getMillis('$solde'), style: TextStyle(//Montant du solde
-                            color: orange_F,
-                            fontSize: taille_titre+8,
-                            fontWeight: FontWeight.bold
-                        ),),
-                      ),
-                    ),
+                    getSoldeWidget(),
                   ],
                 ),
               ),
@@ -251,39 +469,6 @@ class _Transfert1State extends State<Transfert1> {
               key: _formKey,
               child: Stack(
                 children: <Widget>[
-                  /*Padding(
-                    padding: EdgeInsets.only(top: 20, left: gauch, right: droit),
-                    child: Text('Vous souhaitez transférer vers',
-                      style: TextStyle(
-                          color: couleur_titre,
-                          fontSize: taille_libelle_etape,
-                          fontWeight: FontWeight.bold
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 60, left: 0, right: 0),
-                    child: CarouselSlider(
-                      enlargeCenterPage: true,
-                      autoPlay: false,
-                      enableInfiniteScroll: true,
-                      onPageChanged: (value){
-                        setState(() {
-                          indik = value;
-                          _code = "$_code^$indik";
-                        });
-                      },
-                      height: 135.0,
-                      items: [1,2,3,4].map((i) {
-                        return Builder(
-                          builder: (BuildContext context) {
-                            return getMoyen(i);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),*/
-
                   Padding(
                     padding: EdgeInsets.only(top: 25+ad, left: gauch, right: droit),
                     child: Text('Vous transférer vers',
@@ -330,7 +515,7 @@ class _Transfert1State extends State<Transfert1> {
                                 child: new Text(this._code.split('^')[2],
                                   style: TextStyle(
                                       color: couleur_description_champ,
-                                      fontSize: taille_champ,
+                                      fontSize: taille_champ+3,
                                   ),)
                             ),
                           ),
@@ -376,26 +561,26 @@ class _Transfert1State extends State<Transfert1> {
                             child: Padding(
                               padding: const EdgeInsets.only(left: 20.0),
                               child: new TextFormField(
-                                controller: _userTextController,
+                                //controller: _userTextController,
                                 keyboardType: TextInputType.number,
                                 style: TextStyle(
                                     color: couleur_libelle_champ,
-                                    fontSize: taille_champ,
+                                    fontSize: taille_champ+3,
                                 ),
                                 validator: (String value){
                                   if(value.isEmpty || int.parse(value.replaceAll(".", ""))==0){
                                     return "Montant vide !";
                                   }else{
                                     montant = value;
-                                    _userTextController.text = montant;
+                                    //_userTextController.text = montant;
                                     return null;
                                   }
                                 },
                                 decoration: InputDecoration.collapsed(
-                                  hintText: 'Montant de la recharger',
+                                  hintText: 'Montant à transférer',
                                   hintStyle: TextStyle(
                                       color: couleur_libelle_champ,
-                                      fontSize: taille_champ,
+                                      fontSize: taille_champ+3,
                                   ),
                                   //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                 ),
@@ -409,7 +594,7 @@ class _Transfert1State extends State<Transfert1> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 240+ad, left: gauch, right: droit),
-                    child: Text('Motif de l\'opération (facultatif)',
+                    child: Text('Motif de l\'opération',
                       style: TextStyle(
                           color: couleur_titre,
                           fontSize: taille_libelle_etape,
@@ -447,16 +632,16 @@ class _Transfert1State extends State<Transfert1> {
                             isExpanded: true,
                             onChanged: (String selected){
                               setState(() {
-                                _current = selected;
+                                _motif = selected;
                               });
                             },
-                            value: _current,
+                            value: _motif,
                             hint: Padding(
                               padding: EdgeInsets.only(left: 20),
                               child: Text('Choisissez le motif',
                                 style: TextStyle(
                                   color: couleur_libelle_champ,
-                                  fontSize:taille_libelle_champ,
+                                  fontSize:taille_libelle_champ+3,
                                 ),),
                             ),
                             items: _categorie.map((String name){
@@ -467,7 +652,7 @@ class _Transfert1State extends State<Transfert1> {
                                   child: Text(name,
                                     style: TextStyle(
                                         color: couleur_fond_bouton,
-                                        fontSize:taille_libelle_champ,
+                                        fontSize:taille_libelle_champ+3,
                                         fontWeight: FontWeight.bold
                                     ),),
                                 ),
@@ -487,8 +672,18 @@ class _Transfert1State extends State<Transfert1> {
                           child: GestureDetector(
                             onTap: (){
                               if(_formKey.currentState.validate()) {
-                                this._save(montant);
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22('$_code')));
+                                if(_motif == null){
+                                  showInSnackBar("Veuillez sélectionner un motif");
+                                }else{
+                                  var getcommission = getCommission(
+                                      typeOperation: "WALLET_TO_WALLET",
+                                      country: "$country",
+                                      amount: int.parse(this.montant),
+                                      deviseLocale: deviseLocale
+                                  );
+                                  checkConnection(json.encode(getcommission), 0);
+                                }
+                                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22('$_code')));
                               }
                             },
                             child: Padding(
@@ -504,7 +699,9 @@ class _Transfert1State extends State<Transfert1> {
                                   ),
                                   borderRadius: new BorderRadius.circular(10.0),
                                 ),
-                                child: new Center(child: new Text('Client SprintPay', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),),),
+                                child: new Center(child: isLoadClient == false? new Text('Client SprintPay', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),):
+                                    CupertinoActivityIndicator()
+                                ),
                               ),
                             ),
                           ),
@@ -513,10 +710,27 @@ class _Transfert1State extends State<Transfert1> {
                           flex: 6,
                           child: GestureDetector(
                             onTap: (){
-
                               if(_formKey.currentState.validate()) {
-                                this._save(montant);
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2('$_code')));
+                                if(_motif == null){
+                                  showInSnackBar("Veuillez sélectionner un motif");
+                                }else{
+                                  if(from == "CEMAC"){
+                                    this._Alert(context, 0);
+                                  }else if(from == "UEMOA"){
+                                    var getcommission = getCommission(
+                                        typeOperation: "WARI_TO_WALLET",
+                                        country: "$country",
+                                        amount: int.parse(this.montant),
+                                        deviseLocale: deviseLocale
+                                    );
+                                    print(json.encode(getcommission));
+                                    checkConnection(json.encode(getcommission), 3);
+
+                                    //this._Alert(context, 1);
+                                  }else{
+                                    showInSnackBar("Service pas encore disponible vers ce pays.");
+                                  }
+                                }
                               }
                             },
                             child: Padding(
@@ -532,7 +746,9 @@ class _Transfert1State extends State<Transfert1> {
                                   ),
                                   borderRadius: new BorderRadius.circular(10.0),
                                 ),
-                                child: new Center(child: new Text('Direct to cash', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),),),
+                                child: new Center(child:isLoadDirect == false? new Text('Direct to cash', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),):
+                                    CupertinoActivityIndicator()
+                                ),
                               ),
                             ),
                           ),
@@ -548,54 +764,27 @@ class _Transfert1State extends State<Transfert1> {
       ],
     );
   }
-  void _save(String valeur) async {
+  void _save() async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'wallet';
-    final value = valeur;
-    prefs.setString(key, value);
-    print('saved $value');
+    prefs.setString("montant", "$montant");
+    prefs.setString("fees", "$fees");
+    prefs.setString("motif", "$_motif");
+    prefs.setString("lieu", "$lieu");
   }
 
   read() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      final key = 'wallet';
-      montant = prefs.getString(key)==null?"":prefs.getString(key);
-      _userTextController.text = montant==""?"0":montant;
+      //montant = prefs.getString("wallet")==null?"":prefs.getString("wallet");
+      //_userTextController.text = montant==""?"0":montant;
+      country = prefs.getString("iso3");
+      solde = prefs.getString("solde");
+      devise = prefs.getString("devise");
+      local = prefs.getString("local");
+      deviseLocale = prefs.getString("deviseLocale");
     });
   }
 
-  void showInSnackBar(String value) {
-    _scaffoldKey.currentState.showSnackBar(
-        new SnackBar(content: new Text(value,style:
-        TextStyle(
-            color: Colors.white,
-            fontSize: taille_description_champ
-        ),
-          textAlign: TextAlign.center,),
-          backgroundColor: couleur_fond_bouton,
-          duration: Duration(seconds: 5),));
-  }
-
-  Future<void> _ackAlert(BuildContext context, String value) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Oops!'),
-          content: Text(value),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('Ok'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Widget getMoyen(int index){
     String text, img;

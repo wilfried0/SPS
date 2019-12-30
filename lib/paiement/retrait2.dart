@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/composants/components.dart';
-import 'package:services/composants/services.dart';
+import 'package:services/paiement/getsoldewidget.dart';
+import 'package:services/paiement/webview.dart';
 import 'confirma.dart';
 import 'echec.dart';
 import 'package:flutter/material.dart';
@@ -23,37 +26,200 @@ class Retrait2 extends StatefulWidget {
 class _Retrait2State extends State<Retrait2> {
   _Retrait2State(this._code);
   String _code;
-  TabController _tabController;
-  PageController pageController;
   int currentPage = 0;
   int choice = 0;
   int recenteLenght, archiveLenght, populaireLenght;
   var _formKey = GlobalKey<FormState>();
   int flex4, flex6, taille, enlev, rest, enlev1, indik;
-  double aj, ajj,gauch, droit,_taill, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
+  double aj,fees, ajj,gauch, droit,_taill, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   List data, list;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   var _userTextController = new TextEditingController();
+  var _phoneTextController = new TextEditingController();
+  bool isLoading =false;
+  String url, _id, _to, payment_url, echec, _iso;
+  int temps = 500;
   // ignore: non_constant_identifier_names
-  String kittyImage,_xaf="XAF",_mySelection,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="";
+  String kittyImage,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="",  _username, _password, deviseLocale;
 
   @override
   void initState() {
     super.initState();
     this.read();
+    switch(int.parse(_code)){
+      case 0:url = '$base_url/transfert/cashinMtn';break;
+      case 1:url = '$base_url/transfert/refillByOrange';break;
+      //case 3:url = '$base_url/transfert/refillByCard'; break;
+    }
     indik = int.parse(_code)+1;
     print(indik);
-    pageController = PageController(
-        initialPage: currentPage,
-        keepPage: false,
-        viewportFraction: 0.8
-    );
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _userTextController.dispose();
+    _phoneTextController.dispose();
     super.dispose();
+  }
+
+  void _reg(String echec) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('echec', "$echec");
+  }
+
+  void checkConnection(var body) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      //print("Connected to Mobile");
+      setState(() {
+        isLoading = true;
+        this.getId(body);
+      });
+      //this.getUser();
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
+      setState(() {
+        isLoading = true;
+        this.getId(body);
+      });
+      //this.getUser();
+    } else {
+      _ackAlert(context);
+    }
+  }
+
+  void _save(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("id", "$id");
+    print("mon id $id");
+  }
+
+  void save(String payment_url) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("payment_url", "$payment_url");
+    print("mon payment_url $payment_url");
+  }
+
+  Future<String> getId(var body) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+    print(url);
+    return await http.post("$url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print('voici le statusCode $statusCode');
+      print('voici le body ${response.body}');
+      if (statusCode < 200 || json == null) {
+        setState(() {
+          isLoading = false;
+        });
+        throw new Exception("Error while fetching data");
+      }else if(statusCode == 200){
+        var responseJson = json.decode(response.body);
+        _id = responseJson['id'];
+        String payment_url = responseJson['payment_url'];
+        if(payment_url != null){
+          setState(() {
+            save(payment_url);
+            _save(_id);
+          });
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Webview(_code)));
+        }else
+          this.getStatus(_id);
+      }else {
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Echec de l'opération!", _scaffoldKey);
+      }
+      return response.body;
+    });
+  }
+
+  Future<String> getStatus(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+    var url = "$base_url/transaction/checkStatus/$id";
+    print(url);
+    http.Response response = await http.get(url, headers: headers);
+    final int statusCode = response.statusCode;
+    print('getStatus voici le statusCode $statusCode');
+    print('getStatus voici le body ${response.body}');
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      if(responseJson['status'] == "CREATED"){
+        if(temps == 0){
+          setState(() {
+            isLoading = false;
+          });
+          this._reg(responseJson['description'].toString());
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Echec('_code^§')));
+        }else if(temps > 0){
+          temps--;
+          getStatus(id);
+        }
+      }else if(responseJson['status'] == "PROCESSED"){
+        setState(() {
+          isLoading = false;
+        });
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Confirma('retrait')));
+      }else if(responseJson['status'] == "REFUSED"){
+        setState(() {
+          isLoading = false;
+        });
+        this._reg(responseJson['description'].toString());
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Echec('_code^§')));
+      }else{
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Service indisponible!", _scaffoldKey);
+      }
+    }else{
+      setState(() {
+        isLoading = false;
+      });
+      showInSnackBar("Service indisponible", _scaffoldKey);
+    }
+    return null;
+  }
+
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -62,7 +228,8 @@ class _Retrait2State extends State<Retrait2> {
     double fromHeight = 200;
     switch(indik){
       case 1:aj=100; ajj=100;break;
-      case 3:aj=100; ajj=200; break;
+      case 2:aj=100; ajj=100;break;
+      case 4:aj=100; ajj=200; break;
       default:aj=100;ajj=0;
     }
     if(_large<=320){
@@ -134,6 +301,7 @@ class _Retrait2State extends State<Retrait2> {
     }
     return new MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
       home: new DefaultTabController(
         length: 1,
         child: new Scaffold(
@@ -198,27 +366,7 @@ class _Retrait2State extends State<Retrait2> {
                       ),
                     ),
 
-                    Padding(
-                      padding: EdgeInsets.only(left: 80, top: 20),//solde du compte
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text('SOLDE DU COMPTE', style: TextStyle(
-                            color: Colors.white,
-                            fontSize: taille_libelle_etape-2
-                        ),),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(left: 80, top: 10),
-                      child: Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(solde==null?"1.500,0 XAF":getMillis('$solde'), style: TextStyle(//Montant du solde
-                            color: orange_F,
-                            fontSize: taille_titre+8,
-                            fontWeight: FontWeight.bold
-                        ),),
-                      ),
-                    ),
+                    getSoldeWidget(),
                   ],
                 ),
               ),
@@ -274,151 +422,6 @@ class _Retrait2State extends State<Retrait2> {
                       }).toList(),
                     ),
                   ),
-                  /*Padding(
-                      padding: EdgeInsets.only(top: 250, left: 20, right: 20),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                            flex: 4,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: GestureDetector(
-                                onTap: (){
-                                  setState(() {
-                                    choice = 0;
-                                  });
-                                },
-                                child: Container(
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(10.0),
-                                        topRight: Radius.circular(10.0),
-                                        bottomRight: Radius.circular(10.0),
-                                        bottomLeft: Radius.circular(10.0),
-                                      ),
-                                      color: choice==0?Colors.white:couleur_champ,
-                                      border: Border.all(
-                                        color: choice==0?orange_F:couleur_libelle_champ,
-                                      )
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Column(
-                                      children: <Widget>[
-                                        Icon(
-                                          Icons.credit_card,
-                                          color: choice==0?orange_F:couleur_libelle_champ,
-                                          size: 40,
-                                        ),
-                                        Text('Carte de crédit',
-                                          style: TextStyle(
-                                              color: couleur_libelle_champ,
-                                              fontSize: _taill,
-                                              fontWeight: FontWeight.bold
-                                          ),)
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 4,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 5, left: 5),
-                              child: GestureDetector(
-                                onTap: (){
-                                  setState(() {
-                                    choice = 1;
-                                  });
-                                },
-                                child: Container(
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(10.0),
-                                        topRight: Radius.circular(10.0),
-                                        bottomRight: Radius.circular(10.0),
-                                        bottomLeft: Radius.circular(10.0),
-                                      ),
-                                      color: choice==1?Colors.white:couleur_champ,
-                                      border: Border.all(
-                                        color: choice==1?orange_F:couleur_libelle_champ,
-                                      )
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Column(
-                                      children: <Widget>[
-                                        Icon(
-                                          Icons.web,
-                                          color: choice==1?orange_F:couleur_libelle_champ,
-                                          size: 40,
-                                        ),
-                                        Text('Sprint-pay Wallet',
-                                          style: TextStyle(
-                                              color: couleur_libelle_champ,
-                                              fontSize: _taill,
-                                              fontWeight: FontWeight.bold
-                                          ),)
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 4,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 10),
-                              child: GestureDetector(
-                                onTap: (){
-                                  setState(() {
-                                    choice = 2;
-                                  });
-                                },
-                                child: Container(
-                                  height: 80,
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(10.0),
-                                        topRight: Radius.circular(10.0),
-                                        bottomRight: Radius.circular(10.0),
-                                        bottomLeft: Radius.circular(10.0),
-                                      ),
-                                      color: choice==2?Colors.white:couleur_champ,
-                                      border: Border.all(
-                                        color: choice==2?orange_F:couleur_libelle_champ,
-                                      )
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Column(
-                                      children: <Widget>[
-                                        Icon(
-                                          Icons.phone_iphone,
-                                          color: choice==2?orange_F:couleur_libelle_champ,
-                                          size: 40,
-                                        ),
-                                        Text('Mobile money',
-                                          style: TextStyle(
-                                              color: couleur_libelle_champ,
-                                              fontSize: _taill,
-                                              fontWeight: FontWeight.bold
-                                          ),)
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          )
-                        ],
-                      )
-                  ),*/
 
                   Padding(
                     padding: EdgeInsets.only(top: 230, left: gauch, right: droit),
@@ -433,7 +436,7 @@ class _Retrait2State extends State<Retrait2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 270, left: gauch, right: droit),
-                    child: Text(montant==null?"":'$montant,0 $_xaf',
+                    child: Text(montant==""?'':'${getMillis(double.parse(montant).toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
                           fontSize: taille_titre+15,
@@ -455,7 +458,7 @@ class _Retrait2State extends State<Retrait2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 350, left: gauch, right: droit),
-                    child: Text('0,0 $_xaf',
+                    child: Text(fees==null?"":'${getMillis(fees.toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
                           fontSize: taille_titre+15,
@@ -463,81 +466,6 @@ class _Retrait2State extends State<Retrait2> {
                       ),
                     ),
                   ),
-
-                  /*Padding(
-                    padding: EdgeInsets.only(top: 475, left: gauch, right: droit),
-                    child: Text("L'utilisateur qui recharge son compte",
-                      style: TextStyle(
-                          color: couleur_decription_page,
-                          fontSize: taille_libelle_etape,
-                          fontWeight: FontWeight.bold
-                      ),
-                    ),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.only(left: gauch, right: droit, top: 520),
-                    child: Container(
-                      decoration: new BoxDecoration(
-                        borderRadius: new BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0)
-                        ),
-                        color: Colors.transparent,
-                        border: Border.all(
-                            width: bordure,
-                            color: couleur_bordure
-                        ),
-                      ),
-                      height: hauteur_champ,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 0),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                                flex: 5,
-                                child: CountryCodePicker(
-                                  showFlag: true,
-                                  onChanged: (CountryCode code){
-                                    _mySelection = code.dialCode.toString();
-                                  },
-                                )
-                            ),
-                            Expanded(
-                              flex: 10,
-                              child: TextFormField(
-                                //controller: _userTextController3,
-                                keyboardType: TextInputType.phone,
-                                style: TextStyle(
-                                    fontSize: taille_libelle_champ,
-                                    color: couleur_libelle_champ,
-                                    fontFamily: police_champ
-                                ),
-                                validator: (String value){
-                                  if(value.isEmpty){
-                                    return 'Téléphone vide !';
-                                  }else{
-                                    //tel = '$value';
-                                    //_userTextController3.text = tel;
-                                    return null;
-                                  }
-                                },
-                                decoration: InputDecoration.collapsed(
-                                  hintText: 'Contact téléphonique',
-                                  hintStyle: TextStyle(
-                                      color: couleur_libelle_champ,
-                                      fontSize: taille_libelle_champ
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),*/
 
                   Padding(
                     padding: EdgeInsets.only(top: 310+aj, left: gauch, right: droit),
@@ -552,7 +480,7 @@ class _Retrait2State extends State<Retrait2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 330+aj, left: gauch, right: droit),
-                    child: Text(montant==null?"":'$montant,0 $_xaf',
+                    child: Text(montant==""?"":'${getMillis(double.parse(montant).toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
                           fontSize: taille_titre+15,
@@ -561,7 +489,7 @@ class _Retrait2State extends State<Retrait2> {
                     ),
                   ),
 
-                  indik==1||indik==3?Padding(
+                  indik==1||indik==4||indik==2?Padding(
                     padding: EdgeInsets.only(top: 395+aj, left: gauch, right: droit),
                     child: Text("Informations sur le bénéficiaire",
                       style: TextStyle(
@@ -572,7 +500,7 @@ class _Retrait2State extends State<Retrait2> {
                     ),
                   ):Container(),
 
-                  indik==1||indik==3?Padding(
+                  indik==1||indik==4||indik==2?Padding(
                     padding: EdgeInsets.only(top: 425+aj, left: gauch, right: droit),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -592,26 +520,25 @@ class _Retrait2State extends State<Retrait2> {
                       child: Row(
                         children: <Widget>[
                           new Expanded(
-                              flex:2,
-                              child: Padding(
-                                padding: const EdgeInsets.all(10.0),
-                                child: new Image.asset('images/Groupe18.png'),
-                              ),
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Image.asset('images/Groupe18.png'),
                             ),
+                          ),
                           new Expanded(
                             flex:10,
                             child: new TextFormField(
-                              controller: _userTextController,
+                              controller: _phoneTextController,
                               keyboardType: TextInputType.phone,
                               style: TextStyle(
-                                fontSize: taille_libelle_champ,
+                                fontSize: taille_libelle_champ+3,
                                 color: couleur_libelle_champ,
                               ),
                               validator: (String value){
                                 if(value.isEmpty){
                                   return 'Champ téléphone vide !';
                                 }else{
-                                  _userTextController.text = value;
                                   return null;
                                 }
                               },
@@ -630,7 +557,7 @@ class _Retrait2State extends State<Retrait2> {
                     ),
                   ):Container(),
 
-                  indik==3?Padding(
+                  indik==4?Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 475+aj),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -687,7 +614,7 @@ class _Retrait2State extends State<Retrait2> {
                       ),
                     ),
                   ):Container(),
-                  indik==3?Padding(
+                  indik==4?Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 525+aj),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -746,31 +673,28 @@ class _Retrait2State extends State<Retrait2> {
                   ):Container(),
 
                   Padding(
-                    padding: EdgeInsets.only(top:405+aj+ajj,left: gauch, right: droit),
+                    padding: EdgeInsets.only(top:405+aj+ajj,left: gauch, right: droit, bottom: 20),
                     child: GestureDetector(
                       onTap: (){
                         setState(() {
-                          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Confirma("retrait")));
                           if(_formKey.currentState.validate()){
-                            var cardsp = new Cardsp(
-                                amount: int.parse(montant.replaceAll(".", "")),
-                                currency: this._xaf,
-                                firstnameBenef: this.nom,
-                                lastnameBenef: '',
-                                description: this.mot,
-                                mobileNumber: this.number,
-                                country: '',
-                                email: this.email,
-                                spMerchandUrl: '',
-                                clientUrl: '',
-                                failureUrl: '',
-                                cancel_url: 'http://sprint-pay.com/',
-                                return_url: 'http://sprint-pay.com/',
-                                kittyID: int.parse(this.kittyId)
+                            var walletTr = _code == "0"? new walletTrans(
+                                to:'$_to',
+                                amount: int.parse(this.montant),
+                                description: this.description,
+                                deviseLocale: this.deviseLocale,
+                                toFirstname: this._to,
+                                toCountryCode: "CMR",
+                            ):new orangeTrans(
+                                to:this._to,
+                                amount: int.parse(this.montant),
+                                description: this.description,
+                                deviseLocale: this.deviseLocale,
+                                successUrl: "http://www.sprintpay.com",
+                                failureUrl: "http://www.sprintpay.com"
                             );
-                            print(json.encode(cardsp));
-                            createCard(json.encode(cardsp));
-                            //Navigator.of(context).push(SlideLeftRoute(enterWidget: PassCodeScreen(), oldWidget: Encaisser2(_code)));
+                            print(json.encode(walletTr));
+                            checkConnection(json.encode(walletTr));
                           }
                         });
                       },
@@ -785,7 +709,9 @@ class _Retrait2State extends State<Retrait2> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: new Center(child: new Text('Confirmer le retrait', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton, fontFamily: police_bouton),),),
+                        child: new Center(child:isLoading==false? new Text('Confirmer le retrait', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton),):
+                            CupertinoActivityIndicator()
+                        ),
                       ),
                     ),
                   ),
@@ -801,63 +727,21 @@ class _Retrait2State extends State<Retrait2> {
   read() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      final key = 'wallet';
-      montant = prefs.getString(key);
-    });
-  }
-
-  void _save(String valeur) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'wallet';
-    final value = valeur;
-    prefs.setString(key, value);
-    print('saved $value');
-  }
-
-  Future<String> createCard(var body) async {
-    var _header = {
-      "accept": "application/json",
-      "content-type" : "application/json"
-    };
-    String url = "$base_url/walletpayment/cashin/encash";
-    return await http.post(url, body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      if (statusCode < 200 || json == null) {
-        print(statusCode);
-        print(response.body);
-        throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        print(response.body);
-        var convertDataToJson = json.decode(utf8.decode(response.bodyBytes));
-        print(convertDataToJson);
-        this._save(null);
-        if(convertDataToJson['body']['statusCode'] == 'SUCCESSFUL'){
-          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Confirma('$_code')));
-          //Navigator.of(context).push(SlideLeftRoute(enterWidget: Confirma(_code), oldWidget: Encaisser2('$_code')));
-        }else{
-          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Echec('$_code^&')));
-          //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec('$_code^&'), oldWidget: Encaisser2('$_code')));
-        }
-      }else if(statusCode == 403){
-        Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Echec('$_code^&')));
-        //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec('$_code^&'), oldWidget: Encaisser2('$_code')));
-      }
-      else Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Echec('$_code^&')));
-      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec('$_code^&'), oldWidget: Encaisser2('$_code')));
-
-      return response.body;
+      montant = prefs.getString("montant");
+      _to = prefs.getString("to");
+      _phoneTextController.text = _to;
+      fees = double.parse(prefs.getString("fees"));
+      deviseLocale = prefs.getString("deviseLocale");
+      _iso = prefs.getString("iso");
     });
   }
 
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
+      case 1: text = "MTN MOBILE MONEY";img = 'mtn.jpg';
       break;
-      case 2: text = "CARTE BANCAIRE";img = 'carte.jpg';
-      break;
-      case 3: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 2: text = "ORANGE MONEY";img = 'orange.png';
       break;
     }
     return Container(
@@ -901,13 +785,13 @@ class _Retrait2State extends State<Retrait2> {
                     )
                 ),),
               Padding(
-                padding: EdgeInsets.only(top: 10),
-                child: Text('$text',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: _taill,
-                      fontWeight: FontWeight.bold
-                  ),)
+                  padding: EdgeInsets.only(top: 10),
+                  child: Text('$text',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: _taill,
+                        fontWeight: FontWeight.bold
+                    ),)
               )
             ],
           ),

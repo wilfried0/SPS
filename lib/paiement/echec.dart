@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ignore: must_be_immutable
 class Echec extends StatefulWidget {
@@ -15,20 +16,30 @@ class Echec extends StatefulWidget {
 class _EchecState extends State<Echec> {
 
   _EchecState(this._code);
-  String _code, sms;
+  String _code, sms, echec;
 
   var _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
+    this.lire();
     if(_code.split('^').last == '§')
-      sms = "Désolé!\nEchec de l'offre!";
+      sms = "Désolé!\nEchec du retrait!";
     else if(_code.split('^').last == '&')
-      sms = "Désolé!\nEchec de l'encaissement!";
+      sms = "Désolé!\nEchec de la recharge!";
+    else if(_code.split('^').last == 't')
+      sms = "Désolé!\nEchec du transfert!";
     else
       sms = "Désolé!\nVotre participation n'a été enregistrée!";
 
+  }
+
+  lire() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      echec = prefs.getString("echec");
+    });
   }
 
   @override
@@ -41,25 +52,14 @@ class _EchecState extends State<Echec> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(55.0),
         child: new AppBar(
-          title: Text('Confirmation',style: TextStyle(
+          title: Text('',style: TextStyle(
             color: couleur_titre,
             fontSize: taille_libelle_etape,
           ),),
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
-                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Echec(_code)));
-                });
-                //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Verification3(_code)));
-              },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: couleur_fond_bouton),
-        ),
+          leading: Container(),)
       ),
       body: WillPopScope(
         onWillPop: () async {
@@ -76,21 +76,21 @@ class _EchecState extends State<Echec> {
                       height: hauteur_logo,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 40.0, right: 40.0),
-                        child: new Image.asset('images/logo_sprint.png'),
+                        child: new Image.asset('images/logo.png'),
                       ),
                     ),
 
                     Padding(
                       padding: EdgeInsets.only(top: marge_apres_logo),),
 
-                    Padding(
-                        padding: EdgeInsets.only(top:(espace - 65)>0?(espace-65)/2:0.0,)),
-
                     Container(
                       child: CircleAvatar(
                         backgroundColor: couleur_champ,
-                        radius: 65.0,
-                        child: new Image.asset('images/Groupee191.png'),
+                        radius: 70.0,
+                        child: Container(
+                            height: 70,
+                            width: 70,
+                            child: new Image.asset('images/Groupe3.png')),
                       ),
                     ),
 
@@ -105,20 +105,29 @@ class _EchecState extends State<Echec> {
                             style: TextStyle(
                                 color: couleur_titre,
                                 fontSize: taille_titre,
-                                fontFamily: police_titre,
                                 fontWeight: FontWeight.bold
                             )),
                       ),
                     ),
 
+                    /*echec==null?Container():Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                      child: Center(
+                        child: new Text("Motif: $echec",
+                            style: TextStyle(
+                                color: couleur_titre,
+                                fontSize: taille_champ,
+                                fontWeight: FontWeight.normal
+                            )),
+                      ),
+                    ),*/
 
                     Padding(
                       padding: EdgeInsets.only(left:20.0, top:20.0, right: 20),
                       child: new Text("Cliquez pour retourner à l'accueil Sprint Pay",
                         style: TextStyle(
-                            color: couleur_decription_page,
-                            fontSize: taille_description_page,
-                            fontFamily: police_description_page
+                            color: couleur_titre,
+                            fontSize: taille_description_page-2,
                         ),),
                     ),
 
@@ -142,7 +151,7 @@ class _EchecState extends State<Echec> {
                             ),
                             borderRadius: new BorderRadius.circular(10.0),
                           ),
-                          child: Center(child: new Text("Retourner à l'accueil", style: new TextStyle(fontSize: taille_text_bouton, color: Colors.white, fontFamily: police_bouton),)),
+                          child: Center(child: new Text("Retourner à l'accueil", style: new TextStyle(fontSize: taille_text_bouton+3, color: Colors.white),)),
                         ),
                       ),
                     ),

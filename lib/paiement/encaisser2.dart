@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:page_transition/page_transition.dart';
 import 'package:services/composants/components.dart';
-import 'package:services/composants/services.dart';
+import 'package:services/paiement/getsoldewidget.dart';
+import 'package:services/paiement/webview.dart';
 import 'confirma.dart';
 import 'echec.dart';
 import 'encaisser1.dart';
@@ -24,37 +26,205 @@ class Encaisser2 extends StatefulWidget {
 class _Encaisser2State extends State<Encaisser2> {
   _Encaisser2State(this._code);
   String _code;
-  TabController _tabController;
-  PageController pageController;
   int currentPage = 0;
   int choice = 0;
   int recenteLenght, archiveLenght, populaireLenght;
   var _formKey = GlobalKey<FormState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  final navigatorKey = GlobalKey<NavigatorState>();
   int flex4, flex6, taille, enlev, rest, enlev1, indik;
-  double gauch, droit,_taill, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
+  double gauch,fees, droit,_taill, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   List data, list;
+  bool isLoading = false;
+  String url, _id, _to, payment_url;
+  int temps = 500;
   var _userTextController = new TextEditingController();
   // ignore: non_constant_identifier_names
-  String kittyImage,_xaf="XAF",_mySelection,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="";
+  String kittyImage,_xaf="XAF",_mySelection="+237",solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
 
   @override
   void initState() {
-    super.initState();
+    print(_code);
     this.read();
-    print("code: $_code");
+    switch(int.parse(_code)){
+      case 0:url = '$base_url/transfert/refillByMomo';break;
+      case 1:url = '$base_url/transfert/refillByOrange';break;
+      case 2:url = '$base_url/transfert/refillByCard'; break;
+    }
+    super.initState();
+
     indik = int.parse(_code)+1;
-    pageController = PageController(
-        initialPage: currentPage,
-        keepPage: false,
-        viewportFraction: 0.8
-    );
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _userTextController.dispose();
     super.dispose();
+    //BackButtonInterceptor.remove(myInterceptor);
+  }
+
+  read() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      montant = prefs.getString("montant");
+      fees = double.parse(prefs.getString("fees"));
+      deviseLocale = prefs.getString("deviseLocale");
+      _to = prefs.getString("username");
+    });
+  }
+
+
+  void checkConnection(var body) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      //print("Connected to Mobile");
+      setState(() {
+        isLoading = true;
+        this.getId(body);
+      });
+      //this.getUser();
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
+      setState(() {
+        isLoading = true;
+        this.getId(body);
+      });
+      //this.getUser();
+    } else {
+      _ackAlert(context);
+    }
+  }
+
+  void _save(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("id", "$id");
+    print("mon id $id");
+  }
+
+  void save(String payment_url) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("payment_url", "$payment_url");
+    print("mon payment_url $payment_url");
+  }
+
+  Future<String> getId(var body) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+    print(url);
+    return await http.post("$url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print('voici le statusCode $statusCode');
+      print('voici le body ${response.body}');
+      if (statusCode < 200 || json == null) {
+        setState(() {
+          isLoading = false;
+        });
+        throw new Exception("Error while fetching data");
+      }else if(statusCode == 200){
+        var responseJson = json.decode(response.body);
+        _id = responseJson['id'];
+        String payment_url = responseJson['payment_url'];
+        if(payment_url != null){
+          setState(() {
+            save(payment_url);
+            _save(_id);
+          });
+          navigatorKey.currentState.pushNamed("/webview");
+        }else
+        this.getStatus(_id);
+      }else {
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Echec de l'opération!", _scaffoldKey);
+      }
+      return response.body;
+    });
+  }
+
+  Future<String> getStatus(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+    var url = "$base_url/transaction/checkStatus/$id";
+    print(url);
+    http.Response response = await http.get(url, headers: headers);
+    final int statusCode = response.statusCode;
+    print('getStatus voici le statusCode $statusCode');
+    print('getStatus voici le body ${response.body}');
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      if(responseJson['status'] == "CREATED"){
+        if(temps == 0){
+          setState(() {
+            isLoading = false;
+          });
+          navigatorKey.currentState.pushNamed("/echec");
+        }else if(temps > 0){
+          temps--;
+          getStatus(id);
+        }
+      }else if(responseJson['status'] == "PROCESSED"){
+        setState(() {
+          isLoading = false;
+        });
+        navigatorKey.currentState.pushNamed("/confirma");
+      }else if(responseJson['status'] == "REFUSED"){
+        setState(() {
+          isLoading = false;
+        });
+        navigatorKey.currentState.pushNamed("/echec");
+      }else{
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Service indisponible!", _scaffoldKey);
+      }
+    }else{
+      setState(() {
+        isLoading = false;
+      });
+      showInSnackBar("Service indisponible", _scaffoldKey);
+    }
+    return null;
+  }
+
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -129,10 +299,19 @@ class _Encaisser2State extends State<Encaisser2> {
       _taill = taille_description_champ-1;
     }
     return new MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
+      routes: <String, WidgetBuilder>{
+        "/echec": (BuildContext context) =>new Echec("_code^&"),
+        "/confirma": (BuildContext context) =>new Confirma("recharge"),
+        "/encaisser": (BuildContext context) =>new Encaisser1(_code),
+        "/webview": (BuildContext context) =>new Webview(_code)
+      },
       home: new DefaultTabController(
         length: 1,
         child: new Scaffold(
+          key: _scaffoldKey,
           appBar: PreferredSize(
             preferredSize: Size.fromHeight(fromHeight),
             child: new Container(
@@ -146,9 +325,7 @@ class _Encaisser2State extends State<Encaisser2> {
                         GestureDetector(
                             onTap: (){
                               setState(() {
-                                Navigator.pop(context);
-                                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
+                                navigatorKey.currentState.pushNamed("/encaisser");
                               });
                             },
                             child: Icon(Icons.arrow_back_ios,color: Colors.white,)
@@ -156,9 +333,7 @@ class _Encaisser2State extends State<Encaisser2> {
                         GestureDetector(
                           onTap: (){
                             setState(() {
-                              //Navigator.pop(context);
-                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1('$_code')));
-                              //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
+                              navigatorKey.currentState.pushNamed("/encaisser");
                             });
                           },
                           child: Text('Retour',
@@ -167,15 +342,12 @@ class _Encaisser2State extends State<Encaisser2> {
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsets.only(top: 0, left: gauch, right: droit),
-                    child: Center(
-                      child: Text('Etape 1 sur 2',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: taille_libelle_etape,
-                            fontWeight: FontWeight.bold
-                        ),
+                  Center(
+                    child: Text('Etape 2 sur 2',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: taille_libelle_etape,
+                          fontWeight: FontWeight.bold
                       ),
                     ),
                   ),
@@ -193,28 +365,7 @@ class _Encaisser2State extends State<Encaisser2> {
                       ),
                     ),
                   ),
-
-                  Padding(
-                    padding: EdgeInsets.only(left: 80, top: 20),//solde du compte
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text('SOLDE DU COMPTE', style: TextStyle(
-                          color: Colors.white,
-                          fontSize: taille_libelle_etape-2
-                      ),),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 80, top: 10),
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(solde==null?"1.500,0 XAF":getMillis('$solde'), style: TextStyle(//Montant du solde
-                          color: orange_F,
-                          fontSize: taille_titre+8,
-                          fontWeight: FontWeight.bold
-                      ),),
-                    ),
-                  ),
+                  getSoldeWidget(),
                 ],
               ),
             ),
@@ -253,7 +404,24 @@ class _Encaisser2State extends State<Encaisser2> {
                       ),
                     ),
                   ),
-                  Padding(
+                  deviseLocale != "XAF"?Padding(
+                    padding: EdgeInsets.only(top: 70, left: 0, right: 0),
+                    child: CarouselSlider(
+                      enlargeCenterPage: true,
+                      autoPlay: false,
+                      enableInfiniteScroll: false,
+                      onPageChanged: (value){},
+                      height: 135.0,
+                      items: [3].map((i) {
+                        return Builder(
+                          builder: (BuildContext context) {
+                            return getMoyen(3);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  )
+                      :Padding(
                       padding: EdgeInsets.only(top: 70, left: 0, right: 0),
                       child: CarouselSlider(
                         enlargeCenterPage: true,
@@ -284,7 +452,7 @@ class _Encaisser2State extends State<Encaisser2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 260, left: gauch, right: droit),
-                    child: Text(montant==null?"":'$montant $_xaf',
+                    child: Text(montant==""?"":'${getMillis(double.parse(montant).toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
                           fontSize: taille_titre+15,
@@ -306,7 +474,7 @@ class _Encaisser2State extends State<Encaisser2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 350, left: gauch, right: droit),
-                    child: Text(montant==null?"":'0,0 $_xaf',
+                    child: Text(fees==null?"":'${getMillis(fees.toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
                           fontSize: taille_titre+15,
@@ -328,7 +496,7 @@ class _Encaisser2State extends State<Encaisser2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 440, left: gauch, right: droit),
-                    child: Text(montant==null?"":'$montant $_xaf',
+                    child: Text(montant==""?"":'${getMillis(double.parse(montant).toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
                           fontSize: taille_titre+15,
@@ -337,9 +505,9 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
 
-                  Padding(
+                  indik==3||deviseLocale!="XAF"?Container():Padding(
                     padding: EdgeInsets.only(top: 510, left: gauch, right: droit),
-                    child: Text(indik==1?"Téléphone du MoMo/OM à débiter":"Téléphone bénéficiaire",
+                    child: Text(indik==1?"Téléphone MoMo à débiter":indik==2?"Téléphone OM à débiter":"Téléphone bénéficiaire",
                       style: TextStyle(
                           color: couleur_titre,
                           fontSize: taille_libelle_etape,
@@ -348,7 +516,7 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
 
-                  Padding(
+                  indik==3||deviseLocale!="XAF"?Container():Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top: 540),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -384,7 +552,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                 //controller: _userTextController3,
                                 keyboardType: TextInputType.phone,
                                 style: TextStyle(
-                                    fontSize: taille_libelle_champ,
+                                    fontSize: taille_libelle_champ+3,
                                     color: couleur_libelle_champ,
                                     fontFamily: police_champ
                                 ),
@@ -392,8 +560,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                   if(value.isEmpty){
                                     return 'Téléphone vide !';
                                   }else{
-                                    //tel = '$value';
-                                    //_userTextController3.text = tel;
+                                    _to = '$value';
                                     return null;
                                   }
                                 },
@@ -401,7 +568,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                   hintText: 'Contact du débiteur',
                                   hintStyle: TextStyle(
                                       color: couleur_libelle_champ,
-                                      fontSize: taille_libelle_champ
+                                      fontSize: taille_libelle_champ+3
                                   ),
                                 ),
                               ),
@@ -412,31 +579,66 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top:620,left: gauch, right: droit),
+                    padding: EdgeInsets.only(top:indik==3||deviseLocale!="XAF"?510:620,left: gauch, right: droit, bottom: 20),
                     child: GestureDetector(
-                      onTap: (){
+                      onTap: () async {
                         setState(() {
-                          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Confirma("recharge")));
                           if(_formKey.currentState.validate()){
-                            var cardsp = new Cardsp(
-                                amount: int.parse(montant.replaceAll(".", "")),
-                                currency: this._xaf,
-                                firstnameBenef: this.nom,
-                                lastnameBenef: '',
-                                description: this.mot,
-                                mobileNumber: this.number,
-                                country: '',
-                                email: this.email,
-                                spMerchandUrl: '',
-                                clientUrl: '',
-                                failureUrl: '',
-                                cancel_url: 'http://sprint-pay.com/',
-                                return_url: 'http://sprint-pay.com/',
-                                kittyID: int.parse(this.kittyId)
+                            if(_code == "0"){//MTN
+                              if(_to.startsWith('67') || _to.startsWith('68') || _to.startsWith('654') || _to.startsWith('653') || _to.startsWith('652') || _to.startsWith('651') || _to.startsWith('650')){
+                                var walletTr = new walletTrans(
+                                    to:'$_to',
+                                    amount: int.parse(this.montant),
+                                    description: this.description,
+                                    deviseLocale: this.deviseLocale
+                                );
+                                print(json.encode(walletTr));
+                                checkConnection(json.encode(walletTr));
+                              }else{
+                                showInSnackBar("Le numéro à débiter n'est pas un compte MTN MoMo valide!", _scaffoldKey);
+                              }
+                            }else if(_code == "2"){
+                              var walletTr = new orangeTrans(
+                                  to:this._to,
+                                  amount: int.parse(this.montant),
+                                  description: this.description,
+                                  deviseLocale: this.deviseLocale,
+                                  successUrl: "http://www.sprintpay.com",
+                                  failureUrl: "http://www.sprintpay.com"
+                              );
+                              print(json.encode(walletTr));
+                              checkConnection(json.encode(walletTr));
+                            }else{//ORANGE
+                              if(_to.startsWith('69') || _to.startsWith('655') || _to.startsWith('656') || _to.startsWith('657') || _to.startsWith('658') || _to.startsWith('659')){
+                                var walletTr = new orangeTrans(
+                                    to:this._to,
+                                    amount: int.parse(this.montant),
+                                    description: this.description,
+                                    deviseLocale: this.deviseLocale,
+                                    successUrl: "http://www.sprintpay.com",
+                                    failureUrl: "http://www.sprintpay.com"
+                                );
+                                print(json.encode(walletTr));
+                                checkConnection(json.encode(walletTr));
+                              }else{
+                                showInSnackBar("Le numéro à débiter n'est pas un compte ORANGE MONEY valide!", _scaffoldKey);
+                              }
+                            }
+                            /*var walletTr = _code == "0"? new walletTrans(
+                                to:'$_to',
+                                amount: int.parse(this.montant),
+                                description: this.description,
+                                deviseLocale: this.deviseLocale
+                            ):new orangeTrans(
+                                to:this._to,
+                                amount: int.parse(this.montant),
+                                description: this.description,
+                                deviseLocale: this.deviseLocale,
+                              successUrl: "http://www.sprintpay.com",
+                              failureUrl: "http://www.sprintpay.com"
                             );
-                            print(json.encode(cardsp));
-                            createCard(json.encode(cardsp));
-                            //Navigator.of(context).push(SlideLeftRoute(enterWidget: PassCodeScreen(), oldWidget: Encaisser2(_code)));
+                            print(json.encode(walletTr));
+                            checkConnection(json.encode(walletTr));*/
                           }
                         });
                       },
@@ -451,7 +653,9 @@ class _Encaisser2State extends State<Encaisser2> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: new Center(child: new Text('Confirmer la recharge', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton, fontFamily: police_bouton),),),
+                        child: new Center(child: isLoading==false? new Text('Confirmer la recharge', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton, fontFamily: police_bouton),):
+                          CupertinoActivityIndicator()
+                        ),
                       ),
                     ),
                   ),
@@ -464,66 +668,17 @@ class _Encaisser2State extends State<Encaisser2> {
     );
   }
 
-  read() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      final key = 'wallet';
-      montant = prefs.getString(key);
-    });
-  }
-
-  void _save(String valeur) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'wallet';
-    final value = valeur;
-    prefs.setString(key, value);
-    print('saved $value');
-  }
-
-  Future<String> createCard(var body) async {
-    var _header = {
-      "accept": "application/json",
-      "content-type" : "application/json"
-    };
-      String url = "$base_url/walletpayment/cashin/encash";
-      return await http.post(url, body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-        final int statusCode = response.statusCode;
-        print('voici le statusCode $statusCode');
-        if (statusCode < 200 || json == null) {
-          print(statusCode);
-          print(response.body);
-          throw new Exception("Error while fetching data");
-        }else if(statusCode == 200){
-          print(response.body);
-          var convertDataToJson = json.decode(utf8.decode(response.bodyBytes));
-          print(convertDataToJson);
-          this._save(null);
-          if(convertDataToJson['body']['statusCode'] == 'SUCCESSFUL'){
-            Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Confirma('$_code')));
-            //Navigator.of(context).push(SlideLeftRoute(enterWidget: Confirma(_code), oldWidget: Encaisser2('$_code')));
-          }else{
-            Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Echec('$_code^&')));
-            //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec('$_code^&'), oldWidget: Encaisser2('$_code')));
-          }
-        }else if(statusCode == 403){
-          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Echec('$_code^&')));
-          //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec('$_code^&'), oldWidget: Encaisser2('$_code')));
-        }
-        else Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Echec('$_code^&')));
-          //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec('$_code^&'), oldWidget: Encaisser2('$_code')));
-
-        return response.body;
-      });
-  }
 
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
+      case 1: text = "MTN MOBILE MONEY";img = 'mtn.jpg';
       break;
-      case 2: text = "CARTE BANCAIRE";img = 'carte.jpg';
+      case 2: text = "ORANGE MONEY";img = 'orange.png';
       break;
-      case 3: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
+      break;
+      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
       break;
     }
     return Container(
@@ -581,4 +736,15 @@ class _Encaisser2State extends State<Encaisser2> {
       ),
     );
   }
+}
+void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
+  _scaffoldKey.currentState.showSnackBar(
+      new SnackBar(content: new Text(value,style:
+      TextStyle(
+          color: Colors.white,
+          fontSize: taille_description_champ+3
+      ),
+        textAlign: TextAlign.center,),
+        backgroundColor: couleur_fond_bouton,
+        duration: Duration(seconds: 5),));
 }

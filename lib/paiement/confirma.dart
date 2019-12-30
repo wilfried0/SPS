@@ -3,8 +3,6 @@ import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
 
-import 'encaisser2.dart';
-
 // ignore: must_be_immutable
 class Confirma extends StatefulWidget {
   Confirma(this._code);
@@ -52,17 +50,7 @@ class _ConfirmaState extends State<Confirma> {
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
 
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                  Navigator.pop(context);
-                  //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser2(_code)));
-                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Confirma(_code)));
-                });
-                //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Verification3(_code)));
-              },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: couleur_fond_bouton),
+          leading: Container(),
         ),
       ),
       body: WillPopScope(
@@ -122,8 +110,8 @@ class _ConfirmaState extends State<Confirma> {
                       padding: EdgeInsets.only(left:20.0, top:20.0, right: 20),
                       child: new Text("Cliquez pour retourner à l'accueil Sprint Pay Services.",
                         style: TextStyle(
-                            color: couleur_decription_page,
-                            fontSize: taille_description_page,
+                            color: couleur_titre,
+                            fontSize: taille_description_page-2,
                         ),),
                     ),
 
@@ -147,7 +135,7 @@ class _ConfirmaState extends State<Confirma> {
                             ),
                             borderRadius: new BorderRadius.circular(10.0),
                           ),
-                          child: Center(child: new Text("Retourner à l'accueil", style: new TextStyle(fontSize: taille_text_bouton, color: Colors.white),)),
+                          child: Center(child: new Text("Retourner à l'accueil", style: new TextStyle(fontSize: taille_text_bouton+3, color: Colors.white),)),
                         ),
                       ),
                     ),

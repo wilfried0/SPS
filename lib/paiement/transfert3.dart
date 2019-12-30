@@ -1,12 +1,20 @@
-import 'dart:convert';
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:services/composants/components.dart';
-import 'package:services/composants/services.dart';
 import 'confirma.dart';
+import 'echec.dart';
 import 'transfert2.dart';
+
+import 'dart:convert';
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'transfert22.dart';
+
 
 // ignore: must_be_immutable
 class Transfert3 extends StatefulWidget {
@@ -16,79 +24,268 @@ class Transfert3 extends StatefulWidget {
   _Transfert3State createState() => new _Transfert3State(_code);
 }
 
-Future<String> createPost(var body, var _header, String url, String _code, BuildContext context,GlobalKey<ScaffoldState> _scaffoldKey) async {
-  return await http.post(url, body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-    final int statusCode = response.statusCode;
-    print(statusCode);
-    print(response.body);
-    if (statusCode < 200 || json == null) {
-      print(statusCode);
-      print(response.body);
-      throw new Exception("Error while fetching data");
-    }else if(statusCode == 200){
-      Post.fromJson(json.decode(response.body));
-      String idUser = response.body.toString().split(',')[4].split(':')[1].substring(0, response.body.toString().split(',')[4].split(':')[1].length-2);
-      print('idUser $idUser');
-      //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation('$_code^$idUser')));
-      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Activation('$_code^$idUser'), oldWidget: Inscription('$_code^$idUser')));
-    }else if(statusCode == 403){
-      if(response.body.contains("EMAIL_ALREADY_USE"))
-        showInSnackBar("Cette email est utilisée par un autre membre.", _scaffoldKey);
-      else if(response.body.contains("USERNAME_EXIST"))
-        showInSnackBar("Un utilisateur avec le même numéro de téléphone existe déjà", _scaffoldKey);
-    }
-    else print(statusCode);
-    return response.body;
-  });
-}
-
 class _Transfert3State extends State<Transfert3> {
   _Transfert3State(this._code);
   String _code;
-  bool _check=false;
-  String _firstname, _lastname, _email, _verfiPassword, _ville, _country, _birthday, _username, _password;
-  bool boolFirstname=false, boolLastname=false, boolEmail=false, boolPassword=false, boolVille=false, boolbirthday=false, boolUsername=false;
-  int choice = 0, indik;
+  bool isLoading = false;
+  String _current, _name, _to, _username, _password, montant, description, deviseLocale, fees, _lieu, _adresse, _fromCountryISO, _fromCardType, _fromCardNumber, _fromCardIssuingDate, _fromCardExpirationDate, _fromPays, _pays;
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  var _userTextController;
-  bool _isHidden = true;
-  String url;
-  var _header = {
-    "content-type": "application/json",
-    "accept": "application/json"
-  };
+  String url, _id, _payst;
+  var _feesController, _montantController, _motifController, _nameController, _toController, _descriptionController, _deviseLocaleController, _adresseController, _fromCountryISOController, _fromCardTypeController, _fromCardNumberController, _fromCardIssuingDateController, _fromCardExpirationDateController, _fromPaysController, _fromPaysNameController;
+  int temps = 200;
+  final navigatorKey = GlobalKey<NavigatorState>();
+
 
   @override
   void initState(){
+    this.read();
     super.initState();
-    print("hello world $_code");
-    indik = int.parse(_code.split('^').last)+1;
-    url = '$base_url/user/Auth/createmember';
-    _userTextController = TextEditingController();
-    this._country = this._code.split('^')[3];
-    this._ville = 'Yaoundé';
-    this._birthday = '2019-07-24';
-    boolVille = true; boolbirthday = true;
+    url = '$base_url/transfert/wallet';
+    _feesController = TextEditingController();
+    _montantController = TextEditingController();
+    _motifController = TextEditingController();
+    _nameController = TextEditingController();
+    _toController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _deviseLocaleController = TextEditingController();
+    _adresseController = TextEditingController();
+    _fromCountryISOController = TextEditingController();
+    _fromCardTypeController = TextEditingController();
+    _fromCardNumberController = TextEditingController();
+    _fromCardIssuingDateController = TextEditingController();
+    _fromCardExpirationDateController = TextEditingController();
+    _fromPaysController = TextEditingController();
+    _fromPaysNameController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _userTextController.dispose();
+    _feesController.dispose();
+    _montantController.dispose();
+    _motifController.dispose();
+    _nameController.dispose();
+    _toController.dispose();
+    _descriptionController.dispose();
+    _deviseLocaleController.dispose();
+    _adresseController.dispose();
+    _fromCountryISOController.dispose();
+    _fromCardTypeController.dispose();
+    _fromCardNumberController.dispose();
+    _fromCardIssuingDateController.dispose();
+    _fromCardExpirationDateController.dispose();
+    _fromPaysController.dispose();
+    _fromPaysNameController.dispose();
     super.dispose();
   }
 
-  bool isEmail(String em) {
-    String p = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-    RegExp regExp = new RegExp(p);
-    return regExp.hasMatch(em);
+  read() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _lieu = prefs.getString("lieu");
+      print("lieu $_lieu");
+      montant = prefs.getString("montant");
+      _montantController.text = montant;
+      fees = prefs.getString("fees");
+      _feesController.text = fees;
+      _to = prefs.getString("to");
+      _toController.text = _to;
+      _name = prefs.getString("nomd")==null||prefs.getString("nomd").isEmpty||prefs.getString("nomd")==" "?null:prefs.getString("nomd");
+      print("name: $_name");
+      _nameController.text = _name;
+      description = prefs.getString("motif");
+      print("ma description: $description");
+      _descriptionController.text = description;
+      montant = prefs.getString("montant");
+      deviseLocale = prefs.getString("deviseLocale");
+      _payst = prefs.getString("payst");
+      print("_payst********************: $_payst");
+      _adresse = prefs.getString("adresse");
+      _adresseController.text = _adresse;
+      _fromCountryISO = prefs.getString("fromCountryISO");
+      _fromCountryISOController.text = _fromCountryISO;
+      _fromCardType = prefs.getString("fromCardType");
+      _fromCardTypeController.text = _fromCardType;
+      _fromCardNumber = prefs.getString("fromCardNumber");
+      _fromCardNumberController.text = _fromCardNumber;
+      _fromCardIssuingDate = prefs.getString("fromCardIssuingDate");
+      _fromCardIssuingDateController.text = _fromCardIssuingDate;
+      _fromCardExpirationDate = prefs.getString("fromCardExpirationDate");
+      _fromCardExpirationDateController.text = _fromCardExpirationDate;
+      _fromPays = prefs.getString("fromPays");
+      _fromPaysController.text = _fromPays;
+      _pays = prefs.getString("fromPaysName");
+      _fromPaysNameController.text = _pays;
+    });
+  }
+
+  void checkConnection(var body) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      //print("Connected to Mobile");
+      setState(() {
+        isLoading = true;
+        this.getId(body);
+      });
+      //this.getUser();
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
+      setState(() {
+        isLoading = true;
+        this.getId(body);
+      });
+      //this.getUser();
+    } else {
+      _ackAlert(context);
+    }
+  }
+
+  Future<String> getId(var body) async {
+    final prefs = await SharedPreferences.getInstance();
+    _lieu = prefs.getString("lieu");
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+
+    if(_lieu == "0"){
+      url = '$base_url/transfert/wallet';
+    }else if(_lieu == "2"){
+      url = '$base_url/transfert/eu/cashin';
+    }else if(_lieu == "3"){
+      url = '$base_url/transfert/wari/sendMoney';
+    }else
+      url = '$base_url/transfert/eu/sendMoney';
+    print(url);
+    return await http.post("$url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print('voici le statusCode $statusCode');
+      print('voici le body ${response.body}');
+      if (statusCode < 200 || json == null) {
+        setState(() {
+          isLoading = false;
+        });
+        throw new Exception("Error while fetching data");
+      }else if(statusCode == 200){
+        var responseJson = json.decode(response.body);
+        _id = responseJson['id'];
+        if(_id == "INTERNAL_SERVER_ERROR"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Montant non autorisé!", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "THIS_CUSTOMER_HAS_EXCEEDED_HIS_LIMIT_NUMBER_OF_OPERATION"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Vous avez atteint le nombre max d'opérations!", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "THE_AMOUNT_OF_THIS_TRANSACTION_IS_GRATER_THAN_THE_THE_MAXIMUM_AMOUNT_PLANNED_FOR_YOUR_PROFILE"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Le montant de la transaction est supérieur à celui autorisé à votre profil", _scaffoldKey);
+        }else{
+          this.getStatus(_id);
+        }
+      }else {
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Echec de l'opération!", _scaffoldKey);
+      }
+      return response.body;
+    });
+  }
+
+  Future<String> getStatus(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+    var url = "$base_url/transaction/checkStatus/$id";
+    print(url);
+    http.Response response = await http.get(url, headers: headers);
+    final int statusCode = response.statusCode;
+    print('getStatus voici le statusCode $statusCode');
+    print('getStatus voici le body ${response.body}');
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      if(responseJson['status'] == "CREATED"){
+        if(temps == 0){
+          setState(() {
+            isLoading = false;
+          });
+          navigatorKey.currentState.pushNamed("/echec");
+        }else if(temps > 0){
+          temps--;
+          getStatus(id);
+        }
+      }else if(responseJson['status'] == "PROCESSED"){
+        setState(() {
+          isLoading = false;
+        });
+        navigatorKey.currentState.pushNamed("/confirma");
+      }else if(responseJson['status'] == "REFUSED"){
+        setState(() {
+          isLoading = false;
+        });
+        navigatorKey.currentState.pushNamed("/echec");
+      }
+    }else{
+      setState(() {
+        isLoading = false;
+      });
+      showInSnackBar("Service indisponible", _scaffoldKey);
+    }
+    return null;
+  }
+
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final marge = (5*MediaQuery.of(context).size.width)/414;
-
-    return new Scaffold(
+    return new MaterialApp(
+    navigatorKey: navigatorKey,
+    debugShowCheckedModeBanner: false,
+    theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
+    routes: <String, WidgetBuilder>{
+    "/echec": (BuildContext context) =>new Echec("_code^t"),
+    "/confirma": (BuildContext context) =>new Confirma("transfert"),
+    "/transfert": (BuildContext context) =>new Transfert22(_code)
+    },
+    home: new Scaffold(
       key: _scaffoldKey,
       appBar: new AppBar(
         elevation: 0.0,
@@ -102,8 +299,10 @@ class _Transfert3State extends State<Transfert3> {
         leading: InkWell(
             onTap: (){
               setState(() {
+                if(_lieu == "0"){
+                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22(_code)));
+                }else
                 Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2(_code)));
-                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
               });
             },
             child: Icon(Icons.arrow_back_ios,)),
@@ -136,79 +335,6 @@ class _Transfert3State extends State<Transfert3> {
             key: _formKey,
             child: Column(
               children: <Widget>[
-                /*Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20),
-                  child: Text('Moyen vers lequel vous effectuez le transfert',
-                    style: TextStyle(
-                        color: couleur_titre,
-                        fontSize: taille_libelle_etape,
-                        fontWeight: FontWeight.bold
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: EdgeInsets.only(top: 20, bottom: 20),
-                  child: CarouselSlider(
-                    enlargeCenterPage: true,
-                    autoPlay: false,
-                    enableInfiniteScroll: false,
-                    onPageChanged: (value){},
-                    height: 135.0,
-                    items: [indik].map((i) {
-                      return Builder(
-                        builder: (BuildContext context) {
-                          return getMoyen(indik);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ),*/
-
-                Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Détails sur le montant',
-                      style: TextStyle(
-                          color: couleur_libelle_champ,
-                          fontSize: taille_libelle_champ,
-                          fontWeight: FontWeight.bold
-                      ),
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20, top: 10),
-                  child: Divider(
-                    color: couleur_champ,
-                    height: 2,
-                  ),
-                ),
-
-                Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20, top: 10),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        flex: 6,
-                        child: Text("Montant à transférer", style: TextStyle(
-                          color: couleur_libelle_champ,
-                          fontSize: taille_champ
-                        ),),
-                      ),
-                      Expanded(
-                        flex: 6,
-                        child: Text("1.000,0 XAF", style: TextStyle(
-                            color: couleur_fond_bouton,
-                            fontSize: taille_champ,
-                        ),textAlign: TextAlign.end,),
-                      )
-                    ],
-                  ),
-                ),
-
                 Padding(
                   padding: EdgeInsets.only(left: 20, right: 20, top: 10),
                   child: Divider(
@@ -225,14 +351,15 @@ class _Transfert3State extends State<Transfert3> {
                         flex: 6,
                         child: Text("Commission de la transaction", style: TextStyle(
                             color: couleur_libelle_champ,
-                            fontSize: taille_champ
+                            fontSize: taille_champ+3
                         ),),
                       ),
                       Expanded(
                         flex: 6,
-                        child: Text("0,0 XAF", style: TextStyle(
+                        child: Text(fees==null?"":"${double.parse(fees)} $deviseLocale", style: TextStyle(
                           color: couleur_fond_bouton,
-                          fontSize: taille_champ,
+                          fontSize: taille_champ+3,
+                          fontWeight: FontWeight.bold
                         ),textAlign: TextAlign.end,),
                       )
                     ],
@@ -254,14 +381,15 @@ class _Transfert3State extends State<Transfert3> {
                         flex: 6,
                         child: Text("Montant total à débiter", style: TextStyle(
                             color: couleur_libelle_champ,
-                            fontSize: taille_champ
+                            fontSize: taille_champ+3
                         ),),
                       ),
                       Expanded(
                         flex: 6,
-                        child: Text("1.000,0 XAF", style: TextStyle(
+                        child: Text(montant==null || fees==null?"":"${double.parse(montant)+double.parse(fees)} $deviseLocale", style: TextStyle(
                           color: couleur_fond_bouton,
-                          fontSize: taille_champ,
+                          fontSize: taille_champ+3,
+                          fontWeight: FontWeight.bold
                         ),textAlign: TextAlign.end,),
                       )
                     ],
@@ -326,7 +454,7 @@ class _Transfert3State extends State<Transfert3> {
                               child: new Text(this._code.split('^')[2],
                                 style: TextStyle(
                                   color: couleur_description_champ,
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+3,
                                 ),)
                           ),
                         ),
@@ -376,24 +504,20 @@ class _Transfert3State extends State<Transfert3> {
                             padding: const EdgeInsets.only(left: 20.0),
                             child: new TextFormField(
                               enabled: false,
-                              controller: _userTextController,
-                              keyboardType: TextInputType.number,
+                              controller:description==null || description=="null"?null: _descriptionController,
+                              keyboardType: TextInputType.text,
                               style: TextStyle(
                                   color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+3,
                               ),
                               validator: (String value){
-                                if(value.isEmpty || int.parse(value.replaceAll(".", ""))==0){
-                                  return "Motif du transfert vide !";
-                                }else{
-                                  return null;
-                                }
+                                return null;
                               },
                               decoration: InputDecoration.collapsed(
-                                hintText: 'Motif',
+                                hintText: 'Motif non renseigné',
                                 hintStyle: TextStyle(
                                     color: couleur_libelle_champ,
-                                    fontSize: taille_champ,
+                                    fontSize: taille_champ+3,
                                 ),
                                 //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                               ),
@@ -410,7 +534,7 @@ class _Transfert3State extends State<Transfert3> {
                   padding: EdgeInsets.only(left: 20.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Identité & contact',
+                    child: Text(_lieu=="3"?"Informations sur le bénéficiaire":'Identité & contact',
                       style: TextStyle(
                           color: couleur_libelle_champ,
                           fontSize: taille_libelle_champ,
@@ -420,8 +544,8 @@ class _Transfert3State extends State<Transfert3> {
                 ),
 
                 Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+                _name==null?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
@@ -429,34 +553,6 @@ class _Transfert3State extends State<Transfert3> {
                         topLeft: Radius.circular(10.0),
                         topRight: Radius.circular(10.0),
                       ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-
-                        new Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(left: 20),
-                            child: Text("Madame/Monsieur", style: TextStyle(
-                              color: couleur_libelle_champ,
-                              fontSize: taille_champ
-                            ),),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
                       color: Colors.transparent,
                       border: Border.all(
                         width: bordure,
@@ -479,25 +575,19 @@ class _Transfert3State extends State<Transfert3> {
                             padding: EdgeInsets.only(left:0.0),
                             child: new TextFormField(
                               enabled: false,
-                              controller: _userTextController,
+                              controller: _nameController,
                               keyboardType: TextInputType.text,
                               style: TextStyle(
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+3,
                                   color: couleur_libelle_champ,
                               ),
                               validator: (String value){
-                                if(value.isEmpty){
-                                  return 'Champ prénom vide !';
-                                }else{
-                                  boolFirstname = true;
-                                  _firstname = value;
-                                  return null;
-                                }
+                                return null;
                               },
                               decoration: InputDecoration.collapsed(
-                                hintText: 'Prénom',
+                                hintText: 'Nom',
                                 hintStyle: TextStyle(color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+3,
                                 ),
                                 //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                               ),
@@ -508,8 +598,7 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-
-                Padding(
+                _lieu!="3"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -527,7 +616,7 @@ class _Transfert3State extends State<Transfert3> {
                           flex:2,
                           child: Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: new Image.asset('images/Groupe177.png'),
+                            child: new Icon(Icons.location_on, color: couleur_description_champ,),
                           ),
                         ),
                         new Expanded(
@@ -536,25 +625,19 @@ class _Transfert3State extends State<Transfert3> {
                             padding: EdgeInsets.only(left:0.0),
                             child: new TextFormField(
                               enabled: false,
-                              controller: _userTextController,
+                              controller: _adresseController,
                               keyboardType: TextInputType.text,
                               style: TextStyle(
-                                  fontSize: taille_champ,
-                                  color: couleur_libelle_champ,
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
                               ),
                               validator: (String value){
-                                if(value.isEmpty){
-                                  return "Champ nom vide !";
-                                }else{
-                                  boolLastname = true;
-                                  _lastname = value;
-                                  return null;
-                                }
+                                return null;
                               },
                               decoration: InputDecoration.collapsed(
-                                hintText: 'Nom',
+                                hintText: 'Adresse',
                                 hintStyle: TextStyle(color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+3,
                                 ),
                                 //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                               ),
@@ -573,6 +656,8 @@ class _Transfert3State extends State<Transfert3> {
                       borderRadius: new BorderRadius.only(
                         bottomLeft: Radius.circular(10.0),
                         bottomRight: Radius.circular(10.0),
+                        topRight: Radius.circular(_name==null?10.0:0.0),
+                        topLeft: Radius.circular(_name==null?10.0:0.0),
                       ),
                       color: Colors.transparent,
                       border: Border.all(
@@ -590,40 +675,23 @@ class _Transfert3State extends State<Transfert3> {
                             child: new Image.asset('images/Groupe182.png'),
                           ),
                         ),
-                        Expanded(
-                          flex:2,
-                          child: Padding(
-                              padding: const EdgeInsets.only(left:0.0,),
-                              child: new Text(this._code.split('^')[0],
-                                style: TextStyle(
-                                  color: couleur_champ,
-                                  fontSize: taille_champ,
-                                ),)
-                          ),
-                        ),
                         new Expanded(
-                          flex:8,
+                          flex:10,
                           child: new TextFormField(
                             enabled: false,
-                            controller: _userTextController,
+                            controller: _toController,
                             keyboardType: TextInputType.phone,
                             style: TextStyle(
-                              fontSize: taille_champ,
+                              fontSize: taille_champ+3,
                               color: couleur_libelle_champ,
                             ),
                             validator: (String value){
-                              if(value.isEmpty){
-                                return "Champ téléphone vide !";
-                              }else{
-                                boolUsername = true;
-                                _username = this._code.split('^')[0].substring(1)+value;
-                                return null;
-                              }
+                              return null;
                             },
                             decoration: InputDecoration.collapsed(
                               hintText: 'Numéro de téléphone',
                               hintStyle: TextStyle(
-                                fontSize: taille_champ,
+                                fontSize: taille_champ+3,
                                 color: couleur_libelle_champ,
                               ),
                               //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
@@ -635,13 +703,13 @@ class _Transfert3State extends State<Transfert3> {
                   ),
                 ),
 
-                /*Padding(padding: EdgeInsets.only(top: marge_champ_libelle),),
+                _lieu=="3"?Padding(padding: EdgeInsets.only(top: marge_champ_libelle),):Container(),
 
-                Padding(
+                _lieu!="3"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text("Coordonnées de contact",
+                    child: Text("Informations sur l'expéditeur",
                       style: TextStyle(
                           color: couleur_libelle_champ,
                           fontSize: taille_libelle_champ,
@@ -649,9 +717,11 @@ class _Transfert3State extends State<Transfert3> {
                       ),),
                   ),
                 ),
-                Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
+
+                _lieu!="3"?Container():Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
+
+                _lieu!="3"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
@@ -671,8 +741,8 @@ class _Transfert3State extends State<Transfert3> {
                         new Expanded(
                           flex:2,
                           child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0, right: 15.0),
-                            child: new Image.asset('images/Groupe179.png'),
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.assignment_ind, color: couleur_description_champ,),
                           ),
                         ),
                         new Expanded(
@@ -681,27 +751,19 @@ class _Transfert3State extends State<Transfert3> {
                             padding: EdgeInsets.only(left:0.0),
                             child: new TextFormField(
                               enabled: false,
-                              controller: _userTextController,
+                              controller: _fromCardTypeController,
                               keyboardType: TextInputType.text,
                               style: TextStyle(
-                                  fontSize: taille_champ,
-                                  color: couleur_libelle_champ,
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
                               ),
                               validator: (String value){
-                                if(value.isEmpty){
-                                  return 'Adresse email vide';
-                                }else if(isEmail(value) == false){
-                                  return 'Adresse email invalide';
-                                }else{
-                                  boolEmail = true;
-                                  _email = value;
-                                  return null;
-                                }
+                                return null;
                               },
                               decoration: InputDecoration.collapsed(
-                                hintText: 'Adresse email',
+                                hintText: 'Nature de la pièce d\'identité',
                                 hintStyle: TextStyle(color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+3,
                                 ),
                                 //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                               ),
@@ -712,8 +774,8 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                _lieu!="3"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
@@ -730,153 +792,161 @@ class _Transfert3State extends State<Transfert3> {
                           flex:2,
                           child: Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: new Image.asset('images/Groupe182.png'),
+                            child: new Icon(Icons.assignment_ind, color: couleur_description_champ,),
                           ),
                         ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _fromCardNumberController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Numéro de la carte',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _lieu!="3"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.location_on, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _fromCardIssuingDateController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Date de délivrance',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _lieu!="3"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.calendar_today, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _fromCardExpirationDateController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Date d\'expiration',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _lieu!="3"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        bottomLeft: Radius.circular(10.0),
+                        bottomRight: Radius.circular(10.0),
+                      ),
+                      color: Colors.transparent,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
                         Expanded(
                           flex:2,
                           child: Padding(
-                              padding: const EdgeInsets.only(left:0.0,),
-                              child: new Text(this._code.split('^')[0],
-                                style: TextStyle(
-                                  color: couleur_champ,
-                                  fontSize: taille_champ,
-                                ),)
-                          ),
-                        ),
-                        new Expanded(
-                          flex:8,
-                          child: new TextFormField(
-                            enabled: false,
-                            controller: _userTextController,
-                            keyboardType: TextInputType.phone,
-                            style: TextStyle(
-                                fontSize: taille_champ,
-                                color: couleur_libelle_champ,
-                            ),
-                            validator: (String value){
-                              if(value.isEmpty){
-                                return "Champ téléphone vide !";
-                              }else{
-                                boolUsername = true;
-                                _username = this._code.split('^')[0].substring(1)+value;
-                                return null;
-                              }
-                            },
-                            decoration: InputDecoration.collapsed(
-                              hintText: 'Numéro de téléphone',
-                              hintStyle: TextStyle(
-                                  fontSize: taille_champ,
-                                  color: couleur_libelle_champ,
-                              ),
-                              //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        bottomLeft: Radius.circular(10.0),
-                        bottomRight: Radius.circular(10.0),
-                      ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                          width: bordure,
-                          color: couleur_bordure
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: marge,),
-                      child: Row(
-                        children: <Widget>[
-                          new Expanded(
-                            flex:2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: new Image.asset('images/Groupe18.png'),
-                            ),
-                          ),
-                          new Expanded(
-                            flex:10,
-                            child: Padding(
-                              padding: EdgeInsets.only(left:marge),
-                              child: new TextFormField(
-                                enabled: false,
-                                controller: _userTextController,
-                                keyboardType: TextInputType.text,
-                                style: TextStyle(
-                                    fontSize: taille_champ,
-                                    color: couleur_libelle_champ,
-                                ),
-                                validator: (String value){
-                                  if(value.isEmpty){
-                                    return 'Ville de résidence vide !';
-                                  }else{
-                                    _password = value;
-                                    return null;
-                                  }
-                                },
-                                decoration: InputDecoration.collapsed(
-                                  hintText: 'Ville de résidence',
-                                  hintStyle: TextStyle(color: couleur_libelle_champ,fontSize: taille_champ,),
-                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                ),
-                                /*textAlign: TextAlign.end,*/
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(padding: EdgeInsets.only(top: marge_champ_libelle),),
-
-                Padding(
-                  padding: EdgeInsets.only(left: 20.0),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text("Coordonnées bancaires",
-                      style: TextStyle(
-                          color: couleur_libelle_champ,
-                          fontSize: taille_libelle_champ,
-                          fontWeight: FontWeight.bold
-                      ),),
-                  ),
-                ),
-                Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        topLeft: Radius.circular(10.0),
-                        topRight: Radius.circular(10.0),
-                      ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 15.0, right: 15.0),
-                            child: new Image.asset('images/Groupe179.png'),
+                            padding: const EdgeInsets.all(10.0),
+                            child:_fromPays==null?Container(): new Image.asset('$_fromPays'),
                           ),
                         ),
                         new Expanded(
@@ -885,25 +955,19 @@ class _Transfert3State extends State<Transfert3> {
                             padding: EdgeInsets.only(left:0.0),
                             child: new TextFormField(
                               enabled: false,
-                              controller: _userTextController,
+                              controller: _fromPaysNameController,
                               keyboardType: TextInputType.text,
                               style: TextStyle(
-                                  fontSize: taille_champ,
-                                  color: couleur_libelle_champ,
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
                               ),
                               validator: (String value){
-                                if(value.isEmpty){
-                                  return 'Banque vide';
-                                }else{
-                                  boolEmail = true;
-                                  _email = value;
-                                  return null;
-                                }
+                                return null;
                               },
                               decoration: InputDecoration.collapsed(
-                                hintText: 'Banque',
+                                hintText: 'Pays où la pièce a été établie',
                                 hintStyle: TextStyle(color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
+                                  fontSize: taille_champ+3,
                                 ),
                                 //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                               ),
@@ -914,174 +978,59 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Image.asset('images/Groupe182.png'),
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: new TextFormField(
-                            enabled: false,
-                            controller: _userTextController,
-                            keyboardType: TextInputType.phone,
-                            style: TextStyle(
-                                fontSize: taille_champ,
-                                color: couleur_libelle_champ,
-                            ),
-                            validator: (String value){
-                              if(value.isEmpty){
-                                return "Champ code agence vide !";
-                              }else{
-                                boolUsername = true;
-                                _username = this._code.split('^')[0].substring(1)+value;
-                                return null;
-                              }
-                            },
-                            decoration: InputDecoration.collapsed(
-                              hintText: 'Code agence',
-                              hintStyle: TextStyle(
-                                  fontSize: taille_champ,
-                                  color: couleur_libelle_champ,
-                              ),
-                              //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
 
                 Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        bottomLeft: Radius.circular(10.0),
-                        bottomRight: Radius.circular(10.0),
-                      ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                          width: bordure,
-                          color: couleur_bordure
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: marge,),
-                      child: Row(
-                        children: <Widget>[
-                          new Expanded(
-                            flex:2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: new Image.asset('images/Groupe15.png'),
-                            ),
-                          ),
-                          new Expanded(
-                            flex:10,
-                            child: Padding(
-                              padding: EdgeInsets.only(left:marge),
-                              child: new TextFormField(
-                                enabled: false,
-                                controller: _userTextController,
-                                keyboardType: TextInputType.text,
-                                style: TextStyle(
-                                    fontSize: taille_champ,
-                                    color: couleur_libelle_champ,
-                                ),
-                                validator: (String value){
-                                  if(value.isEmpty){
-                                    return 'Numéro de compte vide!';
-                                  }else{
-                                    _password = value;
-                                    return null;
-                                  }
-                                },
-                                decoration: InputDecoration.collapsed(
-                                  hintText: 'Numéro de compte',
-                                  hintStyle: TextStyle(color: couleur_libelle_champ, fontSize: taille_champ,),
-                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                ),
-                                /*textAlign: TextAlign.end,*/
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),*/
-
-                Padding(padding: EdgeInsets.only(top: marge_champ_libelle),),
-
-                InkWell(
-                  onTap: () async {
-                    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Confirma('transfert')));
-                    if (_formKey.currentState.validate()) {
-                      if(_check == true){
-                        if(boolFirstname==true && boolLastname==true && boolEmail==true && boolUsername==true && boolPassword==true) {
-                          Role role = new Role(
-                              idRole: 2,
-                              roleName: "ROLE_CUSTUMER"
+                  padding:  EdgeInsets.only(top: marge_champ_libelle, bottom: 20),
+                  child: InkWell(
+                    onTap: () async {
+                      setState(() {
+                        if(_lieu == "3"){
+                          var _wariTrans = new wariTrans(
+                            to:this._to,
+                            amount: int.parse(this.montant),
+                            description: this.description,
+                            deviseLocale: this.deviseLocale,
+                            toFirstname: ".",
+                            toCountryCode: this._payst,
+                            fromCardExpirationDate: _fromCardExpirationDate,
+                            fromCardIssuingDate: _fromCardIssuingDate,
+                            fromCardNumber: _fromCardNumber,
+                            fromCardType: _fromCardType,
+                            fromCountryISO: _fromCountryISO,
+                            toAdress: _adresse,
+                            toLastname: this._name
                           );
-                          var newPost = new Post(
-                              firstname: this._firstname,
-                              lastname: this._lastname,
-                              town:this._ville,
-                              birthday:this._birthday,
-                              country: this._country,
-                              email:this._email,
-                              username: _username,
-                              password:this._password,
-                              userImage: null,
-                              role: role
+                          print(json.encode(_wariTrans));
+                          checkConnection(json.encode(_wariTrans));
+                        }else{
+                          var walletTr = new walletTrans(
+                            to:this._to,
+                            amount: int.parse(this.montant),
+                            description: this.description,
+                            deviseLocale: this.deviseLocale,
+                            toFirstname: this._name,
+                            toCountryCode: this._payst,
                           );
-                          //var body, var _header, String url, String _code, BuildContext context,GlobalKey<ScaffoldState> _scaffoldKey
-                          FutureBuilder(
-                              future: createPost(json.encode(newPost), _header, url, _code, context, _scaffoldKey),
-                              builder: (context, snapshot){
-                                if(snapshot.data!=null){
-
-                                }
-                                return Center(child: CircularProgressIndicator());
-                              });
+                          print(json.encode(walletTr));
+                          checkConnection(json.encode(walletTr));
                         }
-                      }else{
-                        showInSnackBar("Veuillez d'abord valider les conditions d'utilisation", _scaffoldKey);
-                      }
-                    }
-                  },
-                  child: new Container(
-                    height: hauteur_champ,
-                    width: MediaQuery.of(context).size.width-40,
-                    decoration: new BoxDecoration(
-                      color: couleur_fond_bouton,
-                      border: new Border.all(
-                        color: Colors.transparent,
-                        width: 0.0,
+                      });
+                    },
+                    child: new Container(
+                      height: hauteur_champ,
+                      width: MediaQuery.of(context).size.width-40,
+                      decoration: new BoxDecoration(
+                        color: couleur_fond_bouton,
+                        border: new Border.all(
+                          color: Colors.transparent,
+                          width: 0.0,
+                        ),
+                        borderRadius: new BorderRadius.circular(10.0),
                       ),
-                      borderRadius: new BorderRadius.circular(10.0),
+                      child: Center(child: isLoading == false? new Text('valider le transfert', style: new TextStyle(fontSize: taille_text_bouton+3, color: Colors.white),):
+                          CupertinoActivityIndicator()
+                      ),
                     ),
-                    child: Center(child: new Text('valider le transfert', style: new TextStyle(fontSize: taille_text_bouton, color: Colors.white),)),
                   ),
                 ),
               ],
@@ -1090,73 +1039,7 @@ class _Transfert3State extends State<Transfert3> {
         ],
       ),
       bottomNavigationBar: barreBottom,
-    );
-  }
-  Widget getMoyen(int index){
-    String text, img;
-    switch(index){
-      case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
-      break;
-      case 2: text = "PORTE MONEY";img = 'wallet.png';
-      break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
-      break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
-      break;
-    }
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      margin: EdgeInsets.symmetric(horizontal: 5.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(10.0),
-          topRight: Radius.circular(10.0),
-          bottomRight: Radius.circular(10.0),
-          bottomLeft: Radius.circular(10.0),
-        ),
-        border: Border.all(
-            color: orange_F
-        ),
-        color: orange_F,
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(top: 0),
-        child: GestureDetector(
-          onTap: (){
-            setState(() {
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
-            });
-          },
-          child: Column(
-            children: <Widget>[
-              Container(
-                height: 90,
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      topRight: Radius.circular(10.0),
-                      bottomRight: Radius.circular(10.0),
-                      bottomLeft: Radius.circular(10.0),
-                    ),
-                    image: DecorationImage(
-                      image: AssetImage('images/$img'),
-                      fit: BoxFit.cover,
-                    )
-                ),),
-              Padding(
-                  padding: EdgeInsets.only(top: 10),
-                  child: Text('$text',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: taille_description_champ-3,
-                        fontWeight: FontWeight.bold
-                    ),)
-              )
-            ],
-          ),
-        ),
-      ),
+    )
     );
   }
 }
@@ -1165,7 +1048,7 @@ void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
       new SnackBar(content: new Text(value,style:
       TextStyle(
           color: Colors.white,
-          fontSize: taille_description_champ
+          fontSize: taille_description_champ+3
       ),
         textAlign: TextAlign.center,),
         backgroundColor: couleur_fond_bouton,

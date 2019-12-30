@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
-import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +10,6 @@ import 'package:services/composants/services.dart';
 import 'inscription.dart';
 import 'profile.dart';
 import 'verification1.dart';
-import 'activation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,26 +20,31 @@ class Connexion1 extends StatefulWidget {
   _Connexion1State createState() => new _Connexion1State();
 }
 
-class _Connexion1State extends State<Connexion1> {
+class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
 
   _Connexion1State();
-  String _username, _password, _url, _token, _route, _user, _mySelection;
+  String _username, _password, _url, _nom, _ville, _quartier;
 
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool _isHidden = true, isLoding =false, _check=false;
+  bool _isHidden = true, isLoding =false;
   var _userTextController = new TextEditingController();
   int ad=3;
+  bool isBackButtonActivated = false;
 
   @override
   void initState(){
-    this._username = "";
-    this._password = "";
     this._lect();
-    this.read();
-    print('route: $_route');
-    _url = '$base_url/user/Auth/signin';
+    _url = '$base_url/member/login';
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    //BackButtonInterceptor.add(myInterceptor);
+  }
+
+  bool myInterceptor(bool stopDefaultButtonEvent) {
+    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
+    //navigatorKey.currentState.pushNamed("/connexion"); // Do some stuff.
+    return true;
   }
 
   void checkConnection() async {
@@ -85,8 +88,20 @@ class _Connexion1State extends State<Connexion1> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
     _userTextController.dispose();
+    //BackButtonInterceptor.remove(myInterceptor);
+  }
+
+  @override
+  didPopRoute(){
+    bool override;
+    if(isBackButtonActivated)
+      override = false;
+    else
+      override = true;
+    return new Future<bool>.value(override);
   }
 
   void _toggleVisibility(){
@@ -109,53 +124,40 @@ class _Connexion1State extends State<Connexion1> {
     var url = this._url;
     http.Response response = await http.get(url, headers: headers);
     final int statusCode = response.statusCode;
-
+    print("${response.body}");
     if(statusCode == 200){
       var responseJson = json.decode(response.body);
-      _token = responseJson['token'];
-      save('${responseJson['idUser']}');
-      _save(_token);
-      if(_check == true) _reg(_user);
-      setState(() {
-        isLoding = false;
-      });
-
-    }else if(statusCode == 401){
-      makeLogin();
-    }else if(statusCode == 403){
-      print(response.body);
-      setState(() {
-        isLoding = false;
-      });
-      var responseJson = json.decode(response.body);
-      if(responseJson['error'].contains("not found"))
-        this.showInSnackBar("Utilisateur +$_username n'a pas de compte!");
-      else if(responseJson['error'].contains("already connected"))
-        this.showInSnackBar("Utilisateur +$_username est déjà connecté via un autre appareil!");
-      else {
-        var responseJson = json.decode(response.body);
-        this.showInSnackBar(responseJson['error']);
+      if(responseJson['id'] == 0){
+        setState(() {
+          isLoding = false;
+        });
+        showInSnackBar("Mot de passe incorrect!");
+      }else{
+        List data = responseJson['customValues'];
+        _nom = responseJson['name'];
+        print("Nom: $_nom");
+        for(int i=0; i<data.length;i++){
+          if(data[i]['internalName'] == "city"){
+            _ville = data[i]['value'];
+          }else if(data[i]['internalName'] == "address"){
+            _quartier = data[i]['value'];
+          }
+        }
+        this._reg();
+        setState(() {
+          isLoding = false;
+        });
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile('')));
+        //navigatorKey.currentState.pushNamed("/profile");
       }
-      //Timer(Duration(seconds: 5), onDoneLoading);
-    }else if(statusCode == 500){
+    }else{
       setState(() {
         isLoding = false;
       });
-      this.showInSnackBar("Utilisateur ou Mot de passe incorrect");
-    }
-    else{
-      print(statusCode);
-      setState(() {
-        isLoding = false;
-      });
-      throw new Exception("Erreur lors de la récupération des données.");
+      showInSnackBar("${json.decode(response.body)}");
     }
     //var responseJson = json.decode(response.body);
     return null;
-  }
-
-  onDoneLoading() async {
-    //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Cagnotte('')));
   }
 
   void showInSnackBar(String value) {
@@ -163,35 +165,29 @@ class _Connexion1State extends State<Connexion1> {
         new SnackBar(content: new Text(value,style:
         TextStyle(
             color: Colors.white,
-            fontSize: taille_description_champ
+            fontSize: taille_champ+3
         ),
           textAlign: TextAlign.center,),
           backgroundColor: couleur_fond_bouton,
           duration: Duration(seconds: 5),));
   }
 
-  bool tryParse(String str) {
-    if(str == null) {
-      return false;
-    }
-    return int.tryParse(str) != null;
-  }
 
-  final navigatorKey = GlobalKey<NavigatorState>();
+  //final navigatorKey = GlobalKey<NavigatorState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     final espace = (MediaQuery.of(context).size.height - 533.3333333333334)<=0?0.0:MediaQuery.of(context).size.height - 533.3333333333334;
     return MaterialApp(
-      navigatorKey: navigatorKey,
+      /*navigatorKey: navigatorKey,
       routes: <String, WidgetBuilder>{
         "/verification": (BuildContext context) =>new Verification1(''),
         "/inscription": (BuildContext context) =>new Inscription(),
         "/profile": (BuildContext context) =>new Profile(''),
-        "/connexion": (BuildContext context) =>new Connexion(),
-        "/activation": (BuildContext context) =>new Activation()
-      },
+        "/connexion": (BuildContext context) =>new Connexion()
+      },*/
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
       debugShowCheckedModeBanner: false,
       home: new Scaffold(
         key: _scaffoldKey,
@@ -205,7 +201,8 @@ class _Connexion1State extends State<Connexion1> {
             leading: GestureDetector(
                 onTap: (){
                   setState(() {
-                    navigatorKey.currentState.pushNamed("/connexion");
+                    //navigatorKey.currentState.pushNamed("/connexion");
+                    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
                   });
                 },
                 child: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
@@ -232,92 +229,6 @@ class _Connexion1State extends State<Connexion1> {
                     Padding(
                       padding: EdgeInsets.only(top:marge_apres_logo-15),),
 
-    /* Padding(
-                      padding: EdgeInsets.only(left: 20.0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: new Text('Bienvenue sur\nSprint-Pay',
-                          style: TextStyle(
-                              color: couleur_titre,
-                              fontSize: taille_titre,
-                              fontWeight: FontWeight.bold
-                          ),),
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(left:20.0, top:20.0, right: 20.0),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: new Text("Première plateforme d'interopérabilité des services financiers",
-                          style: TextStyle(
-                            color: couleur_decription_page,
-                            fontSize: taille_description_page,
-                          ),),
-                      ),
-                    ),
-
-
-                   Padding(
-                      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: marge_apres_description_page),
-                      child: Container(
-                        decoration: new BoxDecoration(
-                          borderRadius: new BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                          ),
-                          color: Colors.transparent,
-                          border: Border.all(
-                              color: couleur_bordure,
-                              width: bordure
-                          ),
-                        ),
-                        height: hauteur_champ,
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                                flex: 5,
-                                child: CountryCodePicker(
-                                  showFlag: true,
-                                  onChanged: (CountryCode code){
-                                    _mySelection = code.dialCode.toString();
-                                  },
-                                )
-                            ),
-                            new Expanded(
-                              flex:10,
-                              child: new TextFormField(
-                                controller: _userTextController,
-                                keyboardType: TextInputType.phone,
-                                style: TextStyle(
-                                  fontSize: taille_libelle_champ+ad,
-                                  color: couleur_libelle_champ,
-                                ),
-                                validator: (String value){
-                                  if(value.isEmpty){
-                                    return 'Champ téléphone vide !';
-                                  }else{
-                                    _username = _mySelection.substring(1)+value;
-                                    _user = value;
-                                    _userTextController.text = value;
-                                    return null;
-                                  }
-                                },
-                                decoration: InputDecoration.collapsed(
-                                  hintText: 'Numéro de téléphone',
-                                  hintStyle: TextStyle(
-                                    fontSize: taille_libelle_champ+ad,
-                                    color: couleur_libelle_champ,
-                                  ),
-                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),*/
                     Padding(
                         padding: EdgeInsets.only(left: 20.0, right: 20.0, top: marge_apres_description_page),
                         child: Container(
@@ -393,14 +304,8 @@ class _Connexion1State extends State<Connexion1> {
                       child: new GestureDetector(
                         onTap: () {
                           setState(() {
-                            navigatorKey.currentState.pushNamed("/profile");
-                            //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('')));
                             if(_formKey.currentState.validate()){
-                              if(tryParse('$_username')==false){
-                                showInSnackBar("Numéro de téléphone +$_username invalide!");
-                              }else {
-                                checkConnection();
-                              }
+                              checkConnection();
                             }
                           });
                         },
@@ -426,7 +331,8 @@ class _Connexion1State extends State<Connexion1> {
                       child: GestureDetector(
                         onTap: (){
                           setState(() {
-                            navigatorKey.currentState.pushNamed("/verification");
+                            showInSnackBar("Pas encore disponible");
+                            //Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Verification1('')));
                           });
                         },
                         child: Text("Mot de passe oublié ?",
@@ -443,6 +349,7 @@ class _Connexion1State extends State<Connexion1> {
                       padding: EdgeInsets.only(top:20.0),
                       child: GestureDetector(
                           onTap: (){
+                            showInSnackBar("Pas encore disponible");
                             //navigatorKey.currentState.pushNamed("/verification");
                           },
                           child: Text("Contactez-nous",
@@ -454,102 +361,6 @@ class _Connexion1State extends State<Connexion1> {
                           )
                       ),
                     )
-
-                    /*Padding(
-                        padding: const EdgeInsets.only(left: 5, right: 20),
-                        child: Row(
-                          //mainAxisAlignment: MainAxisAlignment.center,  1fcc2ec18bc30a725c0dab9970d02291758426dc
-                          children: <Widget>[
-                            Checkbox(
-                                activeColor: couleur_fond_bouton,
-                                value: _check,
-                                onChanged: (bool val){
-                                  setState(() {
-                                    _check = val;
-                                  });
-                                }
-                            ),
-                            Text("Se souvenir de mon identifiant",style: TextStyle(
-                                color: couleur_description_champ,
-                                fontSize: taille_description_champ,
-                                fontWeight: FontWeight.normal
-                            ),),
-                          ],
-                        ),
-                      ),
-
-                      Padding(
-                        padding: EdgeInsets.only(top:0.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Text("Vous êtes nouveau?",
-                            style: TextStyle(
-                              color: couleur_description_champ,
-                              fontSize: taille_description_champ,
-                            ),
-                            ),
-                            GestureDetector(
-                              onTap: (){
-                                setState(() {
-                                  navigatorKey.currentState.pushNamed("/inscription");
-                                });
-                              },
-                              child: Text(" Inscrivez-vous !",
-                                style: TextStyle(
-                                    color: couleur_fond_bouton,
-                                    fontSize: taille_description_champ,
-                                    fontWeight: FontWeight.bold
-                                ),
-                                ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(top:15.0),
-                        child: GestureDetector(
-                          onTap: (){
-                            setState(() {
-                              navigatorKey.currentState.pushNamed("/verification1");
-                            });
-                          },
-                          child: Text("Mot de passe oublié ?",
-                            style: TextStyle(
-                                color: couleur_fond_bouton,
-                                fontSize: taille_description_champ,
-                                fontWeight: FontWeight.bold
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      Padding(
-                        padding: EdgeInsets.only(top:17.0),
-                        child: GestureDetector(
-                          onTap: (){
-                            navigatorKey.currentState.pushNamed("/activation");
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text("Code d'activation reçu?",
-                                style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: taille_description_champ,
-                                ),
-                              ),
-                              Text(" Valider mon compte",
-                                style: TextStyle(
-                                    color:couleur_fond_bouton,
-                                    fontSize: taille_description_champ,
-                                  fontWeight: FontWeight.bold
-                                ),
-                              ),
-                            ],
-                          )
-                        ),
-                      ),*/
                   ],
                 ),
               ),
@@ -561,50 +372,19 @@ class _Connexion1State extends State<Connexion1> {
     );
   }
 
-  void _save(String _token) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'monToken';
-    final value = '$_token';
-    prefs.setString(key, value);
-    print('saved $value');
-  }
-
-  void save(String idUser) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'idUser';
-    final value = '$idUser';
-    prefs.setString(key, value);
-    print('saved $value');
-  }
-
-  read() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      final key = 'route';
-      _route = prefs.getString(key);
-    });
-  }
-
-  void enreg() async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'route';
-    final value = "";
-    prefs.setString(key, value);
-  }
-
-  void _reg(String username) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'username';
-    final value = "$username";
-    prefs.setString(key, value);
-  }
-
   _lect() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      final key = 'username';
-      _user = prefs.getString(key)!=null?prefs.getString(key):"";
-      _userTextController.text ="$_user";
+      _username = prefs.getString('username')!=null?prefs.getString('username'):"";
     });
+    print(_username);
+  }
+
+  void _reg() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('nom', "$_nom");
+    prefs.setString('ville', "$_ville");
+    prefs.setString('quartier', "$_quartier");
+    prefs.setString('password', "$_password");
   }
 }

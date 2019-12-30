@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
 import 'package:connectivity/connectivity.dart';
@@ -19,26 +17,19 @@ import 'package:fl_chart/fl_chart.dart';
 class Historique extends StatefulWidget {
   Historique(this._code);
   String _code;
-  final List<Color> availableColors = [
-    Colors.purpleAccent,
-    Colors.yellow,
-    Colors.lightBlue,
-    Colors.orange,
-    Colors.pink,
-    Colors.redAccent,
-  ];
+
   @override
   _HistoriqueState createState() => new _HistoriqueState(_code);
 }
 
 class _HistoriqueState extends State<Historique> with SingleTickerProviderStateMixin {
   _HistoriqueState(this._code);
-  String _code, _url2, _url3, _url1, _url, _url4;
+  String _code, _url;
   Future<Login> post;
-  TabController _tabController;
+  //TabController _tabController;
   PageController pageController;
   int currentPage = 1, nb1, nb2, nb3, nb;
-  String _token;
+  String _username,deviseLocale, _password, _date, _fromCountry, _toCountry, _status, _amount, _name, _transactionId, _fees, _heure;
   DateTime date;
   bool isLoding = true;
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, xval, choix=1, indik=1, enlvb, enlevt, ind=2017;
@@ -47,61 +38,75 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
   var _cagnottes= [], cagnottes = [], _trans = [], _liste = [];
   final Color barBackgroundColor = const Color(0xff72d8bf);
   final Duration animDuration = Duration(milliseconds: 250);
-
+  List data;
   int touchedIndex;
 
   bool isPlaying = false;
 
   @override
   void initState(){
-    date = new DateTime.now();
-    _url1 = '$base_url/kitty/visibility/true/Desc';
-    _url2 = '$base_url/kitty/endDateBefore/true';//kitty/visibility/true/Asc';
-    _url3 = '$base_url/kitty/populate';
-    _url = _url1;
-    _url4 = "$base_url/trans/allTrans";
-    rating = 0.0;
+    this.getHistorique();
+    _url = "http://74.208.183.205:8086/corebanking/rest/transaction/getTransactions";
     super.initState();
-    this.getDate();
-    _tabController = new TabController(length: 3, vsync: this);
-    this._read();
-    //checkConnection();
-    nb1 = nb;
-    this.lire();
-    //getTrans();
-    Timer(Duration(seconds: 15), onDoneLoading);
-    pageController = PageController(
-        initialPage: currentPage,
-        keepPage: false,
-        viewportFraction: 0.8
-    );
   }
 
-  getDate(){
-    String text;
-    var date  = new DateTime.now().year;
-    int _tail=date-2017, inter;
-    for(int i=0;i<=_tail;i++){
-      inter = 2017+i;
-      text = inter.toString();
-      _liste.add(text);
+  String getLieu(String nature){
+    String lieu;
+    if(nature == "WALLET_TO_WARI"){
+      lieu = "3";
+    }else if(nature == "WALLET_TO_WALLET"){
+      lieu = "0";
+    }else if(nature == "OM_TO_WALLET"){
+      lieu = "2";
+    }else if(nature == "MOMO_TO_WALLET"){
+
+    }else if(nature == "EU_TO_WALLET"){
+      lieu = "2";
     }
   }
 
-  onDoneLoading() async {
-    setState(() {
-      isLoding = false;
-    });
-  }
 
   void checkConnection() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile) {
-      this.getJsonData();
     } else if (connectivityResult == ConnectivityResult.wifi) {
-      this.getJsonData();
     } else {
       ackAlert(context);
+    }
+  }
+
+  void _save(String _fromCountry, String _toCountry, String _serviceName, String _name, String _amount, String _fees, String _status, String _nature, String _transactionid, String _date) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("payst", "$_toCountry");
+    prefs.setString("paysf", "$_fromCountry");
+    prefs.setString("serviceName", "$_serviceName");
+    prefs.setString("named", "$_name");
+    prefs.setString("montant", "$_amount");
+    prefs.setString("fees", "$_fees");
+    prefs.setString("status", "$_status");
+    prefs.setString("nature", "$_nature");
+    prefs.setString("transactionid", "$_transactionid");
+    prefs.setString("date", "$_date");
+  }
+
+  Future<void> getHistorique() async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    deviseLocale = prefs.getString("deviseLocale");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials"
+    };
+    var response = await http.get(Uri.encodeFull("$_url/$deviseLocale"), headers: headers,);
+    if(response.statusCode == 200){
+      print(response.body);
+      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        data = responseJson;
+      });
     }
   }
 
@@ -125,109 +130,9 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     );
   }
 
-  Future<String> getTrans() async {
-    var _header = {
-      "accept": "application/json",
-      "content-type" : "application/json",
-    };
-    var response = await http.get(Uri.encodeFull(_url4), headers: _header,);
-    print('statuscode ${response.statusCode}');
-    print('url $_url4');
-    if (response.statusCode == 200) {
-      setState(() {
-        var convertDataToJson = json.decode(utf8.decode(response.bodyBytes));
-        _trans = convertDataToJson['content'];
-        print("liste: ${_trans.toString()}");
-      });
-    }else print(response.body);
-    return "success";
-  }
-
-  double getStars(int idKitty, var liste){
-    int star = 0, nbre=0;
-    for(int i=0;i<liste.length;i++){
-      if(idKitty == liste[i]['kitty']['id_kitty'] && liste[i]['trans']['levelKitty']!=null){
-        nbre++;
-        star = star + liste[i]['trans']['levelKitty'];
-      }else{}
-    }
-    rating = star/nbre;
-    print("star: $rating");
-    return rating.toString()!="NaN"?rating:0;
-  }
-
-
-  Future<String> getJsonData() async {
-    var response = await http.get(Uri.encodeFull(_url), headers: {"Accept": "application/json"},);
-    print(response.statusCode);
-    if (response.statusCode == 200) {
-      setState(() {
-        if(_code=='true'){
-          cagnottes = json.decode(utf8.decode(response.bodyBytes));
-          var gnottes = [];
-          for(int i=0;i<cagnottes.length;i++){
-            if(cagnottes[i]["kitty"]['user']['id_user']!=idUser){
-              cagnottes.remove(cagnottes[i]);
-            }else{
-              gnottes.add(cagnottes[i]);
-            }
-          }
-          this._cagnottes = gnottes;
-          nb = this._cagnottes.length;
-        }else{
-          _cagnottes = json.decode(utf8.decode(response.bodyBytes));
-          nb = this._cagnottes.length;
-          print(_cagnottes.toString());
-        }
-      });
-    }else if(response.statusCode == 403 && _url == _url3){
-      setState(() {
-        if(_code=='true'){
-          cagnottes = json.decode(utf8.decode(response.bodyBytes));
-          var gnottes = [];
-          for(int i=0;i<cagnottes.length;i++){
-            if(cagnottes[i]["kitty"]['user']['id_user']!=idUser){
-              cagnottes.remove(cagnottes[i]);
-            }else{
-              gnottes.add(cagnottes[i]);
-            }
-          }
-          this._cagnottes = gnottes;
-          nb = this._cagnottes.length;
-        }else{
-          _cagnottes = json.decode(utf8.decode(response.bodyBytes));
-          nb = this._cagnottes.length;
-          print(_cagnottes.toString());
-        }
-      });
-    }
-    return "success";
-  }
-
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
-  }
-
-  Future<void> _ackAlert(BuildContext context, String text) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(text,
-            textAlign: TextAlign.justify,),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('Ok'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -501,7 +406,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     }
     return new Scaffold(
           appBar: new PreferredSize(
-              preferredSize: Size.fromHeight(fromHeight+226), //200
+              preferredSize: Size.fromHeight(fromHeight+180), //200
               child: new Container(
                 color: bleu_F,
                 child: Column(
@@ -548,52 +453,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                             fontSize: taille_titre+grand,
                             color: Colors.white,),
                           textAlign: TextAlign.right,)),
-
-                    Padding(
-                      padding: const EdgeInsets.only(top:0, left: 40, right: 40),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            bottomRight: Radius.circular(15),
-                            topRight: Radius.circular(15),
-                            bottomLeft: Radius.circular(15),
-                            topLeft: Radius.circular(15),
-                          ),
-                          color: couleur_fond_bouton,
-                        ),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                                flex: 3,
-                                child: Icon(Icons.refresh, color: orange_F,)),
-                            Expanded(
-                              flex: 6,
-                              child: CarouselSlider(
-                                enlargeCenterPage: true,
-                                autoPlay: false,
-                                enableInfiniteScroll: true,
-                                onPageChanged: (value){
-                                  print(value);
-                                },
-                                height: 35.0,
-                                items: _liste.map((i) {
-                                  return Builder(
-                                    builder: (BuildContext context) {
-                                      ind = int.parse(i);
-                                      print("voilà $ind");
-                                      return getMoyen(i);
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                            Expanded(
-                                flex: 3,
-                                child: Icon(Icons.refresh, color: orange_F,)),
-                          ],
-                        ),
-                      ),
-                    ),
                     AspectRatio(
                       aspectRatio: 1.5,
                       child: Card(
@@ -630,81 +489,37 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                 ),
               ),
           ),
-          body:SingleChildScrollView(
-            child: Column(
-              children: <Widget>[
-                Container(
-                  color: Colors.white,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: <Widget>[
-                        Expanded(
-                          flex: 4,
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                choix = 0;
-                              });
-                            },
-                            child: Center(
-                              child: Text("Récentes",style: TextStyle(
-                                  fontSize: filtre+grand,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: police_titre,
-                                  color: choix==0?bleu_F:couleur_description_champ
-                              ),),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                choix = 1;
-                                print(MediaQuery.of(context).size.width);
-                                print(MediaQuery.of(context).size.height);
-                              });
-                            },
-                            child: Center(
-                              child: Text("Réussies",style: TextStyle(
-                                  fontSize: filtre+grand,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: police_titre,
-                                  color: choix==1?bleu_F:couleur_description_champ
-                              ),),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                choix = 2;
-                              });
-                            },
-                            child: Center(
-                              child: Text("Echouées",style: TextStyle(
-                                  fontSize: filtre+grand,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: police_titre,
-                                  color: choix==2?bleu_F:couleur_description_champ
-                              ),),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
+          body:data == null?Center(child: CupertinoActivityIndicator(radius: 30,)):ListView.builder(
+              itemCount: data == null?0:data.length,
+              itemBuilder: (BuildContext context, int i){
+               var _amount = data[i]['amount'];
+               var _date = data[i]['date'].split(" ")[0];
+               var _heure = data[i]['date'].split(" ")[1];
+               var _fees = data[i]['fees'];
+               var _toCountry = data[i]['tocountry'];
+               var _status = data[i]['status'];
+               var _nature = data[i]['typeOper'];
+               var _fromCountry = data[i]['fromcountry'];
+               var _tocountry = data[i]['tocountry'];
+               var _tofirstname = data[i]['tofirstname'];
+               var _serviceName = data[i]['serviceName'];
+               var _transactionid = data[i]['transactionid'];
+               var _tolastname = data[i]['tolastname'];
+               var _name;
+               if(data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null")
+                  _name = "${data[i]['tolastname']}";
+               else if(data[i]['tolastname'] == null || data[i]['tolastname'] == "null"){
+                 _name = "${data[i]['tofirstname']}";
+               }else if((data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null") && (data[i]['tolastname'] == null || data[i]['tolastname'] == "null")){
+                 _name="";
+               }else
+                 _name = "${data[i]['tofirstname']} ${data[i]['tolastname']}";
+               var _transactionId = data[i]['transactionid'];
+                return Padding(
                   padding: EdgeInsets.only(left: 20, right: 20, top: 20),
                   child: GestureDetector(
                     onTap: (){
+                      _save(_fromCountry, _toCountry, _serviceName ,_name,_amount.toString(), _fees.toString(), _status, _nature ,_transactionid, _date);
                       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                     },
                     child: Card(
@@ -722,82 +537,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                                       width: 5,
                                       height: 30.0,
                                       decoration: BoxDecoration(
-                                        color: Colors.green,
-                                        borderRadius: BorderRadius.only(
-                                          bottomRight: Radius.circular(10),
-                                          topRight: Radius.circular(10)
-                                        )
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(left: 10),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text("Transfert d'argent", style: TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: taille_champ
-                                          ),),
-                                          Text("Approuvé", style: TextStyle(
-                                            color: couleur_description_champ,
-                                            fontSize: taille_champ-2
-                                          ),),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                )
-                            ),
-
-                            Expanded(
-                                flex: 6,
-                                child: Padding(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: <Widget>[
-                                      Text("-10.000,0 XAF", style: TextStyle(
-                                          color: Colors.green,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: taille_champ
-                                      ),),
-                                      Text("10 juillet 2019", style: TextStyle(
-                                        color: couleur_description_champ,
-                                          fontSize: taille_champ-2
-                                      ),),
-                                    ],
-                                  ),
-                                )
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-                  child: GestureDetector(
-                    onTap: (){
-                      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                    },
-                    child: Card(
-                      elevation: .5,
-                      color: couleur_appbar,
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 5, bottom: 5),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                                flex: 6,
-                                child: Row(
-                                  children: <Widget>[
-                                    Container(
-                                      width: 5,
-                                      height: 30.0,
-                                      decoration: BoxDecoration(
-                                          color: orange_F,
+                                          color:getStatus(_status)=="Approuvé"? Colors.green:Colors.red,
                                           borderRadius: BorderRadius.only(
                                               bottomRight: Radius.circular(10),
                                               topRight: Radius.circular(10)
@@ -809,13 +549,13 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: <Widget>[
-                                          Text("Retrait d'argent", style: TextStyle(
-                                              color: orange_F,
+                                          Text(getNature(_serviceName), style: TextStyle(
+                                              color: couleur_titre,
                                               fontWeight: FontWeight.bold,
-                                            fontSize: taille_champ
+                                              fontSize: taille_champ
                                           ),),
-                                          Text("En attente de validation", style: TextStyle(
-                                              color: couleur_description_champ,
+                                          Text(getStatus(_status), style: TextStyle(
+                                              color: getStatus(_status)=="Approuvé"?Colors.green: Colors.red,
                                               fontSize: taille_champ-2
                                           ),),
                                         ],
@@ -832,13 +572,13 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: <Widget>[
-                                      Text("-5.200,0 XAF", style: TextStyle(
-                                          color: orange_F,
+                                      Text("${getMillis(_amount.toString())} $deviseLocale", style: TextStyle(
+                                          color:getStatus(_status)=="Approuvé"? Colors.green:Colors.red,
                                           fontWeight: FontWeight.bold,
                                           fontSize: taille_champ
                                       ),),
-                                      Text("8 juillet 2019", style: TextStyle(
-                                          color: couleur_description_champ,
+                                      Text(getMonth(_date), style: TextStyle(
+                                          color: couleur_titre,
                                           fontSize: taille_champ-2
                                       ),),
                                     ],
@@ -850,28 +590,13 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
+                );
+              }
+          )
         );
   }
 
-  _read() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      final key = 'monToken';
-      _token = prefs.getString(key);
-    });
-  }
 
-  lire() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      final key = 'idUser';
-      idUser = prefs.getString(key)==null?-1:int.parse(prefs.getString(key));
-    });
-  }
 
   Widget getMoyen(String index){
     return Padding(
@@ -882,6 +607,46 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
         fontWeight: FontWeight.bold
       ),),
     );
+  }
+
+  String getMonth(String date){
+    String mois;
+    switch(int.parse(date.split("-")[1])){
+      case 1: mois = "Janvier";break;
+      case 2: mois = "Février";break;
+      case 3: mois = "Mars";break;
+      case 4: mois = "Avril";break;
+      case 5: mois = "Mai";break;
+      case 6: mois = "Juin";break;
+      case 7: mois = "Juillet";break;
+      case 8: mois = "Août";break;
+      case 9: mois = "Septembre";break;
+      case 10: mois = "Octobre";break;
+      case 11: mois = "Novembre";break;
+      case 12: mois = "Décembre";break;
+    }
+    return "${date.split("-")[0]} $mois ${date.split("-")[2]}";
+  }
+
+  String getStatus(String status){
+    String _status;
+    if(status == "PROCESSED")
+      _status = "Approuvé";
+    else
+      _status = "Echoué";
+    return _status;
+  }
+
+  String getNature(String nature){
+    String _nature = "";
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI"){
+      _nature = "Transfert d'argent";
+    }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
+      _nature = "Recharge d'argent";
+    }else if(nature == "WALLET_TO_MOMO" || nature == "WALLET_TO_OM"){
+      _nature = "Retrait d'argent";
+    }
+    return _nature;
   }
 
   BarChartGroupData makeGroupData(

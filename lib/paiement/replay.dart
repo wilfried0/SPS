@@ -1,9 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
-import 'package:page_view_indicators/step_page_indicator.dart';
 import 'package:services/auth/connexion.dart';
-import 'package:carousel_pro/carousel_pro.dart';
-import 'package:services/composants/components.dart';
 
 
 class Replay extends StatelessWidget {
@@ -136,32 +133,4 @@ class Replay extends StatelessWidget {
       ),
     );
   }
-
-  _buildBody() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        _buildPageView(),
-        _buildStepIndicator(),
-      ],
-    );
-  }
-
-
-
-  _buildStepIndicator() {
-    return Container(
-      color: Colors.black,
-      padding: const EdgeInsets.all(16.0),
-      child: StepPageIndicator(
-        itemCount: 3,
-        currentPageNotifier: _currentPageNotifier,
-        onPageSelected: (int index) {
-          if (_currentPageNotifier.value > index)
-            _pageController.jumpToPage(index);
-        },
-      ),
-    );
-  }
-
 }

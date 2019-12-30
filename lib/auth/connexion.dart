@@ -9,9 +9,6 @@ import 'package:services/auth/connexion1.dart';
 import 'package:services/auth/inscription1.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/composants/services.dart';
-import 'profile.dart';
-import 'verification1.dart';
-import 'activation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,17 +22,17 @@ class Connexion extends StatefulWidget {
 class _ConnexionState extends State<Connexion> {
 
   _ConnexionState();
-  String _username, _url, _mySelection="+237";
-
-  var _formKey = GlobalKey<FormState>();
+  String _username, _url, iso3, pays, _mySelection;
+  var _formKey = GlobalKey<FormState>(), flagUri;
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoding =false;
   int ad=3;
 
   @override
-  void initState(){
-    _url = '$base_url/getUser/';
+  void initState() {
+    this.lire();
     super.initState();
+    _url = '$base_url/member/getUser/';
   }
 
   void checkConnection() async {
@@ -56,6 +53,7 @@ class _ConnexionState extends State<Connexion> {
       _ackAlert(context);
     }
   }
+
 
   Future<void> _ackAlert(BuildContext context) {
     return showDialog<void>(
@@ -85,12 +83,21 @@ class _ConnexionState extends State<Connexion> {
     var url = "${this._url}$_username";
     http.Response response = await http.get(url, headers: headers);
     final int statusCode = response.statusCode;
+    print("${response.body}");
     if(statusCode == 200){
       var responseJson = json.decode(response.body);
-      print(responseJson.toString());
+      print(responseJson);
       setState(() {
         isLoding = false;
       });
+      this._reg();
+      if(responseJson['isExist'] == false){
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Inscription1('')));
+        //navigatorKey.currentState.pushNamed("/inscription");
+      }else{
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion1()));
+        //navigatorKey.currentState.pushNamed("/connexion");
+      }
     }else{
       print(statusCode);
       setState(() {
@@ -107,7 +114,7 @@ class _ConnexionState extends State<Connexion> {
         new SnackBar(content: new Text(value,style:
         TextStyle(
             color: Colors.white,
-            fontSize: taille_description_champ
+            fontSize: taille_champ+3
         ),
           textAlign: TextAlign.center,),
           backgroundColor: couleur_fond_bouton,
@@ -121,21 +128,18 @@ class _ConnexionState extends State<Connexion> {
     return int.tryParse(str) != null;
   }
 
-  final navigatorKey = GlobalKey<NavigatorState>();
+  //final navigatorKey = GlobalKey<NavigatorState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     final espace = (MediaQuery.of(context).size.height - 533.3333333333334)<=0?0.0:MediaQuery.of(context).size.height - 533.3333333333334;
     return MaterialApp(
-      navigatorKey: navigatorKey,
+      /*navigatorKey: navigatorKey,
       routes: <String, WidgetBuilder>{
-        "/profile": (BuildContext context) =>new Profile(''),
         "/inscription": (BuildContext context) =>new Inscription1(''),
         "/connexion": (BuildContext context) =>new Connexion1(),
-        "/verification1": (BuildContext context) =>new Verification1(''),
-        "/activation": (BuildContext context) =>new Activation()
-      },
+      },*/
       theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
       debugShowCheckedModeBanner: false,
       home: new Scaffold(
@@ -187,7 +191,7 @@ class _ConnexionState extends State<Connexion> {
                           alignment: Alignment.center,
                           child: new Text("Première plateforme d'interopérabilité des services financiers",
                             style: TextStyle(
-                                color: couleur_decription_page,
+                                color: couleur_titre,
                                 fontSize: taille_description_page,
                             ),),
                         ),
@@ -215,10 +219,15 @@ class _ConnexionState extends State<Connexion> {
                             children: <Widget>[
                               Expanded(
                                   flex: 5,
-                                  child: CountryCodePicker(
+                                  child:_mySelection==null?Container(): CountryCodePicker(
                                     showFlag: true,
-                                    onChanged: (CountryCode code){
+                                    initialSelection:_mySelection,
+                                    onChanged: (CountryCode code) {
                                       _mySelection = code.dialCode.toString();
+                                      flagUri = "${code.flagUri}";
+                                      iso3 = "${code.codeIso}";
+                                      //print(iso3);
+                                      pays = "${code.name}";
                                     },
                                   )
                               ),
@@ -234,7 +243,11 @@ class _ConnexionState extends State<Connexion> {
                                     if(value.isEmpty){
                                       return 'Champ téléphone vide !';
                                     }else{
-                                      _username = _mySelection.substring(1)+value;
+                                      if(_mySelection == "+33" && value.startsWith("0")){
+                                          _username = _mySelection.substring(1)+value.substring(1);
+                                      }else{
+                                          _username = _mySelection.substring(1)+value;
+                                      }
                                       return null;
                                     }
                                   },
@@ -257,8 +270,8 @@ class _ConnexionState extends State<Connexion> {
                         child: new GestureDetector(
                           onTap: () {
                             setState(() {
-                              print(_username);
                               if(_formKey.currentState.validate()){
+                                print(_username);
                                 if(tryParse('$_username')==false){
                                   showInSnackBar("Numéro de téléphone +$_username invalide!");
                                 }else {
@@ -288,6 +301,7 @@ class _ConnexionState extends State<Connexion> {
                       padding: EdgeInsets.only(top:20.0),
                       child: GestureDetector(
                           onTap: (){
+                            showInSnackBar("Pas encore disponible");
                             //navigatorKey.currentState.pushNamed("/activation");
                           },
                           child: Text("Contactez-nous",
@@ -310,11 +324,43 @@ class _ConnexionState extends State<Connexion> {
     );
   }
 
-
-  void _reg(String username) async {
+  void _reg() async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'username';
-    final value = "$username";
-    prefs.setString(key, value);
+    prefs.setString('username', "$_username");
+    prefs.setString('flag', "$flagUri");
+    prefs.setString('iso3', "$iso3");
+    prefs.setString('pays', "$pays");
+    prefs.setString('dial', "$_mySelection");
+    print(pays);
+  }
+
+  lire() async {
+    final prefs = await SharedPreferences.getInstance();
+      if(prefs.getString("pays") == null){
+        pays="Cameroun";
+      }else{
+        pays = prefs.getString("pays");
+      }
+
+      if(prefs.getString("dial") == null){
+        _mySelection="+237";
+      }else{
+        print("Mon dial"+prefs.getString("dial"));
+        setState(() {
+          _mySelection=prefs.getString("dial");
+        });
+      }
+
+      if(prefs.getString("iso3") == null){
+        iso3="CMR";
+      }else{
+        iso3 = prefs.getString("iso3");
+      }
+
+    if(prefs.getString("flag") == null){
+      flagUri="flags/cm.png";
+    }else{
+      flagUri = prefs.getString("flag");
+    }
   }
 }

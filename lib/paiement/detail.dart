@@ -12,6 +12,7 @@ import 'package:services/paiement/retrait1.dart';
 import 'dart:async';
 
 import 'package:services/paiement/transfert3.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 // ignore: must_be_immutable
@@ -26,31 +27,96 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   _DetailState(this._code);
   String _code;
   Future<Login> post;
-  TabController _tabController;
-  PageController pageController;
   int currentPage = 0, choix;
-  String _token, solde, idUser, userImage;
-  DateTime date;
+  String _token, solde, idUser, userImage, deviseLocale, _fromCountry, _toCountry, _serviceName, _name, _amount, _fees, _status, _nature, _transactionid, _date, _payst, _paysf;
   bool isLoding = false, loadImage = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb;
   int flex4, flex6, taille, enlev, rest, enlev1, enl;
   double haut, _taill,topi, bottomsolde,sold,topo22,top33, top34, top1, top, top2, top3,top4, topo1, topo2, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext;
-  var _liste = [];
   final navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState(){
-    date = new DateTime.now();
     super.initState();
-    this.getDate();
-    _tabController = new TabController(length: 1, vsync: this);
+    this.read();
   }
 
-  getDate(){
-    for(int i=0;i<=5;i++){
-      _liste.add("TR1OKO71O19");
+
+  read() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _payst = prefs.getString("payst");
+      _paysf = prefs.getString("paysf");
+      _serviceName = prefs.getString("serviceName");
+      _name = prefs.getString("named");
+      _amount = prefs.getString("montant");
+      _fees = prefs.getString("fees");
+      _status = prefs.getString("status");
+      _nature = prefs.getString("nature");
+      _transactionid = prefs.getString("transactionid");
+      _date = prefs.getString("date");
+      print("la _date: $_date");
+      deviseLocale = prefs.getString("deviseLocale");
+    });
+  }
+
+  String getMonth(String date){
+    String mois;
+    switch(int.parse(date.split("-")[1])){
+      case 1: mois = "Janvier";break;
+      case 2: mois = "Février";break;
+      case 3: mois = "Mars";break;
+      case 4: mois = "Avril";break;
+      case 5: mois = "Mai";break;
+      case 6: mois = "Juin";break;
+      case 7: mois = "Juillet";break;
+      case 8: mois = "Août";break;
+      case 9: mois = "Septembre";break;
+      case 10: mois = "Octobre";break;
+      case 11: mois = "Novembre";break;
+      case 12: mois = "Décembre";break;
     }
+    return "${date.split("-")[0]} $mois ${date.split("-")[2]}";
+  }
+
+  String getStatus(String status){
+    String _status;
+    if(status == "PROCESSED")
+      _status = "Approuvé";
+    else
+      _status = "Echoué";
+    return _status;
+  }
+
+  String getNature(String nature){
+    String _nature = "";
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI"){
+      _nature = "Transfert d'argent";
+    }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
+      _nature = "Recharge d'argent";
+    }else if(nature == "WALLET_TO_MOMO" || nature == "WALLET_TO_OM"){
+      _nature = "Retrait d'argent";
+    }
+    return _nature;
+  }
+
+  String getMoyen(String nature){
+    String _nature = "";
+    if(nature == "WALLET_TO_WALLET"){
+      _nature = "Wallet SprintPay";
+    }else if(nature == "EU_TO_WALLET"){
+      _nature = "Express Union";
+    }else if(nature == "CARD_TO_WALLET"){
+      _nature = "Carte bancaire";
+    }else if(nature == "OM_TO_WALLET" || nature == "WALLET_TO_OM"){
+      _nature = "Orange Money";
+    }else if(nature == "MOMO_TO_WALLET" || nature == "WALLET_TO_MOMO"){
+      _nature = "MTN Mobile Money";
+    }else if(nature == "WALLET_TO_WARI"){
+      _nature = "Wari";
+    }
+    return _nature;
   }
 
 
@@ -69,7 +135,6 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
 
   @override
   void dispose() {
-    _tabController.dispose();
     super.dispose();
   }
 
@@ -193,6 +258,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
 
     return MaterialApp(
       navigatorKey: navigatorKey,
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
       routes: <String, WidgetBuilder>{
         "/transfert": (BuildContext context) =>new Transfert3("+33^FR^France^FRA^0"),
         "/retrait": (BuildContext context) =>new Retrait1(_code),
@@ -243,7 +309,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top:40, left: 50, right: 50),
+                    padding: const EdgeInsets.only(top:40, left: 20, right: 20),
                     child: Container(
                       decoration: BoxDecoration(
                         color: couleur_fond_bouton,
@@ -254,7 +320,14 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                             topLeft: Radius.circular(15),
                           )
                       ),
-                      child: CarouselSlider(
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 20, right: 20),
+                        child: Text(_transactionid==null?"":_transactionid.startsWith("REF")?"$_transactionid":"REF $_transactionid", style: TextStyle(
+                            color: orange_F,
+                            fontSize: taille_champ,
+                            fontWeight: FontWeight.bold
+                        ),),
+                      ) /*CarouselSlider(
                         enlargeCenterPage: true,
                         autoPlay: false,
                         enableInfiniteScroll: true,
@@ -268,7 +341,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                             },
                           );
                         }).toList(),
-                      ),
+                      ),*/
                     ),
                   ),
                 ],
@@ -327,21 +400,22 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                Text('Transfert d\'argent',
+                                Text(getNature(_serviceName),
                                   style: TextStyle(
                                       color: couleur_titre,
-                                      fontSize: taille_champ,
+                                      fontSize: taille_champ+3,
                                       fontWeight: FontWeight.bold
                                   ),),
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: <Widget>[
-                                    Text('10.000 XAF',
+                                    Text(_amount==null?"":"${getMillis(_amount)} $deviseLocale",
                                       style: TextStyle(
                                           color: Colors.green,
-                                          fontSize: taille_champ,
+                                          fontSize: taille_champ+3,
                                           fontWeight: FontWeight.bold
                                       ),),
-                                    GestureDetector(
+                                    /*GestureDetector(
                                       onTap: (){
                                         navigatorKey.currentState.pushNamed("/transfert");
                                       },
@@ -349,42 +423,40 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                                         padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2-10),
                                         child: Icon(Icons.cached, color: orange_F,size: 30,),
                                       ),
-                                    )
+                                    )*/
                                   ],
                                 ),
                                 Padding(
                                   padding: EdgeInsets.only(top: 15),
                                   child: Container(
                                     height: 2,
-                                    width: MediaQuery.of(context).size.width-80,
+                                    width: MediaQuery.of(context).size.width-100,
                                     decoration: BoxDecoration(
-                                      color: couleur_appbar,
+                                      color: couleur_description_champ,
                                     ),
                                   ),
                                 ),
-                                Padding(
-                                  padding: EdgeInsets.only(top: 0),
-                                  child: Row(
-                                    children: <Widget>[
-                                      Text('Ref: TR1OKO71O19',
-                                        style: TextStyle(
-                                            color: couleur_champ,
-                                            fontSize: _taill,
-                                            fontWeight: FontWeight.bold
-                                        ),),
-                                      Padding(
-                                        padding: EdgeInsets.only(left: (MediaQuery.of(context).size.width-80)/2-10),
-                                        child: Text('10 Juillet 2019',
-                                          style: TextStyle(
-                                              color: couleur_champ,
-                                              fontSize: _taill,
-                                              fontWeight: FontWeight.bold
-                                          ),),
-                                      )
-                                    ],
-                                  ),
-                                )
+                                Text(_date==null?"":getMonth(_date),
+                                  style: TextStyle(
+                                      color: couleur_champ,
+                                      fontSize: taille_champ,
+                                      fontWeight: FontWeight.bold
+                                  ),textAlign: TextAlign.right,)
                               ],
+                            ),
+                            Padding(
+                              padding: EdgeInsets.only(right: 0, bottom: 10, left: 22),
+                              child: Container(
+                                width: 5,
+                                height: topo2+25,
+                                decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.only(
+                                        bottomLeft: Radius.circular(10),
+                                        topLeft: Radius.circular(10)
+                                    )
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -400,7 +472,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                     Expanded(
                       flex: 3,
                       child: Text("Pays", style: TextStyle(
-                      fontSize: taille_champ
+                      fontSize: taille_champ+2
                       ),),
                     ),
                     Expanded(
@@ -410,16 +482,16 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
-                            Text("France ", style: TextStyle(
+                            Text(_paysf=="null"?"":"$_paysf ", style: TextStyle(
                               color: couleur_fond_bouton,
-                              fontSize: taille_champ
+                              fontSize: taille_champ+2
                             ),),
-                            Text("vers ", style: TextStyle(
-                                fontSize: taille_champ
+                            Text(_payst=="null"?"":"vers ", style: TextStyle(
+                                fontSize: taille_champ+2
                             ),),
-                            Text("Cameroun ", style: TextStyle(
+                            Text(_payst=="null"?"":"$_payst ", style: TextStyle(
                                 color: couleur_fond_bouton,
-                                fontSize: taille_champ
+                                fontSize: taille_champ+2
                             ),),
                           ],
                         ),
@@ -448,7 +520,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text("Moyen de paiement", style: TextStyle(
-                            fontSize: taille_champ
+                            fontSize: taille_champ+2
                         ),),
                       ),
                     ),
@@ -458,9 +530,10 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         padding: EdgeInsets.only(right: 20),
                         child: Align(
                           alignment: Alignment.topRight,
-                          child: Text("MTN Mobile Money", style: TextStyle(
+                          child: Text(getMoyen(_serviceName), style: TextStyle(
                               color: couleur_fond_bouton,
-                              fontSize: taille_champ
+                              fontSize: taille_champ+2,
+                            fontWeight: FontWeight.bold
                           ),),
                         ),
                       ),
@@ -488,7 +561,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text("Destinataire", style: TextStyle(
-                            fontSize: taille_champ
+                            fontSize: taille_champ+2
                         ),),
                       ),
                     ),
@@ -496,12 +569,15 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       flex: 6,
                       child: Padding(
                         padding: EdgeInsets.only(right: 20),
-                        child: Align(
-                          alignment: Alignment.topRight,
-                          child: Text("Wilfried ASSAM", style: TextStyle(
-                              color: couleur_fond_bouton,
-                              fontSize: taille_champ
-                          ),),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            Text(_name==null||_name=="null"?"": _name.length<15?_name:_name.substring(0, 12)+"...", style: TextStyle(
+                                color: couleur_fond_bouton,
+                                fontSize: taille_champ+2,
+                                fontWeight: FontWeight.bold
+                            ),),
+                          ],
                         ),
                       ),
                     ),
@@ -528,7 +604,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text("Montant envoyé", style: TextStyle(
-                            fontSize: taille_champ
+                            fontSize: taille_champ+2
                         ),),
                       ),
                     ),
@@ -538,9 +614,10 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         padding: EdgeInsets.only(right: 20),
                         child: Align(
                           alignment: Alignment.topRight,
-                          child: Text("10.000,0 XAF", style: TextStyle(
+                          child: Text(_amount==null?"":"${getMillis(_amount.toString())} $deviseLocale", style: TextStyle(
                               color: couleur_fond_bouton,
-                              fontSize: taille_champ
+                              fontSize: taille_champ+2,
+                              fontWeight: FontWeight.bold
                           ),),
                         ),
                       ),
@@ -568,7 +645,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text("Commission", style: TextStyle(
-                            fontSize: taille_champ
+                            fontSize: taille_champ+2
                         ),),
                       ),
                     ),
@@ -578,9 +655,10 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         padding: EdgeInsets.only(right: 20),
                         child: Align(
                           alignment: Alignment.topRight,
-                          child: Text("0,0 XAF", style: TextStyle(
+                          child: Text(_fees==null?"":"${getMillis(_fees.toString())} $deviseLocale", style: TextStyle(
                               color: couleur_fond_bouton,
-                              fontSize: taille_champ
+                              fontSize: taille_champ+2,
+                              fontWeight: FontWeight.bold
                           ),),
                         ),
                       ),
@@ -609,7 +687,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text("Montant total de la transaction", style: TextStyle(
-                            fontSize: taille_champ
+                            fontSize: taille_champ+2
                         ),),
                       ),
                     ),
@@ -619,9 +697,10 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         padding: EdgeInsets.only(right: 20),
                         child: Align(
                           alignment: Alignment.topRight,
-                          child: Text("10.000,0 XAF", style: TextStyle(
+                          child: Text(_fees==null || _amount==null?"":"${getMillis((double.parse(_fees)+double.parse(_amount)).toString())} $deviseLocale", style: TextStyle(
                               color: couleur_fond_bouton,
-                              fontSize: taille_champ
+                              fontSize: taille_champ+2,
+                              fontWeight: FontWeight.bold
                           ),),
                         ),
                       ),
@@ -650,7 +729,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       child: Align(
                         alignment: Alignment.topLeft,
                         child: Text("Statut de la requête", style: TextStyle(
-                            fontSize: taille_champ,
+                            fontSize: taille_champ+2,
                         ),),
                       ),
                     ),
@@ -660,9 +739,9 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         padding: EdgeInsets.only(right: 20),
                         child: Align(
                           alignment: Alignment.topRight,
-                          child: Text("Aprouvé", style: TextStyle(
+                          child: Text(getStatus(_status), style: TextStyle(
                               color: Colors.green,
-                              fontSize: taille_champ,
+                              fontSize: taille_champ+2,
                             fontWeight: FontWeight.bold
                           ),),
                         ),
@@ -685,16 +764,6 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
           ),
         ),
       ),
-    );
-  }
-  Widget getMoyen(String index){
-    return Padding(
-      padding: EdgeInsets.only(top: 0),
-      child: Text("$index", style: TextStyle(
-          color: orange_F,
-          fontSize: taille_titre,
-          fontWeight: FontWeight.bold
-      ),),
     );
   }
 }

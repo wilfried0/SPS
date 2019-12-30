@@ -1,12 +1,16 @@
+import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
+import 'package:services/paiement/getsoldewidget.dart';
 import 'encaisser2.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -26,42 +30,166 @@ class _Encaisser1State extends State<Encaisser1> {
   int currentPage = 0;
   int choice = 0,indik=0;
   var _userTextController;
-  GlobalKey<ScaffoldState> _scaffoldKey;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  //final navigatorKey = GlobalKey<NavigatorState>();
   // ignore: non_constant_identifier_names
   int recenteLenght, archiveLenght, populaireLenght, id_kitty;
   var _formKey = GlobalKey<FormState>();
   int flex4, flex6, taille, enlev, rest, enlev1;
-  double _taill,gauch, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
-  File _image;
+  double _taill,gauch,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   List data, list;
+  bool isLoading = false;
   // ignore: non_constant_identifier_names
-  String kittyImage, firstnameBenef,solde,kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="";
+  String kittyImage, firstnameBenef,_username, _password, kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", solde, deviseLocale, local, devise, country;
 
   @override
   void initState() {
-    super.initState();
     this.read();
+    super.initState();
     _userTextController = new MoneyMaskedTextController(decimalSeparator: '', thousandSeparator: '.', precision: 0);
-//_code = '$index ${_cagnottes[index]["kittyImage"]} ${_cagnottes[index]["firstnameBenef"]} ${_cagnottes[index]["endDate"]} ${_cagnottes[index]["startDate"]} ${_cagnottes[index]["title"]} ${_cagnottes[index]["suggested_amount"]} ${_cagnottes[index]["amount"]} ${_cagnottes[index]["description"]}';
-
     pageController = PageController(
         initialPage: currentPage,
         keepPage: false,
         viewportFraction: 0.8
     );
+    //BackButtonInterceptor.add(myInterceptor);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    //_tabController.dispose();
     _userTextController.dispose();
     super.dispose();
+    //BackButtonInterceptor.remove(myInterceptor);
+  }
+
+  bool myInterceptor(bool stopDefaultButtonEvent) {
+    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile(_code)));
+    //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile(_code)));
+    //navigatorKey.currentState.pushNamed("/profil"); // Do some stuff.
+    return false;
+  }
+
+  read() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      country = prefs.getString("iso3");
+      solde = prefs.getString("solde");
+      devise = prefs.getString("devise");
+      local = prefs.getString("local");
+      deviseLocale = prefs.getString("deviseLocale");
+    });
+  }
+
+  void checkConnection(var body, int q) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      //print("Connected to Mobile");
+      setState(() {
+        print("q vaut $q");
+        isLoading = true;
+        if(q == 0){//MTN
+          getSoldeCommission(body, q);
+        }else if(q == 1){//ORANGE
+          getSoldeCommission(body, q);
+        }else if(q == 2){//CARD
+          getSoldeCommission(body, q);
+        }else{
+          isLoading = false;
+          showInSnackBar("Service non disponible!");
+        }
+      });
+      //this.getUser();
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
+      setState(() {
+        print("q vaut $q");
+        isLoading = true;
+        if(q == 0){//MTN
+          getSoldeCommission(body, q);
+        }else if(q == 1){//ORANGE
+          getSoldeCommission(body, q);
+        }else if(q == 2){//CARD
+          getSoldeCommission(body, q);
+        }else{
+          isLoading = false;
+          showInSnackBar("Service non disponible!");
+        }
+      });
+      //this.getUser();
+    } else {
+      _ackAlert(context);
+    }
+  }
+
+  Future<String> getSoldeCommission(var body, int q) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    String fee = "$base_url/transaction/getFeesTransaction";
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials",
+      "content-type":"application/json"
+    };
+    return await http.post("$fee", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print('voici le statusCode $statusCode');
+      print('voici le body ${response.body}');
+      if (statusCode < 200 || json == null) {
+        setState(() {
+          isLoading = false;
+        });
+        throw new Exception("Error while fetching data");
+      }else if(statusCode == 200){
+        var responseJson = json.decode(response.body);
+        fees = responseJson['fees'];
+        newSolde = double.parse(montant)+fees;
+        print(newSolde.toString());
+        print(double.parse(local));
+        this._save();
+        setState(() {
+          isLoading = false;
+        });
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Encaisser2(_code)));
+        //navigatorKey.currentState.pushNamed("/encaisser");
+      }else {
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("$statusCode ${response.body}");
+      }
+      return response.body;
+    });
+  }
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final _large = MediaQuery.of(context).size.width;
-    double fromHeight = 120;;
+    double fromHeight = 120;
     if(_large<=320){
       hauteurcouverture = 250;
       fromHeight = 200;
@@ -131,76 +259,87 @@ class _Encaisser1State extends State<Encaisser1> {
       gauch = 20;
       droit = 20;
     }
-    return new MaterialApp(
+    //return new MaterialApp(
+    /*navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      home: new DefaultTabController(
-        length: 1,
-        child: new Scaffold(
-            appBar: PreferredSize(
-              preferredSize: Size.fromHeight(fromHeight),
-              child: new Container(
-                color: bleu_F,
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
-                      child: Row(
-                        children: <Widget>[
-                          GestureDetector(
-                              onTap: (){
-                                setState(() {
-                                  Navigator.pop(context);
-                                  //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
-                                });
-                              },
-                              child: Icon(Icons.arrow_back_ios,color: Colors.white,)
-                          ),
-                          GestureDetector(
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
+      routes: <String, WidgetBuilder>{
+        "/encaisser": (BuildContext context) =>new Encaisser2(_code),
+        "/profil": (BuildContext context) =>new Profile(_code),
+      },*/
+    return new DefaultTabController(
+      length: 1,
+      child: new Scaffold(
+          key: _scaffoldKey,
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(fromHeight),
+            child: new Container(
+              color: bleu_F,
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
+                    child: Row(
+                      children: <Widget>[
+                        GestureDetector(
                             onTap: (){
                               setState(() {
+                                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile(_code)));
                                 //Navigator.pop(context);
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
+                                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                                 //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
                               });
                             },
-                            child: Text('Retour',
-                              style: TextStyle(color: Colors.white, fontSize: taille_champ),),
-                          )
-                        ],
-                      ),
+                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                        ),
+                        GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile(_code)));
+                              //Navigator.pop(context);
+                              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
+                              //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
+                            });
+                          },
+                          child: Text('Retour',
+                            style: TextStyle(color: Colors.white, fontSize: taille_champ),),
+                        )
+                      ],
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 0, left: gauch, right: droit),
-                      child: Center(
-                        child: Text('Etape 1 sur 2',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: taille_libelle_etape,
-                              fontWeight: FontWeight.bold
-                          ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 0, left: gauch, right: droit),
+                    child: Center(
+                      child: Text('Etape 1 sur 2',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: taille_libelle_etape,
+                            fontWeight: FontWeight.bold
                         ),
                       ),
                     ),
+                  ),
 
-                    Padding(
-                      padding: EdgeInsets.only(top: 20),
+                  Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text('Recharger mon compte',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: taille_titre-2,
+                            fontWeight: FontWeight.bold
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  getSoldeWidget(),
+
+                  /*Padding(
+                      padding: EdgeInsets.only(top: 20),//solde du compte
                       child: Align(
                         alignment: Alignment.center,
-                        child: Text('Recharger mon compte',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: taille_titre-2,
-                              fontWeight: FontWeight.bold
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: EdgeInsets.only(left: 80, top: 20),//solde du compte
-                      child: Align(
-                        alignment: Alignment.topLeft,
                         child: Text('SOLDE DU COMPTE', style: TextStyle(
                             color: Colors.white,
                             fontSize: taille_libelle_etape-2
@@ -208,25 +347,25 @@ class _Encaisser1State extends State<Encaisser1> {
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.only(left: 80, top: 10),
+                      padding: EdgeInsets.only(top: 10),
                       child: Align(
-                        alignment: Alignment.topLeft,
+                        alignment: Alignment.center,
                         child: Text(solde==null?"1.500,0 XAF":getMillis('$solde'), style: TextStyle(//Montant du solde
                             color: orange_F,
                             fontSize: taille_titre+8,
                             fontWeight: FontWeight.bold
                         ),),
                       ),
-                    ),
-                  ],
-                ),
+                    ),*/
+                ],
               ),
             ),
+          ),
           body: _buildCarousel(context),
           bottomNavigationBar: barreBottom
-        ),
       ),
     );
+    //);
   }
 
 
@@ -258,20 +397,39 @@ class _Encaisser1State extends State<Encaisser1> {
                           ),
                         ),
                       ),
-                      Padding(
+                      country != "CMR"?Padding(
+                        padding: EdgeInsets.only(top: 20, left: 0, right: 0),
+                        child: CarouselSlider(
+                          enlargeCenterPage: true,
+                          autoPlay: false,
+                          enableInfiniteScroll: false,
+                          onPageChanged: (value){},
+                          height: 136.0,
+                          items: [3].map((i) {
+                            return Builder(
+                              builder: (BuildContext context) {
+                                return getMoyen(3);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      )
+                          :Padding(
                         padding: EdgeInsets.only(top: 20, left: 0, right: 0),
                         child: CarouselSlider(
                           enlargeCenterPage: true,
                           autoPlay: false,
                           enableInfiniteScroll: true,
+                          initialPage: 2,
                           onPageChanged: (value){
                             setState(() {
                               indik = value;
                               _code = "$indik";
+                              print(indik);
                             });
                           },
                           height: 136.0,
-                          items: [1,2,3].map((i) {
+                          items: [1,2,3,4].map((i) {
                             return Builder(
                               builder: (BuildContext context) {
                                 return getMoyen(i);
@@ -320,7 +478,7 @@ class _Encaisser1State extends State<Encaisser1> {
                                     keyboardType: TextInputType.number,
                                     style: TextStyle(
                                         color: couleur_libelle_champ,
-                                        fontSize: taille_champ,
+                                        fontSize: taille_champ+3,
                                         fontFamily: police_champ
                                     ),
                                     validator: (String value){
@@ -328,7 +486,7 @@ class _Encaisser1State extends State<Encaisser1> {
                                         return "Montant vide !";
                                       }else{
                                         montant = value;
-                                        _userTextController.text = montant;
+                                        //_userTextController.text = montant;
                                         return null;
                                       }
                                     },
@@ -336,7 +494,7 @@ class _Encaisser1State extends State<Encaisser1> {
                                       hintText: 'Montant de la recharger',
                                       hintStyle: TextStyle(
                                           color: couleur_libelle_champ,
-                                          fontSize: taille_champ,
+                                          fontSize: taille_champ+3,
                                           fontFamily: police_champ
                                       ),
                                       //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
@@ -352,11 +510,28 @@ class _Encaisser1State extends State<Encaisser1> {
                         padding: EdgeInsets.only(top:20,left: gauch, right: droit),
                         child: GestureDetector(
                           onTap: (){
-                            _code = '$indik';
-                            if(_formKey.currentState.validate()) {
-                              this._save(montant);
-                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser2('$_code')));
-                            }
+                            setState(() {
+                              if(country != "CMR")
+                                indik = 2;
+                              _code = '$indik';
+                              String code;
+                              switch(indik){
+                                case 0: code = "MOMO_TO_WALLET";break;
+                                case 1: code = "OM_TO_WALLET";break;
+                                case 2: code = "CARD_TO_WALLET";break;
+                                case 3: code = "EU_TO_WALLET";break;
+                              }
+                              if(_formKey.currentState.validate()) {
+                                var getcommission = getCommission(
+                                    typeOperation:code,
+                                    country: "$country",
+                                    amount: int.parse(this.montant.replaceAll(".", "")),
+                                    deviseLocale: deviseLocale
+                                );
+                                print(json.encode(getcommission));
+                                checkConnection(json.encode(getcommission), indik);
+                              }
+                            });
                           },
                           child: Container(
                             height: hauteur_bouton,
@@ -369,7 +544,9 @@ class _Encaisser1State extends State<Encaisser1> {
                               ),
                               borderRadius: new BorderRadius.circular(10.0),
                             ),
-                            child: new Center(child: new Text('Poursuivre', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton, fontFamily: police_bouton),),),
+                            child: new Center(child:isLoading==false? new Text('Poursuivre', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton, fontFamily: police_bouton),):
+                            CupertinoActivityIndicator()
+                            ),
                           ),
                         ),
                       ),
@@ -383,21 +560,10 @@ class _Encaisser1State extends State<Encaisser1> {
       ],
     );
   }
-  void _save(String valeur) async {
+  void _save() async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'wallet';
-    final value = valeur;
-    prefs.setString(key, value);
-    print('saved $value');
-  }
-
-  read() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      final key = 'wallet';
-      montant = prefs.getString(key)==null?"":prefs.getString(key);
-      _userTextController.text = montant==""?"0":montant;
-    });
+    prefs.setString("montant", "${montant.replaceAll(".", "")}");
+    prefs.setString("fees", "$fees");
   }
 
   void showInSnackBar(String value) {
@@ -405,41 +571,24 @@ class _Encaisser1State extends State<Encaisser1> {
         new SnackBar(content: new Text(value,style:
         TextStyle(
             color: Colors.white,
-            fontSize: taille_description_champ
+            fontSize: taille_description_champ+3
         ),
           textAlign: TextAlign.center,),
           backgroundColor: couleur_fond_bouton,
           duration: Duration(seconds: 5),));
   }
 
-  Future<void> _ackAlert(BuildContext context, String value) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Oops!'),
-          content: Text(value),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('Ok'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
+      case 1: text = "MTN MOBILE MONEY";img = 'mtn.jpg';
       break;
-      case 2: text = "CARTE BANCAIRE";img = 'carte.jpg';
+      case 2: text = "ORANGE MONEY";img = 'orange.png';
       break;
-      case 3: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
+      break;
+      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
       break;
     }
     return Container(
@@ -468,7 +617,7 @@ class _Encaisser1State extends State<Encaisser1> {
           child: Column(
             children: <Widget>[
               Container(
-                height: 90,
+                height: 85,
                 width: MediaQuery.of(context).size.width,
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.only(

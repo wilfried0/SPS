@@ -62,7 +62,7 @@ class _InscriptionState extends State<Inscription> {
   @override
   void initState(){
     super.initState();
-    url = '$base_url/user/Auth/createmember';
+    url = '$base_url/member/user/Auth/createmember';
     print(url);
     this._ville = 'Yaoundé';
     boolVille = true; boolbirthday = true;

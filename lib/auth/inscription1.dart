@@ -1,8 +1,12 @@
 import 'dart:convert';
-import 'package:country_code_picker/country_code_picker.dart';
+import 'dart:io';
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
-import 'package:services/composants/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'connexion.dart';
 import 'package:http/http.dart' as http;
 import 'activation.dart';
@@ -16,64 +20,146 @@ class Inscription1 extends StatefulWidget {
   _Inscription1State createState() => new _Inscription1State(_code);
 }
 
-Future<String> createPost(var body, var _header, String url, String _code, BuildContext context,GlobalKey<ScaffoldState> _scaffoldKey) async {
-  return await http.post(url, body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-    final int statusCode = response.statusCode;
-    print(statusCode);
-    print(response.body);
-    if (statusCode < 200 || json == null) {
-      print(statusCode);
-      print(response.body);
-      throw new Exception("Error while fetching data");
-    }else if(statusCode == 200){
-      Post.fromJson(json.decode(response.body));
-      String idUser = response.body.toString().split(',')[4].split(':')[1].substring(0, response.body.toString().split(',')[4].split(':')[1].length-2);
-      print('idUser $idUser');
-      //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation('$_code^$idUser')));
-      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Activation('$_code^$idUser'), oldWidget: Inscription('$_code^$idUser')));
-    }else if(statusCode == 403){
-      if(response.body.contains("EMAIL_ALREADY_USE"))
-        showInSnackBar("Cette email est utilisée par un autre membre.", _scaffoldKey);
-      else if(response.body.contains("USERNAME_EXIST"))
-        showInSnackBar("Un utilisateur avec le même numéro de téléphone existe déjà", _scaffoldKey);
-    }
-    else print(statusCode);
-    return response.body;
-  });
-}
-
 class _Inscription1State extends State<Inscription1> {
   _Inscription1State(this._code);
   String _code;
   bool _check1=false, _check2=false;
-  String _firstname, _lastname, _ville, _country, _birthday, _password, _verfiPassword, _email, _mySelection;
-  bool boolFirstname=false, boolLastname=false, boolEmail=false, boolPassword=false, boolVille=false, boolbirthday=false, boolUsername=false;
-
-  var _formKey = GlobalKey<FormState>();
+  String _password, _verfiPassword, _url, iso3;
+  var _usernameController = new TextEditingController();
+  String _username, urlPath = "";
+  var _formKey = GlobalKey<FormState>(), flagUri;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  bool _isHidden = true, isLoding = false;
+  int idUser;
 
-  bool _isHidden = true;
-  String url;
-  var _header = {
-    "content-type": "application/json",
-    "accept": "application/json"
-  };
+  lire() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      flagUri = prefs.getString("flag");
+      _username = prefs.getString("username");
+      iso3 = prefs.getString("iso3");
+      print(iso3);
+      _usernameController.text = _username;
+    });
+  }
+
+
+  bool myInterceptor(bool stopDefaultButtonEvent) {
+    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
+    return true;
+  }
+
+  Future<File> getPdfFromUrl(String url) async {
+    try{
+      var data = await http.get(url);
+      var bytes = data.bodyBytes;
+      var dir = await getApplicationDocumentsDirectory();
+      File file = File("${dir.path}/sprintpayconditions.pdf");
+
+      File urlFile = await file.writeAsBytes(bytes);
+      return urlFile;
+    }catch(e){
+      throw Exception("Erreur lors de l'ouverture du fichier");
+    }
+  }
+
+
+  void _reg() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('password', "$_password");
+  }
+
+  void reg() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('idUser', "$idUser");
+  }
+
+  void checkConnection(var body) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      setState(() {
+        isLoding =true;
+        createMember(body);
+      });
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      setState(() {
+        isLoding =true;
+        createMember(body);
+      });
+    } else {
+      ckAlert(context);
+    }
+  }
+
+  Future<String> createMember(var body) async {
+    var _header = {
+      "accept": "application/json",
+      "content-type" : "application/json"
+    };
+    return await http.post(_url, body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print('voici le statusCode $statusCode');
+      print('voici le body ${response.body}');
+      if (statusCode < 200 || json == null) {
+        setState(() {
+          isLoding =false;
+        });
+        //throw new Exception("Error while fetching data");
+      }else if(statusCode == 200){
+        var responseJson = json.decode(response.body);
+        idUser = responseJson['id_user'];
+        if(responseJson['username'] == "USERNAME_ALREADY_USED"){
+          setState(() {
+            isLoding =false;
+          });
+          //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation()));
+          showInSnackBar("Utilisateur déjà existant!", _scaffoldKey);
+        }else{
+          this.reg();
+          setState(() {
+            isLoding =false;
+          });
+          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation()));
+        }
+      }else {
+        setState(() {
+          isLoding =false;
+        });
+        showInSnackBar("$statusCode ${response.body}", _scaffoldKey);
+      }
+      return response.body;
+    });
+  }
+
+  Future<void> ckAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void initState(){
-    List<String> list = _code.split('^');
-    if(list.length-1>3){
-      list.removeAt(list.length-1);
-      _code = list.toString().substring(1,list.toString().length-1).replaceAll(',', '^');
-      _code = _code.replaceAll(' ', "");
-      print('back to $_code');
-    }
+    //BackButtonInterceptor.add(myInterceptor);
+    this.lire();
     super.initState();
-    url = '$base_url/user/Auth/createmember';
-    print(url);
-    this._ville = 'Yaoundé';
-    boolVille = true; boolbirthday = true;
-    print(_code);
+    _url = "$base_url/member/createMemberTemp";
+    getPdfFromUrl("https://sprint-pay.com/wp-content/uploads/2018/11/CGU-Afrique-CEMAC-%E2%80%93-Sprint-Pay-2018.pdf").then((f) {
+      urlPath = f.path;
+    });
   }
 
   void _toggleVisibility(){
@@ -81,6 +167,13 @@ class _Inscription1State extends State<Inscription1> {
       _isHidden = !_isHidden;
     });
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+    //BackButtonInterceptor.remove(myInterceptor);
+  }
+
 
 
   bool isEmail(String em) {
@@ -101,7 +194,6 @@ class _Inscription1State extends State<Inscription1> {
         elevation: 0.0,
         backgroundColor: couleur_appbar,
         flexibleSpace: barreTop,
-
         leading: GestureDetector(
             onTap: (){
               setState(() {
@@ -113,7 +205,7 @@ class _Inscription1State extends State<Inscription1> {
             child: Icon(Icons.arrow_back_ios,)),
         iconTheme: new IconThemeData(color: couleur_fond_bouton),
       ),
-      body: ListView(
+      body:ListView(
         children: <Widget>[
           Container(
             height: hauteur_logo,
@@ -158,7 +250,7 @@ class _Inscription1State extends State<Inscription1> {
                 ),
                 Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
 
-                Padding(
+                /*Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
@@ -168,7 +260,7 @@ class _Inscription1State extends State<Inscription1> {
                           fontSize: taille_description_champ+ad
                       ),),
                   ),
-                ),
+                ),*/
 
                 Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
                 Padding(
@@ -191,18 +283,17 @@ class _Inscription1State extends State<Inscription1> {
                       child: Row(
                         children: <Widget>[
                           Expanded(
-                              flex: 4,
-                              child: CountryCodePicker(
-                                showFlag: true,
-                                onChanged: (CountryCode code){
-                                  _mySelection = code.dialCode.toString();
-                                },
-                              )
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child:flagUri==null?Container(): new Image.asset('$flagUri'),
+                            ),
                           ),
                           Expanded(
                             flex: 10,
                             child: TextFormField(
-                              //controller: _userTextController3,
+                              enabled: false,
+                              controller: _usernameController,
                               keyboardType: TextInputType.phone,
                               style: TextStyle(
                                   fontSize: taille_libelle_champ+ad,
@@ -268,11 +359,12 @@ class _Inscription1State extends State<Inscription1> {
                                 validator: (String value){
                                   if(value.isEmpty){
                                     return 'Champ mot de passe vide !';
-                                  }else if(value.length>=7){
+                                  }else/* if(value.length>=7){
                                     _password = value;
                                     return null;
-                                  }else{
-                                    return 'Votre mot de passe doit avoir au moins 8 caractères!';
+                                  }else*/{
+                                    _password = value;
+                                    return null;
                                   }
                                 },
                                 decoration: InputDecoration.collapsed(
@@ -344,7 +436,6 @@ class _Inscription1State extends State<Inscription1> {
                                   }else{
                                     _verfiPassword = value;
                                     if(_verfiPassword == _password){
-                                      boolPassword = true;
                                       return null;
                                     }else{
                                       return 'Les mots de passe ne sont pas identiques';
@@ -391,24 +482,49 @@ class _Inscription1State extends State<Inscription1> {
                             });
                           }
                       ),
-                      Row(
-                        children: <Widget>[
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text("Accepter les conditions générales d'utilisation",style: TextStyle(
-                                  color: couleur_fond_bouton,
-                                  fontSize: taille_description_champ,
-                                  fontWeight: FontWeight.bold
-                              ),),
-                              Text("et la politique de confidentialité de SPRINT PAY",style: TextStyle(
-                                  color: couleur_description_champ,
-                                  fontSize: taille_description_champ,
-                                  fontWeight: FontWeight.normal
-                              ),),
-                            ],
-                          ),
-                        ],
+                      GestureDetector(
+                        onTap: (){
+                          FocusScopeNode currentFocus = FocusScope.of(context);
+                          if (!currentFocus.hasPrimaryFocus) {
+                            currentFocus.unfocus();
+                            FocusScope.of(context).requestFocus(new FocusNode());
+                          }
+                          if(urlPath!="") {
+                            print(urlPath);
+                            Navigator.push(context, PageTransition(type: PageTransitionType.fade,
+                                child: PdfViewPage(path: urlPath,))
+                            );
+                          }else{
+                            setState(() {
+                              getPdfFromUrl("https://sprint-pay.com/wp-content/uploads/2018/11/CGU-Afrique-CEMAC-%E2%80%93-Sprint-Pay-2018.pdf").then((f) {
+                                setState(() {
+                                  urlPath = f.path;
+                                  print("mon path: $urlPath");
+                                });
+                              });
+                            });
+                            Navigator.push(context, PageTransition(type: PageTransitionType.fade,
+                                child: PdfViewPage(path: urlPath,))
+                            );
+                          }
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text("Accepter les conditions générales d'utilisation",style: TextStyle(
+                                color: couleur_fond_bouton,
+                                fontSize: taille_description_champ,
+                                fontWeight: FontWeight.normal,
+                                fontStyle: FontStyle.italic
+                            ),),
+                            Text("et la politique de confidentialité de SPRINT PAY",style: TextStyle(
+                                color: couleur_fond_bouton,
+                                fontSize: taille_description_champ,
+                                fontWeight: FontWeight.normal,
+                                fontStyle: FontStyle.italic
+                            ),),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -453,36 +569,20 @@ class _Inscription1State extends State<Inscription1> {
 
                 GestureDetector(
                   onTap: () async {
-                    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation()));
                     if (_formKey.currentState.validate()) {
                       if(_check1 == true){
-                        if(boolFirstname==true && boolLastname==true && boolEmail==true && boolUsername==true && boolPassword==true) {
-                          Role role = new Role(
-                              idRole: 2,
-                              roleName: "ROLE_CUSTUMER"
-                          );
-                          var newPost = new Post(
-                              firstname: this._firstname,
-                              lastname: this._lastname,
-                              town:this._ville,
-                              birthday:this._birthday,
-                              country: this._country,
-                              email:this._email,
-                              //username: _username,
-                              password:this._password,
-                              userImage: null,
-                              role: role
-                          );
-                          //var body, var _header, String url, String _code, BuildContext context,GlobalKey<ScaffoldState> _scaffoldKey
-                          FutureBuilder(
-                              future: createPost(json.encode(newPost), _header, url, _code, context, _scaffoldKey),
-                              builder: (context, snapshot){
-                                if(snapshot.data!=null){
-
-                                }
-                                return Center(child: CircularProgressIndicator());
-                              });
-                        }
+                        this._reg();
+                        print(iso3);
+                        print(_username);
+                        print(_password);
+                        print(_url);
+                        var MemberTemp = new createMemberTemp(
+                          country: this.iso3,
+                          username: this._username,
+                          password: this._password
+                        );
+                        print(json.encode(MemberTemp));
+                        this.checkConnection(json.encode(MemberTemp));
                       }else{
                         showInSnackBar("Veuillez d'abord valider les conditions d'utilisation", _scaffoldKey);
                       }
@@ -499,7 +599,9 @@ class _Inscription1State extends State<Inscription1> {
                       ),
                       borderRadius: new BorderRadius.circular(10.0),
                     ),
-                    child: Center(child: new Text('Je m\'inscris', style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),)),
+                    child: Center(
+                        child: isLoding==false? new Text('Je m\'inscris', style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),):CupertinoActivityIndicator()
+                    ),
                   ),
                 ),
               ],
@@ -510,10 +612,8 @@ class _Inscription1State extends State<Inscription1> {
             child: GestureDetector(
               onTap: (){
                 setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
-                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
+                  showInSnackBar("Pas encore disponible", _scaffoldKey);
                 });
-                //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
               },
               child: Text('Contactez-nous',
                 style: TextStyle(
@@ -535,9 +635,123 @@ void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
       new SnackBar(content: new Text(value,style:
       TextStyle(
           color: Colors.white,
-          fontSize: taille_description_champ
+          fontSize: taille_champ+3
       ),
         textAlign: TextAlign.center,),
         backgroundColor: couleur_fond_bouton,
         duration: Duration(seconds: 5),));
 }
+
+class createMemberTemp{
+  final String country;
+  final String username;
+  final String password;
+
+  createMemberTemp({this.country, this.username, this.password});
+
+  createMemberTemp.fromJson(Map<String, dynamic> json)
+      : country = json['country'],
+        username = json['username'],
+        password = json['password'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "country": country,
+        "username": username,
+        "password": password,
+      };
+}
+
+class PdfViewPage extends StatefulWidget {
+  final String path;
+
+  const PdfViewPage({Key key, this.path}) : super(key: key);
+  @override
+  _PdfViewPageState createState() => _PdfViewPageState();
+}
+
+class _PdfViewPageState extends State<PdfViewPage> {
+
+  int _totalPages = 0, _currentPage = 0;
+  bool pdfReady = false;
+  PDFViewController _pdfViewController;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Conditions d'utilisation SprintPay", style: TextStyle(
+          fontSize: taille_description_champ+3,
+          color: couleur_fond_bouton
+        ),),
+        elevation: 0.0,
+        leading: GestureDetector(
+            onTap: (){
+              setState(() {
+                Navigator.pop(context);
+              });
+            },
+            child: Icon(Icons.arrow_back_ios,)),
+        iconTheme: new IconThemeData(color: couleur_fond_bouton),
+      ),
+      body: Stack(
+        children: <Widget>[
+          PDFView(
+              filePath: widget.path,
+            autoSpacing: true,
+            enableSwipe: true,
+            pageSnap: true,
+            swipeHorizontal: true,
+            onError: (e){
+                print(e);
+            },
+            onRender: (_pages){
+                setState(() {
+                  _totalPages = _pages;
+                  pdfReady = true;
+                });
+            },
+            onViewCreated: (PDFViewController vc){
+                _pdfViewController = vc;
+            },
+
+            onPageChanged: (int page, int total){
+                setState(() {
+
+                });
+            },
+            onPageError: (page, e){
+
+            },
+          ),
+          !pdfReady?Center(
+            child: CupertinoActivityIndicator(radius: 30,),):Offstage(
+          )
+        ]
+      ),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          _currentPage>0?FloatingActionButton.extended(
+            backgroundColor: orange_F,
+            label: Icon(Icons.arrow_back_ios),
+              onPressed: (){
+                _currentPage -= 1;
+                _pdfViewController.setPage(_currentPage);
+              },
+          ):Offstage(),
+
+          _currentPage<_totalPages?FloatingActionButton.extended(
+            backgroundColor: bleu_F,
+            label: Icon(Icons.arrow_forward_ios),
+            onPressed: (){
+              _currentPage += 1;
+              _pdfViewController.setPage(_currentPage);
+            },
+          ):Offstage(),
+        ],
+      ),
+    );
+  }
+}
+

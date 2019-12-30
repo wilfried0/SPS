@@ -1,4 +1,6 @@
+import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/connexion.dart';
@@ -22,57 +24,149 @@ class _ActivationState extends State<Activation> {
 
   _ActivationState();
   String phone;
-
   var _formKey = GlobalKey<FormState>();
-
-  String url, secretCode;
-  String  idUser, spsTransactionId;
-  String  code, _text1, _text2, text1, text2, text, textID, _text, iso="+237";
-  bool _enable;
-  var _userTextController = new TextEditingController();
+  String url, secretCode, idUser;
+  String  spsTransactionId;
+  String  code, text, textID, _text,_text1, iso="+237", _username;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
   int ad = 3;
-
-  var _header = {
-    "content-type": "application/json",
-    "accept": "application/json"
-  };
+  bool isLoding = false, isResend = false;
   var _formKey2 = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-      _enable = true;
-      idUser = "";
-      phone = "";
-      _text = "Veuillez renseigner le code d'activation envoyé à votre numéro de téléphone";
-      textID = "ID de l'utilisateur vide !";
-      _text1 = "Code d'activation vide !";
-      _text2 = 'Définir un code secret (4 caractères)';
-      text1 = "";
-      text2 = '';
-      text = 'Activation du compte';
+    this.lire();
+    url = '$base_url/member/activate';
+    phone = "";
+    code = "";
+    _text = "Veuillez renseigner le code d'activation envoyé à votre numéro de téléphone";
+    textID = "ID de l'utilisateur vide !";
+    _text1 = "Code d'activation vide !";
+    text = 'Activation du compte';
   }
 
-  @override
-  void dispose() {
-    _userTextController.dispose();
-    super.dispose();
-  }
-
-  Future<String> createPost(var body) async {
-    return await http.post(url, body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      if (statusCode < 200 || statusCode > 400 || json == null) {
-        print(statusCode);
-        throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        Post.fromJson(json.decode(response.body));
-        //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child:  Activer(_code)));
-      }
-      return response.body;
+  lire() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      idUser = prefs.getString("idUser");
+      _username = prefs.getString("username");
+      print(idUser);
     });
   }
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void checkConnection(int q) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      //print("Connected to Mobile");
+      if(q == 0) {
+        setState(() {
+          isLoding = true;
+        });
+        this.getUser();
+      }else {
+        setState(() {
+          isResend = true;
+        });
+        this.resendCode();
+      }
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
+      if(q == 0) {
+        setState(() {
+          isLoding = true;
+        });
+        this.getUser();
+      }else{
+        setState(() {
+          isResend = true;
+        });
+        this.resendCode();
+      }
+    } else {
+      _ackAlert(context);
+    }
+  }
+
+  Future<Login> getUser() async {
+    var headers = {
+      "Accept": "application/json",
+      "content-type": "application/json"
+    };
+    var _url = "$url/$idUser/$code";
+    print(_url);
+    http.Response response = await http.get(_url, headers: headers);
+    final int statusCode = response.statusCode;
+    print(statusCode);
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      print(responseJson);
+      setState(() {
+        isLoding = false;
+      });
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Inscrip()));
+    }else{
+      setState(() {
+        isLoding = false;
+      });
+      showInSnackBar("veuillez vérifier votre code d'activation!");
+      //throw new Exception(response.body);
+    }
+    return null;
+  }
+
+  Future<Login> resendCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _username = prefs.getString("username");
+      print(_username);
+    });
+    var headers = {
+      "Accept": "application/json",
+      "content-type": "application/json"
+    };
+    var _url = "$base_url/member/resendCode/$_username";
+    print("mon url $_url");
+    http.Response response = await http.get(_url, headers: headers);
+    final int statusCode = response.statusCode;
+    print(statusCode);
+    print(response.body);
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      print(responseJson);
+      setState(() {
+        isResend = false;
+      });
+    }else{
+      setState(() {
+        isResend = false;
+      });
+      showInSnackBar("veuillez vérifier votre code d'activation!");
+      //throw new Exception(response.body);
+    }
+    return null;
+  }
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final espace = (MediaQuery.of(context).size.height - 533.3333333333334)<0?0.0:MediaQuery.of(context).size.height - 533.3333333333334;
@@ -134,14 +228,11 @@ class _ActivationState extends State<Activation> {
                   ),
 
                   Padding(
-                    padding: EdgeInsets.only(top: _enable==false?marge_apres_titre:0),),
-
-                  Padding(
                     padding: EdgeInsets.only(left:20.0, right: 20.0),
                     child: new Text(_text,
                       style: TextStyle(
-                          color: couleur_decription_page,
-                          fontSize: taille_description_champ+ad,
+                        color: couleur_decription_page,
+                        fontSize: taille_description_champ+ad,
                       ),),
                   ),
 
@@ -179,10 +270,11 @@ class _ActivationState extends State<Activation> {
                           new Expanded(
                             flex:10,
                             child: new TextFormField(
+                              //controller: _codeTextController,
                               keyboardType: TextInputType.number,
                               style: TextStyle(
-                                  color: couleur_libelle_champ,
-                                  fontSize: taille_champ+ad,
+                                color: couleur_libelle_champ,
+                                fontSize: taille_champ+ad,
                               ),
                               validator: (String value){
                                 if(value.isEmpty){
@@ -206,7 +298,9 @@ class _ActivationState extends State<Activation> {
                     padding: EdgeInsets.only(top: pas/2),
                     child: new GestureDetector(
                       onTap: () {
-                        Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Inscrip()));
+                        if(_formKey.currentState.validate()) {
+                          checkConnection(0);
+                        }
                       },
                       child: new Container(
                         height: hauteur_champ,
@@ -219,7 +313,10 @@ class _ActivationState extends State<Activation> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: Center(child: new Text("Activer mon compte", style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),)),
+                        child: Center(
+                            child:isLoding==false? new Text("Activer mon compte", style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),):
+                                CupertinoActivityIndicator()
+                        ),
                       ),
                     ),
                   ),
@@ -229,10 +326,8 @@ class _ActivationState extends State<Activation> {
                     child: GestureDetector(
                       onTap: (){
                         setState(() {
-                          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
-                          //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
+                          showInSnackBar("Pas encore disponible");
                         });
-                        //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
                       },
                       child: Text('Contactez-nous',
                         style: TextStyle(
@@ -243,6 +338,38 @@ class _ActivationState extends State<Activation> {
                       ),
                     ),
                   ),
+
+                  Padding(
+                    padding: EdgeInsets.only(top:20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text('Code non reçu ? ',
+                          style: TextStyle(
+                              color: couleur_libelle_champ,
+                              fontSize: taille_champ+ad,
+                              fontWeight: FontWeight.normal
+                          ),textAlign: TextAlign.center,
+                        ),
+
+                        GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              checkConnection(1);
+                            });
+                          },
+                          child:isResend == false? Text('Redemander le code',
+                            style: TextStyle(
+                                color: couleur_fond_bouton,
+                                fontSize: taille_champ+ad,
+                                fontWeight: FontWeight.bold
+                            ),textAlign: TextAlign.center,
+                          ):CupertinoActivityIndicator(),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 ],
               ),
             ),
@@ -258,7 +385,7 @@ class _ActivationState extends State<Activation> {
         new SnackBar(content: new Text(value,style:
         TextStyle(
             color: Colors.white,
-            fontSize: taille_description_champ
+            fontSize: taille_champ+3
         ),
           textAlign: TextAlign.center,),
           backgroundColor: couleur_fond_bouton,
@@ -304,16 +431,16 @@ class _ActivationState extends State<Activation> {
                       child: TextFormField(
                         keyboardType: TextInputType.number,
                         style: TextStyle(
-                            fontSize: taille_libelle_champ,
-                            color: couleur_libelle_champ,
+                          fontSize: taille_libelle_champ,
+                          color: couleur_libelle_champ,
                         ),
                         validator: (String value){
-                            if(value.isEmpty){
-                              return "Téléphone vide!";
-                            }else{
-                              phone = value;
-                              return null;
-                            }
+                          if(value.isEmpty){
+                            return "Téléphone vide!";
+                          }else{
+                            phone = value;
+                            return null;
+                          }
                         },
                         decoration: InputDecoration.collapsed(
                           hintText: 'téléphone',
@@ -336,23 +463,22 @@ class _ActivationState extends State<Activation> {
                 onPressed: () async {
                   if(_formKey2.currentState.validate()) {
                     String tel = "${iso.substring(1, iso.length)}$phone";
-                    url = "$base_url/user/Auth/resendCode/$tel";
+                    url = "$base_url/member/user/Auth/resendCode/$tel";
                     var response = await http.get(url);
                     print(url);
                     print(response.body);
-                      if(response.statusCode == 200){
-                        setState(() {
-                          //idUser = response.body.toString().split(',')[4].split(':')[1].substring(0, response.body.toString().split(',')[4].split(':')[1].length-2);
-                          print('idUser $idUser');
-                          _userTextController.text = idUser;
-                        });
-                        Navigator.of(context).pop();
-                      }else{
-                        Navigator.of(context).pop();
-                        setState(() {
-                          showInSnackBar(response.body);
-                        });
-                      }
+                    if(response.statusCode == 200){
+                      setState(() {
+                        //idUser = response.body.toString().split(',')[4].split(':')[1].substring(0, response.body.toString().split(',')[4].split(':')[1].length-2);
+                        print('idUser $idUser');
+                      });
+                      Navigator.of(context).pop();
+                    }else{
+                      Navigator.of(context).pop();
+                      setState(() {
+                        showInSnackBar(response.body);
+                      });
+                    }
                   }
                 },
               ),

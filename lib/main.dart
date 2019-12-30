@@ -1,38 +1,47 @@
 import 'dart:async';
-import 'package:back_button_interceptor/back_button_interceptor.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:services/accueil.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:services/accueil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'auth/connexion.dart';
 import 'composants/components.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown
-  ]);
-
-  runApp(new MaterialApp(
-    title: '',
-    theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-    debugShowCheckedModeBanner: false,
-    routes: <String, WidgetBuilder>{
-      "/connexion": (BuildContext context) =>new Connexion(),
-      "/accueil": (BuildContext context) =>new Accueil()
-    },
-    /*localizationsDelegates: [
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((_) {
+    runApp(new MaterialApp(
+      title: '',
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
+      debugShowCheckedModeBanner: false,
+    /*routes: <String, WidgetBuilder>{
+        "/connexion": (BuildContext context) =>new Connexion(),
+        "/accueil": (BuildContext context) =>new Accueil()
+      },
+     localizationsDelegates: [
+      // ... app-specific localization delegate[s] here
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: [
-      const Locale('en', ''),
-      const Locale('fr', ''),
-    ],*/
-    home: SplashScreen(),
-  ));
+      const Locale('en'), // English
+      const Locale('fr'), // French
+    ],
+    localeResolutionCallback: (locale, supportedLocales){
+      for(var supportedLocale in supportedLocales){
+        if(supportedLocale.languageCode == locale.languageCode && supportedLocale.countryCode == locale.countryCode){
+          return supportedLocale;
+        }
+      }
+      return supportedLocales.first;
+    },*/
+      home: SplashScreen(),
+    ));
+  });
+
 }
 
 class SplashScreen extends StatefulWidget {
@@ -42,29 +51,14 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  String _token;
   String test;
 
   @override
   void initState(){
     super.initState();
-    BackButtonInterceptor.add(myInterceptor);
-    ///
-    /// Let's save a pointer to this method, should the user wants to change its language
-    /// We would then call: applic.onLocaleChanged(new Locale('en',''));
-    ///
     this.lire("first");
-    //applic.onLocaleChanged = onLocaleChange;
     Timer(Duration(seconds: 5), onDoneLoading);
   }
-
-  bool myInterceptor(bool stopDefaultButtonEvent) {
-    Navigator.pop(context);
-    //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Cagnotte('')));
-    //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(''), oldWidget: SplashScreen()));
-    return true;
-  }
-
 
   @override
   Widget build(BuildContext context){
@@ -80,17 +74,9 @@ class _SplashScreenState extends State<SplashScreen> {
             child: new Padding(
               padding: EdgeInsets.only(top: 150.0),
               child: Theme(
-                  data: Theme.of(context).copyWith(accentColor: Colors.white),
+                  data: Theme.of(context).copyWith(accentColor: couleur_fond_bouton),
                   child: Center(
-                      child: Container(
-                          height: 50,
-                          width: 50,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: couleur_fond_bouton,
-                          ),
-                          child: CupertinoActivityIndicator()
-                      )
+                      child: CupertinoActivityIndicator(radius: 30,)
                   )
               ),//new CircularProgressIndicator(),
             ),
@@ -101,7 +87,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   onDoneLoading() async {
-    test == 'true'?Navigator.of(context).pushNamed("/accueil"):Navigator.of(context).pushNamed("/connexion");
+    if(test == 'true'){
+      Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Accueil()));
+    }else{
+      Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
+    }
+    //Navigator.of(context).pushNamed("/accueil"):Navigator.of(context).pushNamed("/connexion");
   }
 
   lire(String v) async {

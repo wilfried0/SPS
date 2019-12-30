@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:page_transition/page_transition.dart';
+import 'package:services/auth/connexion.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 // ignore: non_constant_identifier_names
@@ -115,8 +118,9 @@ final marge_libelle_champ = 5.0;
 // ignore: non_constant_identifier_names
 double marge_champ_libelle = 20.0;
 // ignore: non_constant_identifier_names
-final base_url = "http://74.208.183.205:8086/corebanking/rest/member";//"http://192.168.45.145:8080/negprod/api";
-final baseUrl = "http://serveless-spc-app.s3-website.eu-west-3.amazonaws.com/detailcagnottepart";
+final base_url = "http://74.208.183.205:8086/corebanking/rest";
+//final baseUrl = "http://74.208.183.205:8086/SpAuthentication/contacts";//"http://192.168.45.145:8080/negprod/api";
+final baseUrl = "http://74.208.183.205:7086/paymentcore/rest/users/contact";
 
 bool search = false;
 
@@ -131,10 +135,13 @@ String reversed(String str){
 
 String getMillis(String amount){
   String reste=amount.split('.')[1];
+  if(reste.length>2){
+    reste = reste.substring(0, 2);
+  }
   amount = reversed(amount.split('.')[0]);
   String nombre="";
   if(amount.length <= 3){
-    return reversed(amount);
+    return reversed(amount)+','+reste;
   }else
   if(amount.length == 4){
     for(int i=amount.length-1;i>=0;i--){
@@ -157,6 +164,8 @@ String getMillis(String amount){
   return nombre.toString()+','+reste;
 }
 
+
+
 String values;
 Future<void> getAvatar(String _token) async {
   var response = await http.get(Uri.encodeFull("$base_url/user/infosConnectUser"), headers: {"Accept": "application/json", "Authorization": "Bearer $_token"},);
@@ -164,6 +173,43 @@ Future<void> getAvatar(String _token) async {
   values = "${info['firstname']} ${info['lastname']}^${info['town']}";
 }
 
+Future<String> getMonSolde(GlobalKey<ScaffoldState> _scaffoldKey, String _username, String _password) async {
+  final prefs = await SharedPreferences.getInstance();
+  _username = prefs.getString("username");
+  _password = prefs.getString("password");
+  String sold = "$base_url/transaction/getSoldeUser";
+  var bytes = utf8.encode('$_username:$_password');
+  var credentials = base64.encode(bytes);
+  var headers = {
+    "Accept": "application/json",
+    "Authorization": "Basic $credentials"
+  };
+  var response = await http.get(Uri.encodeFull(sold), headers: headers,);
+  if(response.statusCode == 200){
+    //print(json.decode(response.body));
+    //var responseJson = json.decode(utf8.decode(response.bodyBytes));
+    //print(responseJson);
+    var responseJson = json.decode(response.body);
+    print(responseJson);
+      return response.body;
+  } else {
+    showInSnackBar(json.decode(utf8.decode(response.bodyBytes)), _scaffoldKey);
+    return null;
+  }
+}
+
+
+void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
+  _scaffoldKey.currentState.showSnackBar(
+      new SnackBar(content: new Text(value,style:
+      TextStyle(
+          color: Colors.white,
+          fontSize: taille_description_champ+3
+      ),
+        textAlign: TextAlign.center,),
+        backgroundColor: couleur_fond_bouton,
+        duration: Duration(seconds: 5),));
+}
 
 final barreBottom = BottomAppBar(
   child: Container(
@@ -203,7 +249,7 @@ final barreTop = Row(
   ],
 );
 
-bottomNavigate(BuildContext context, int enlev) {
+bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffoldKey) {
   return new Theme(
     data: Theme.of(context).copyWith(
         canvasColor: bleu_F,
@@ -222,27 +268,7 @@ bottomNavigate(BuildContext context, int enlev) {
           BottomNavigationBarItem(
             icon: GestureDetector(
               onTap:(){
-              },
-              child: Container(
-                  height: 20,
-                  width: 20,
-                  child: new Icon(Icons.person,
-                    color: orange_F,)),//Image.asset('images/creer.png')),
-            ),
-            title: GestureDetector(
-              onTap:(){
-              },
-              child: Text("Accueil",
-                style: TextStyle(
-                    fontSize: taille_text_bouton-enlev,
-                    fontWeight: FontWeight.bold,
-                  color: orange_F,
-                ),),
-            ),
-          ),
-          BottomNavigationBarItem(
-            icon: GestureDetector(
-              onTap:(){
+                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
               },
               child: Container(
                   height: 20,
@@ -252,17 +278,22 @@ bottomNavigate(BuildContext context, int enlev) {
             ),
             title: GestureDetector(
               onTap:(){
+                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
               },
-              child: Text('Recommander à un ami',
-                style: TextStyle(
-                    fontSize: taille_text_bouton-enlev,
-                    fontWeight: FontWeight.bold
-                ),),
+              child: Padding(
+                padding: EdgeInsets.only(left: 20),
+                child: Text('Recommander à un ami',
+                  style: TextStyle(
+                      fontSize: taille_text_bouton,
+                      fontWeight: FontWeight.bold
+                  ),),
+              ),
             ),
           ),
           BottomNavigationBarItem(
             icon: GestureDetector(
               onTap:(){
+                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
               },
               child: Container(
                   height: 20,
@@ -272,10 +303,11 @@ bottomNavigate(BuildContext context, int enlev) {
             ),
             title: GestureDetector(
               onTap:(){
+                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
               },
               child: Text('Service client',
                 style: TextStyle(
-                    fontSize: taille_text_bouton-enlev,
+                    fontSize: taille_text_bouton,
                     fontWeight: FontWeight.bold
                 ),),
             ),
@@ -283,8 +315,7 @@ bottomNavigate(BuildContext context, int enlev) {
           BottomNavigationBarItem(
             icon: GestureDetector(
               onTap:(){
-                print("hello");
-                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: news1));
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
               },
               child: Container(
                   height: 20,
@@ -293,12 +324,11 @@ bottomNavigate(BuildContext context, int enlev) {
             ),
             title: GestureDetector(
               onTap:(){
-                print("hello");
-                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: news1));
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
               },
               child: Text('Déconnexion',
                 style: TextStyle(
-                    fontSize: taille_text_bouton-enlev,
+                    fontSize: taille_text_bouton,
                     fontWeight: FontWeight.bold
                 ),),
             ),
@@ -552,4 +582,156 @@ Widget _Drawer(BuildContext context){
         ],
       )
   );
+}
+
+class getCommission {
+  final String typeOperation;
+  final String country;
+  final int amount;
+  final String deviseLocale;
+
+
+  getCommission({this.typeOperation, this.country, this.amount, this.deviseLocale});
+
+  getCommission.fromJson(Map<String, dynamic> json)
+      :typeOperation = json['typeOperation'],
+        country = json['country'],
+        amount = json['amount'],
+        deviseLocale = json['deviseLocale'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "typeOperation": typeOperation,
+        "country": country,
+        "amount": amount,
+        "deviseLocale": deviseLocale,
+      };
+}
+
+
+class walletTrans {
+  final String to;
+  final String description;
+  final int amount;
+  final String deviseLocale;
+  final String toFirstname;
+  final String toCountryCode;
+
+
+  walletTrans({this.to, this.amount, this.description, this.deviseLocale, this.toFirstname, this.toCountryCode});
+
+  walletTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        toFirstname = json['toFirstname'],
+        toCountryCode = json['toCountryCode'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "toFirstname": toFirstname,
+        "toCountryCode": toCountryCode,
+      };
+}
+
+
+class orangeTrans {
+  final String to;
+  final String description;
+  final int amount;
+  final String deviseLocale;
+  final String successUrl;
+  final String failureUrl;
+
+
+  orangeTrans({this.to, this.amount, this.description, this.deviseLocale, this.successUrl, this.failureUrl});
+
+  orangeTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        successUrl = json['deviseLocale'],
+        failureUrl = json['failureUrl'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "successUrl": successUrl,
+        "failureUrl": failureUrl,
+      };
+}
+
+class wariTrans {
+  final String to;
+  final String description;
+  final int amount;
+  final String deviseLocale;
+  final String toFirstname;
+  final String toLastname;
+  final String toCountryCode;
+  final String toAdress;
+  final String fromCountryISO;
+  final String fromCardType;
+  final String fromCardNumber;
+  final String fromCardIssuingDate;
+  final String fromCardExpirationDate;
+
+
+  wariTrans({this.to, this.amount, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.fromCardExpirationDate, this.fromCardIssuingDate, this.fromCardNumber, this.fromCardType, this.fromCountryISO, this.toAdress});
+
+  wariTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        toFirstname = json['toFirstname'],
+        toCountryCode = json['toCountryCode'],
+        toLastname = json['toLastname'],
+        toAdress = json['toAdress'],
+        fromCountryISO = json['fromCountryISO'],
+        fromCardType = json['fromCardType'],
+        fromCardNumber = json['fromCardNumber'],
+        fromCardIssuingDate = json['fromCardIssuingDate'],
+        fromCardExpirationDate = json['fromCardExpirationDate'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "toFirstname": toFirstname,
+        "toCountryCode": toCountryCode,
+        "toLastname": toLastname,
+        "toAdress": toAdress,
+        "fromCountryISO": fromCountryISO,
+        "fromCardType": fromCardType,
+        "fromCardNumber": fromCardNumber,
+        "fromCardIssuingDate": fromCardIssuingDate,
+        "fromCardExpirationDate": fromCardExpirationDate,
+      };
+}
+
+
+class contact {
+  final String username;
+
+  contact({this.username});
+
+  contact.fromJson(Map<String, dynamic> json)
+      :username = json['username'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "username": username
+      };
 }

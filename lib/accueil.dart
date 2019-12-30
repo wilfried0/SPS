@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:services/second.dart';
-import 'package:services/second.dart' as prefix0;
-import 'package:services/third.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'auth/connexion.dart';
@@ -113,7 +110,7 @@ class _AccueilState extends State<Accueil> {
             ),
             Padding(
               padding: EdgeInsets.only(left: 20, right: 20, top: 20),
-              child: Text("Sprint Pay community est le service pour collecter et gérer de l'argent à plusieurs en toutes simplicité.",style: TextStyle(
+              child: Text("Sprint Pay community est le service pour collecter et gérer de l'argent à plusieurs en toute simplicité.",style: TextStyle(
                   color: Colors.white,
                   fontSize: taille_champ+ad-2
               ),textAlign: TextAlign.center,),
@@ -764,6 +761,7 @@ class _AccueilState extends State<Accueil> {
                         padding: EdgeInsets.only(right: 10),
                         child: GestureDetector(
                           onTap: (){
+                            this._stock("first", "false");
                             Navigator.push(context, PageTransition(type: PageTransitionType.rightToLeft, child: Connexion()));
                           },
                           child: Container(
