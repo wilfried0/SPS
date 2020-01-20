@@ -1,14 +1,17 @@
-import 'package:carousel_slider/carousel_slider.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/composants/services.dart';
 import 'package:services/paiement/encaisser1.dart';
+import 'package:services/paiement/encaisser2.dart';
 import 'package:services/paiement/historique.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:services/paiement/retrait1.dart';
+import 'package:services/paiement/retrait2.dart';
 import 'dart:async';
 
 import 'package:services/paiement/transfert3.dart';
@@ -28,18 +31,63 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   String _code;
   Future<Login> post;
   int currentPage = 0, choix;
-  String _token, solde, idUser, userImage, deviseLocale, _fromCountry, _toCountry, _serviceName, _name, _amount, _fees, _status, _nature, _transactionid, _date, _payst, _paysf;
-  bool isLoding = false, loadImage = false;
+  String solde, idUser, _lieu, fromMemeber, codeIso2, nomPays, iso, namePays, _url, toMember, userImage, deviseLocale, _serviceName, _name, _amount, _fees, _status, _transactionid, _date, _payst, _paysf, _username;
+  bool isLoding = false, replay = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb;
   int flex4, flex6, taille, enlev, rest, enlev1, enl;
-  double haut, _taill,topi, bottomsolde,sold,topo22,top33, top34, top1, top, top2, top3,top4, topo1, topo2, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext;
+  double haut, topi, bottomsolde,sold,topo22,top33, top34, top1, top, top2, top3,top4, topo1, topo2, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext;
   final navigatorKey = GlobalKey<NavigatorState>();
+  List data;
 
   @override
   void initState(){
     super.initState();
     this.read();
+    this.getTrans();
+  }
+
+
+  Future<bool>loadMap(int q) async {
+    final prefs = await SharedPreferences.getInstance();
+    var jsonText = await rootBundle.loadString('images/map.json');
+    this.data = json.decode(jsonText);
+      for(var i=0; i<data.length; i++){
+        if(q == 0){
+          print("mes data0000000 ${data.toString()}");
+          if(_paysf.length>2){
+            String iso3 = data[i]['code3'];
+            if(iso3 == "$_payst"){
+              nomPays = data[i]['name'];
+              codeIso2 = data[i]['code'];
+              prefs.setString("codeIso2", codeIso2);
+              prefs.setString("nomPays", nomPays);
+              print("codeIso2 $codeIso2");
+              break;
+            }
+          }else{
+            String iso2 = data[i]['code'];
+            if(iso2 == "$_payst"){
+              nomPays = data[i]['name'];
+              codeIso2 = data[i]['code'];
+              prefs.setString("codeIso2", codeIso2);
+              prefs.setString("nomPays", nomPays);
+
+              prefs.setString("payst", data[i]['code3'].toString());
+              break;
+            }
+          }
+        }else{
+          print("mes data111111111 ${data.toString()}");
+          String iso2 = data[i]['code'];
+          if(iso == iso2){
+            namePays = data[i]['name'];
+            prefs.setString("fromPaysName", namePays);
+            break;
+          }
+        }
+      }
+    return true;
   }
 
 
@@ -47,18 +95,76 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _payst = prefs.getString("payst");
+      _username = prefs.getString("username");
       _paysf = prefs.getString("paysf");
       _serviceName = prefs.getString("serviceName");
       _name = prefs.getString("named");
       _amount = prefs.getString("montant");
       _fees = prefs.getString("fees");
       _status = prefs.getString("status");
-      _nature = prefs.getString("nature");
       _transactionid = prefs.getString("transactionid");
       _date = prefs.getString("date");
-      print("la _date: $_date");
       deviseLocale = prefs.getString("deviseLocale");
+      _url = "$base_url/transaction/getTransactionById/$deviseLocale/$_transactionid";
     });
+    //this.loadMap(0);
+  }
+
+  save() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("lieu", _lieu);
+  }
+
+  Future<void> getTrans() async {
+    final prefs = await SharedPreferences.getInstance();
+    String _password = prefs.getString("password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials"
+    };
+    var response = await http.get(Uri.encodeFull("$_url"), headers: headers,);
+    print(_url);
+    if(response.statusCode == 200){
+      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        toMember = responseJson['toMember'];
+      });
+      prefs.setString("to", toMember);
+    }
+  }
+
+  Future<void> getTransactionById() async {
+    final prefs = await SharedPreferences.getInstance();
+    String _password = prefs.getString("password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials"
+    };
+    var response = await http.get(Uri.encodeFull("$_url"), headers: headers,);
+    print(_url);
+    if(response.statusCode == 200){
+      print(response.body);
+      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      prefs.setString("to", responseJson['toMember']);
+      toMember = responseJson['toMember'].toString();
+      prefs.setString("adresse", responseJson['toAdress']);
+      prefs.setString("fromCardType", responseJson['fromCardType']);
+      prefs.setString("fromCardNumber", responseJson['fromCardNumber']);
+      prefs.setString("fromCardNumber", responseJson['fromCardNumber']);
+      if(responseJson['toFirstName'] == "." || responseJson['toFirstName'] == null || responseJson['toFirstName'] == "null"){
+        prefs.setString("nomd",responseJson['toLastName']);
+      }else
+      prefs.setString("nomd", responseJson['toFirstName'] + responseJson['toLastName']);
+      prefs.setString("fromCardIssuingDate", responseJson['fromCardIssuingDate'].toString().replaceAll("-", "/"));
+      prefs.setString("fromCardExpirationDate", responseJson['fromCardExpirationDate'].toString().replaceAll("-", "/"));
+      prefs.setString("fromPays", "flags/${responseJson['fromCountryISO'].toString().toLowerCase()}.png");
+      iso = responseJson['fromCountryISO'].toString();
+      fromMemeber = responseJson['fromMemeber'];
+    }
   }
 
   String getMonth(String date){
@@ -80,6 +186,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
     return "${date.split("-")[0]} $mois ${date.split("-")[2]}";
   }
 
+
   String getStatus(String status){
     String _status;
     if(status == "PROCESSED")
@@ -91,32 +198,90 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
 
   String getNature(String nature){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU"){
       _nature = "Transfert d'argent";
     }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
       _nature = "Recharge d'argent";
-    }else if(nature == "WALLET_TO_MOMO" || nature == "WALLET_TO_OM"){
+    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE"){
       _nature = "Retrait d'argent";
     }
     return _nature;
   }
 
   String getMoyen(String nature){
-    String _nature = "";
+    String _natures = "";
     if(nature == "WALLET_TO_WALLET"){
-      _nature = "Wallet SprintPay";
-    }else if(nature == "EU_TO_WALLET"){
-      _nature = "Express Union";
+      _natures = "Wallet SprintPay";
+      _code = "";
+      _lieu = "0";
+      this.getTransactionById();
+    }else if(nature == "WALLET_TO_EU"){//Ici _lieu ==2(Cashin) || _lieu == 1(SendMoney)
+      _natures = "Wallet -> Express Union";
+      this.getTransactionById();
+      print("il esixte: $fromMemeber");
+      if(fromMemeber == null){
+        _lieu = "1";
+      }else{
+        _lieu = "2";
+      }
+      _code = "";
+      //this.loadMap(0);
     }else if(nature == "CARD_TO_WALLET"){
-      _nature = "Carte bancaire";
-    }else if(nature == "OM_TO_WALLET" || nature == "WALLET_TO_OM"){
-      _nature = "Orange Money";
-    }else if(nature == "MOMO_TO_WALLET" || nature == "WALLET_TO_MOMO"){
-      _nature = "MTN Mobile Money";
+      _natures = "Carte bancaire -> Wallet";
+      _code = "2";
+      _lieu = "-1";
+    }else if(nature == "OM_TO_WALLET"){
+      _natures = "ORANGE Money -> Wallet";
+      _code = "1";
+      _lieu = "-1";
+    }else if(nature == "MOMO_TO_WALLET"){
+      _natures = "MTN Mobile Money -> Wallet";
+      _code = "0";
+      _lieu = "-1";
+    }else if(nature == "WALLET_TO_MTN"){
+      _natures = "Wallet -> MTN Mobile Money";
+      _code = "0";
+      _lieu = "-2";
+    }else if(nature == "WALLET_TO_OM"){
+      _natures = "Wallet -> ORANGE Money";
+      _code = "1";
+      _lieu = "-2";
     }else if(nature == "WALLET_TO_WARI"){
-      _nature = "Wari";
+      _natures = "Wallet -> Wari";
+      _code = "";
+      _lieu = "3";
+      this.getTransactionById();
+      //this.loadMap(0);
     }
-    return _nature;
+    return _natures;
+  }
+
+  getRoute(String code, String lieu) {
+    //lieu == -1 pour la rechage (Encaisser)
+    //lieu == -2 pour le retrait (Encaisser)
+    if(code == "0" && lieu == "-1"){
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser2('$code')));
+    }else if(code == "1" && lieu == "-1"){
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser2('$code')));
+    }else if(code == "2" && lieu == "-1"){
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser2('$code')));
+    }else if(code == "0" && lieu == "-2"){
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait2('$code')));
+    }else if(code == "1" && lieu == "-2"){
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait2('$code')));
+    }else if(code == "" && lieu == "0"){
+      //showInSnackBar("Les transferts ne sont pas encore disponible!");
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
+    }else if(code == "" && lieu == "1"){
+      //showInSnackBar("Les transferts ne sont pas encore disponible!");
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
+    }else if(code == "" && lieu == "2"){
+      //showInSnackBar("Les transferts ne sont pas encore disponible!");
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
+    }else if(code == "" && lieu == "3"){
+      //showInSnackBar("Les transferts ne sont pas encore disponible!");
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
+    }
   }
 
 
@@ -125,7 +290,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
         new SnackBar(content: new Text(value,style:
         TextStyle(
             color: Colors.white,
-            fontSize: taille_description_champ
+            fontSize: taille_champ+3
         ),
           textAlign: TextAlign.center,),
           backgroundColor: couleur_fond_bouton,
@@ -143,16 +308,11 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
-    double fromHeight, leftcagnotte, rightcagnotte, topcagnotte, bottomcagnotte;
+    double fromHeight;
     if(_large<=320){
       fromHeight = 120;
-      leftcagnotte = 20;
-      rightcagnotte = 30;
-      topcagnotte = 50; //espace entre mes tabs et le slider
-      bottomcagnotte = 30;
       bottomsolde = 400;
       sold = 330;
-      _taill = taille_description_champ-2;
       top1 = 65;
       top = 100;
       topo1 = 133;
@@ -168,13 +328,8 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       enl = 2;
     }else if(_large>320 && _large<=360 && _haut==738){
       fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 50;
       bottomsolde = 400;
       sold = 330;
-      _taill = taille_description_champ-1;
       top1 = 75;
       top = 100;
       topo1 = 172;
@@ -190,13 +345,8 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       enl = 2;
     }else if(_large>320 && _large<=360){
       fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 50;
       bottomsolde = 400;
       sold = 330;
-      _taill = taille_description_champ-1;
       top1 = 75;
       top = 100;
       topo1 = 155;
@@ -212,13 +362,8 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       enl = 2;
     }else if(_large>411 && _large<412){
       fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 40;
       bottomsolde = 400;
       sold = 330;
-      _taill = taille_description_champ;
       top1 = 75;
       top = 100;
       topo1 = 172;
@@ -234,13 +379,8 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       enl = 2;
     }else if(_large>360){
       fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 50;
       bottomsolde = 400;
       sold = 330;
-      _taill = taille_description_champ;
       top1 = 75;
       top = 100;
       topo1 = 172;
@@ -409,21 +549,24 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: <Widget>[
-                                    Text(_amount==null?"":"${getMillis(_amount)} $deviseLocale",
+                                    Text(_amount==null?"":"${getMillis(double.parse(_amount).toString())} $deviseLocale",
                                       style: TextStyle(
                                           color: Colors.green,
                                           fontSize: taille_champ+3,
                                           fontWeight: FontWeight.bold
                                       ),),
-                                    /*GestureDetector(
+                                    GestureDetector(
                                       onTap: (){
-                                        navigatorKey.currentState.pushNamed("/transfert");
+                                        this.loadMap(0);
+                                        if(_lieu == "3") this.loadMap(1);
+                                        save();
+                                        getRoute(_code, _lieu);
                                       },
                                       child: Padding(
-                                        padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2-10),
-                                        child: Icon(Icons.cached, color: orange_F,size: 30,),
+                                        padding: EdgeInsets.only(left: MediaQuery.of(context).size.width/2-80),
+                                        child:replay == false? Icon(Icons.cached, color: orange_F,size: 30,):CupertinoActivityIndicator(),
                                       ),
-                                    )*/
+                                    )
                                   ],
                                 ),
                                 Padding(
@@ -572,7 +715,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
-                            Text(_name==null||_name=="null"?"": _name.length<15?_name:_name.substring(0, 12)+"...", style: TextStyle(
+                            Text(_serviceName == "EU_TO_WALLET" || _serviceName == "CARD_TO_WALLET" || _serviceName == "OM_TO_WALLET" || _serviceName == "MOMO_TO_WALLET"?"$_username":_serviceName == "WALLET_TO_WARI"?getDestinataireWari():_name==null||_name=="null"?"": _name.length<15?_name:_name.substring(0, 12)+"...", style: TextStyle(
                                 color: couleur_fond_bouton,
                                 fontSize: taille_champ+2,
                                 fontWeight: FontWeight.bold
@@ -614,7 +757,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         padding: EdgeInsets.only(right: 20),
                         child: Align(
                           alignment: Alignment.topRight,
-                          child: Text(_amount==null?"":"${getMillis(_amount.toString())} $deviseLocale", style: TextStyle(
+                          child: Text(_amount==null?"":"${getMillis(double.parse(_amount).toString())} $deviseLocale", style: TextStyle(
                               color: couleur_fond_bouton,
                               fontSize: taille_champ+2,
                               fontWeight: FontWeight.bold
@@ -740,7 +883,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         child: Align(
                           alignment: Alignment.topRight,
                           child: Text(getStatus(_status), style: TextStyle(
-                              color: Colors.green,
+                              color:_status == "PROCESSED"? Colors.green:Colors.red,
                               fontSize: taille_champ+2,
                             fontWeight: FontWeight.bold
                           ),),
@@ -766,4 +909,12 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       ),
     );
   }
+  String getDestinataireWari(){
+    if(toMember==null){
+      return "...";
+    }else{
+      return toMember;
+    }
+  }
+  //_serviceName == "WALLET_TO_WARI"?toMember==null?Container():toMember
 }

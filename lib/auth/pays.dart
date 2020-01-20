@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';

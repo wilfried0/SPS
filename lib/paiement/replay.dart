@@ -5,8 +5,6 @@ import 'package:services/auth/connexion.dart';
 
 class Replay extends StatelessWidget {
   final navigatorKey = GlobalKey<NavigatorState>();
-  final _pageController = PageController();
-  final _currentPageNotifier = ValueNotifier<int>(0);
   String img = "images/community.jpg";
   int index = 1;
 
@@ -93,43 +91,6 @@ class Replay extends StatelessWidget {
                 ]
             )
         ),
-      ),
-    );
-  }
-
-  _buildPageView() {
-    return Expanded(
-      child: PageView.builder(
-        itemCount: 3,
-        controller: _pageController,
-        itemBuilder: (BuildContext context, int index) {
-          switch(index){
-            case 0:img="images/communiti.jpg";break;
-            case 1:img="images/markertplac.jpg";break;
-            case 2:img="images/service.jpg";break;
-          }
-          return Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("$img"),
-                fit: BoxFit.cover,
-              ),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      colors: [
-                        Colors.black.withOpacity(.0),//0.3
-                        Colors.black.withOpacity(.0),//0.3
-                      ]
-                  )
-              ),
-            ),
-          );
-        },
-        onPageChanged: (int index) {
-          _currentPageNotifier.value = index;
-        },
       ),
     );
   }

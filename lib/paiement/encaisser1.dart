@@ -4,7 +4,6 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
-import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/paiement/getsoldewidget.dart';
@@ -25,7 +24,6 @@ class Encaisser1 extends StatefulWidget {
 class _Encaisser1State extends State<Encaisser1> {
   _Encaisser1State(this._code);
   String _code;
-  TabController _tabController;
   PageController pageController;
   int currentPage = 0;
   int choice = 0,indik=0;
@@ -74,6 +72,7 @@ class _Encaisser1State extends State<Encaisser1> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       country = prefs.getString("iso3");
+      print(country);
       solde = prefs.getString("solde");
       devise = prefs.getString("devise");
       local = prefs.getString("local");

@@ -5,11 +5,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:services/auth/connexion.dart';
+import 'package:services/auth/verification2.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/composants/services.dart';
-import 'inscription.dart';
 import 'profile.dart';
-import 'verification1.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,44 +22,39 @@ class Connexion1 extends StatefulWidget {
 class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
 
   _Connexion1State();
-  String _username, _password, _url, _nom, _ville, _quartier;
+  String _username, _password, _nom, _url, _urlc, _ville, _quartier, _email, _avatar, _account_Type;
 
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool _isHidden = true, isLoding =false;
-  var _userTextController = new TextEditingController();
-  int ad=3;
+  bool _isHidden = true, isLoding =false, isLoading = false;
+  //var _userTextController = new TextEditingController();
+  int ad=3, _id;
   bool isBackButtonActivated = false;
 
   @override
   void initState(){
     this._lect();
     _url = '$base_url/member/login';
+    _urlc = '$base_url/user/getCode/';
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     //BackButtonInterceptor.add(myInterceptor);
   }
 
-  bool myInterceptor(bool stopDefaultButtonEvent) {
-    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
-    //navigatorKey.currentState.pushNamed("/connexion"); // Do some stuff.
-    return true;
-  }
 
-  void checkConnection() async {
+  void checkConnection(int q) async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile) {
-      //print("Connected to Mobile");
       setState(() {
-        isLoding = true;
+        q == 0?isLoding = true: isLoading = true;
       });
-      makeLogin();
+      q == 0?makeLogin():getCode();
     } else if (connectivityResult == ConnectivityResult.wifi) {
       //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
       setState(() {
-        isLoding = true;
+        q == 0?isLoding = true: isLoading = true;
       });
-      makeLogin();
+      q == 0?makeLogin():getCode();
     } else {
       _ackAlert(context);
     }
@@ -90,18 +84,35 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-    _userTextController.dispose();
-    //BackButtonInterceptor.remove(myInterceptor);
   }
 
-  @override
-  didPopRoute(){
-    bool override;
-    if(isBackButtonActivated)
-      override = false;
-    else
-      override = true;
-    return new Future<bool>.value(override);
+  Future<void> getCode() async {
+    var headers = {
+      "Accept": "application/json"
+    };
+    var url = "${this._urlc}$_username";
+    http.Response response = await http.get(url, headers: headers);
+    final int statusCode = response.statusCode;
+    print("${response.body}");
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      print(responseJson);
+      setState(() {
+        isLoading = false;
+      });
+      if(responseJson['code'] == 200){
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Verification2()));
+      }else{
+        showInSnackBar("Service indisponible! Réessayez plus tard.");
+      }
+    }else{
+      print(statusCode);
+      setState(() {
+        isLoading = false;
+      });
+      showInSnackBar("Service indisponible! Réessayez plus tard.");
+    }
+    return null;
   }
 
   void _toggleVisibility(){
@@ -131,18 +142,30 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
         setState(() {
           isLoding = false;
         });
+        if(responseJson['name'] == "BLOCKED_CREDENTIALS"){
+          showInSnackBar("Compte bloqué. disponible dans 10 minutes");
+        }else if(responseJson['name'] == "INVALID_CREDENTIALS"){
+          showInSnackBar("Mot de passe incorrect!");
+        }else if(responseJson['name'] == "CONNECTION_REFUSED"){
+          showInSnackBar("Connexion non autorisée");
+        }else
         showInSnackBar("Mot de passe incorrect!");
       }else{
         List data = responseJson['customValues'];
         _nom = responseJson['name'];
-        print("Nom: $_nom");
         for(int i=0; i<data.length;i++){
           if(data[i]['internalName'] == "city"){
             _ville = data[i]['value'];
           }else if(data[i]['internalName'] == "address"){
             _quartier = data[i]['value'];
+          }else if(data[i]['internalName'] == "typeMember"){
+            _account_Type = data[i]['value'];
           }
         }
+
+        _avatar = responseJson['userImage'];
+        _id = responseJson['id'];
+        _email = responseJson['email'];
         this._reg();
         setState(() {
           isLoding = false;
@@ -154,7 +177,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
       setState(() {
         isLoding = false;
       });
-      showInSnackBar("${json.decode(response.body)}");
+      showInSnackBar("Service indisponible!");
     }
     //var responseJson = json.decode(response.body);
     return null;
@@ -253,7 +276,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                                 flex:2,
                                 child: Padding(
                                   padding: const EdgeInsets.all(10.0),
-                                  child: new Image.asset('images/Trace943.png'),
+                                  child: new Icon(Icons.vpn_key, color: couleur_description_champ,),
                                 ),
                               ),
                               new Expanded(
@@ -305,7 +328,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                         onTap: () {
                           setState(() {
                             if(_formKey.currentState.validate()){
-                              checkConnection();
+                              checkConnection(0);
                             }
                           });
                         },
@@ -331,17 +354,16 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                       child: GestureDetector(
                         onTap: (){
                           setState(() {
-                            showInSnackBar("Pas encore disponible");
-                            //Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Verification1('')));
+                            checkConnection(1);
                           });
                         },
-                        child: Text("Mot de passe oublié ?",
+                        child:isLoading == false? Text("Mot de passe oublié ?",
                           style: TextStyle(
                               color: couleur_fond_bouton,
                               fontSize: taille_champ+ad,
                               fontWeight: FontWeight.bold
                           ),
-                        ),
+                        ):CupertinoActivityIndicator(),
                       ),
                     ),
 
@@ -382,9 +404,21 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
 
   void _reg() async {
     final prefs = await SharedPreferences.getInstance();
+    prefs.setString('id', "$_id");
     prefs.setString('nom', "$_nom");
     prefs.setString('ville', "$_ville");
     prefs.setString('quartier', "$_quartier");
     prefs.setString('password', "$_password");
+    prefs.setString('avatar', "$_avatar");
+    prefs.setString('email', "$_email");
+    //MarketPlace
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    prefs.setString('BUYER_PHONE', "$_username");
+    prefs.setString('BUYER_EMAIL', "$_email");
+    prefs.setString('SP_CREDENTIAL', "Basic $credentials");
+    prefs.setString('BUYER_ID', "$_id");
+    prefs.setString('ACCOUNT_TYPE', "$_account_Type");
+    print(_account_Type);
   }
 }

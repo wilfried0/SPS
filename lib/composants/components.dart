@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:page_transition/page_transition.dart';
+import 'package:services/auth/service_client.dart';
+import 'package:share/share.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/connexion.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -268,17 +271,23 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
           BottomNavigationBarItem(
             icon: GestureDetector(
               onTap:(){
-                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
+                if(Platform.isIOS){
+                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du applestore");
+                }else
+                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du playstore");
               },
               child: Container(
                   height: 20,
                   width: 20,
-                  child: new Icon(Icons.thumb_up)
+                  child: new Icon(Icons.thumb_up, color: orange_F)
               ),//Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
               onTap:(){
-                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
+                if(Platform.isIOS){
+                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du applestore");
+                }else
+                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du playstore");
               },
               child: Padding(
                 padding: EdgeInsets.only(left: 20),
@@ -293,17 +302,19 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
           BottomNavigationBarItem(
             icon: GestureDetector(
               onTap:(){
-                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
+                //showInSnackBar("Service pas encore disponible!", _scaffoldKey);
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: ListDisplay()));
               },
               child: Container(
                   height: 20,
                   width: 20,
-                  child: new Icon(Icons.help_outline)//Image.asset('images/creer.png')),
+                  child: new Icon(Icons.help_outline, color: orange_F)//Image.asset('images/creer.png')),
               ),
             ),
             title: GestureDetector(
               onTap:(){
-                showInSnackBar("Service pas encore dispoinible!", _scaffoldKey);
+                //showInSnackBar("Service pas encore disponible!", _scaffoldKey);
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: ListDisplay()));
               },
               child: Text('Service client',
                 style: TextStyle(
@@ -315,16 +326,18 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
           BottomNavigationBarItem(
             icon: GestureDetector(
               onTap:(){
-                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
+                Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
+                //Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
               },
               child: Container(
                   height: 20,
                   width: 20,
-                  child: new Icon(Icons.lock)),//Image.asset('images/creer.png')),
+                  child: new Icon(Icons.lock, color: orange_F)),//Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
               onTap:(){
-                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
+                Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
+                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
               },
               child: Text('Déconnexion',
                 style: TextStyle(
@@ -336,251 +349,6 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
         ],
       ),
     ),
-  );
-}
-
-Widget _Drawer(BuildContext context){
-  return Drawer(
-      elevation: 20.0,
-      child: new ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget> [
-          Container(
-            height: 140,
-            decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: ExactAssetImage('images/banner.jpg'),
-                  fit: BoxFit.cover,
-                )),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                      flex:1,
-                      child: Icon(Icons.home)),//Image.asset("images/Groupe12.png")),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Retour à l\'accueil',style: TextStyle(
-                          color: bleu_F,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Pays()));
-              //Navigator.pop(context);
-            },
-          ),
-
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    flex:1,
-                    child: Image.asset("images/Groupe3.png",height: 50,width: 50,),
-                  ),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Tarifs',style: TextStyle(
-                          color: bleu_F,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {},
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                      flex:1,
-                      child: Image.asset("images/Groupe11.png")),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Comment ça marche',style: TextStyle(
-                          color: bleu_F,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {},
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                      flex:1,
-                      child: Image.asset("images/trace3.png")),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('A propos',style: TextStyle(
-                          color: bleu_F,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {},
-          ),
-
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                      flex:1,
-                      child: Image.asset("images/ic_deconnexion.png")),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Connexion',style: TextStyle(
-                          color: bleu_F,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Pays()));
-            },
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                      flex:1,
-                      child: Image.asset("images/ic_contact_service.png")),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Service client',style: TextStyle(
-                          color: bleu_F,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {
-            },
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-
-          new ListTile(
-            title: Padding(
-              padding: EdgeInsets.only(left: 0),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                      flex:1,
-                      child: Image.asset("images/ic_conditions.png")),
-                  Expanded(
-                    flex:11,
-                    child: Padding(
-                      padding: EdgeInsets.only(left: 20),
-                      child: new Text('Conditions générales d\'utilisation',style: TextStyle(
-                          color: bleu_F,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: police_titre
-                      ),),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            onTap: () {
-            },
-          ),
-          Padding(
-            padding: EdgeInsets.only(left: 20),
-            child: new Divider(
-              color: couleur_champ,
-            ),
-          ),
-        ],
-      )
   );
 }
 
@@ -613,16 +381,18 @@ class walletTrans {
   final String to;
   final String description;
   final int amount;
+  final double fees;
   final String deviseLocale;
   final String toFirstname;
   final String toCountryCode;
 
 
-  walletTrans({this.to, this.amount, this.description, this.deviseLocale, this.toFirstname, this.toCountryCode});
+  walletTrans({this.to, this.amount, this.fees, this.description, this.deviseLocale, this.toFirstname, this.toCountryCode});
 
   walletTrans.fromJson(Map<String, dynamic> json)
       :to = json['to'],
         amount = json['amount'],
+        fees = json['fees'],
         description = json['description'],
         deviseLocale = json['deviseLocale'],
         toFirstname = json['toFirstname'],
@@ -632,6 +402,7 @@ class walletTrans {
       {
         "to": to,
         "amount": amount,
+        "fees": fees,
         "description": description,
         "deviseLocale": deviseLocale,
         "toFirstname": toFirstname,
@@ -644,16 +415,18 @@ class orangeTrans {
   final String to;
   final String description;
   final int amount;
+  final double fees;
   final String deviseLocale;
   final String successUrl;
   final String failureUrl;
 
 
-  orangeTrans({this.to, this.amount, this.description, this.deviseLocale, this.successUrl, this.failureUrl});
+  orangeTrans({this.to, this.amount, this.fees, this.description, this.deviseLocale, this.successUrl, this.failureUrl});
 
   orangeTrans.fromJson(Map<String, dynamic> json)
       :to = json['to'],
         amount = json['amount'],
+        fees = json['fees'],
         description = json['description'],
         deviseLocale = json['deviseLocale'],
         successUrl = json['deviseLocale'],
@@ -663,6 +436,7 @@ class orangeTrans {
       {
         "to": to,
         "amount": amount,
+        "fees": fees,
         "description": description,
         "deviseLocale": deviseLocale,
         "successUrl": successUrl,
@@ -670,10 +444,74 @@ class orangeTrans {
       };
 }
 
+class cardTrans {
+  final String to;
+  final String description;
+  final String ipAddress;
+  final int amount;
+  final double fees;
+  final String deviseLocale;
+  final String successUrl;
+  final String failureUrl;
+
+
+  cardTrans({this.to, this.amount, this.fees, this.description, this.ipAddress, this.deviseLocale, this.successUrl, this.failureUrl});
+
+  cardTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        fees = json['fees'],
+        ipAddress = json['ipAddress'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        successUrl = json['deviseLocale'],
+        failureUrl = json['failureUrl'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "ipAddress": ipAddress,
+        "deviseLocale": deviseLocale,
+        "successUrl": successUrl,
+        "failureUrl": failureUrl,
+      };
+}
+
+class orangeRetrait {
+  final String to;
+  final String description;
+  final int amount;
+  final double fees;
+  final String deviseLocale;
+
+
+  orangeRetrait({this.to, this.amount, this.fees, this.description, this.deviseLocale});
+
+  orangeRetrait.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        fees = json['fees'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+      };
+}
+
 class wariTrans {
   final String to;
   final String description;
   final int amount;
+  final double fees;
   final String deviseLocale;
   final String toFirstname;
   final String toLastname;
@@ -686,11 +524,12 @@ class wariTrans {
   final String fromCardExpirationDate;
 
 
-  wariTrans({this.to, this.amount, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.fromCardExpirationDate, this.fromCardIssuingDate, this.fromCardNumber, this.fromCardType, this.fromCountryISO, this.toAdress});
+  wariTrans({this.to, this.amount,this.fees, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.fromCardExpirationDate, this.fromCardIssuingDate, this.fromCardNumber, this.fromCardType, this.fromCountryISO, this.toAdress});
 
   wariTrans.fromJson(Map<String, dynamic> json)
       :to = json['to'],
         amount = json['amount'],
+        fees = json['fees'],
         description = json['description'],
         deviseLocale = json['deviseLocale'],
         toFirstname = json['toFirstname'],
@@ -707,6 +546,7 @@ class wariTrans {
       {
         "to": to,
         "amount": amount,
+        "fees": fees,
         "description": description,
         "deviseLocale": deviseLocale,
         "toFirstname": toFirstname,
@@ -734,4 +574,102 @@ class contact {
       {
         "username": username
       };
+}
+
+//MarketPlace
+
+Widget getMoyen(int index, BuildContext context, int indik) {
+  String text, img;
+  switch (index) {
+    case 1:
+      text = "SPRINTPAY";
+      img = 'marketimages/sprintpay.png';
+      break;
+    case 2:
+      text = "CARTE BANCAIRE";
+      img = 'marketimages/carte.jpg';
+      break;
+    case 3:
+      text = "ORANGE";
+      img = 'images/orange.png';
+      break;
+    case 4:
+      text = "MTN";
+      img = 'images/mtn.jpg';
+      break;
+    case 5:
+      text = "YUP";
+      img = 'marketimages/yup.jpg';
+      break;
+  }
+  return Container(
+    width: MediaQuery.of(context).size.width,
+    margin: EdgeInsets.symmetric(horizontal: 5.0),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(10.0),
+        topRight: Radius.circular(10.0),
+        bottomRight: Radius.circular(10.0),
+        bottomLeft: Radius.circular(10.0),
+      ),
+      border: Border.all(color: index - 1 == indik ? orange_F : bleu_F),
+      color: index - 1 == indik ? orange_F : bleu_F,
+    ),
+    child: Padding(
+      padding: EdgeInsets.only(top: 0),
+      child: Column(
+        children: <Widget>[
+          Container(
+            height: 73,
+            width: MediaQuery.of(context).size.width,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(10.0),
+                  topRight: Radius.circular(10.0),
+                  bottomRight: Radius.circular(10.0),
+                  bottomLeft: Radius.circular(10.0),
+                ),
+                image: DecorationImage(
+                  image: AssetImage('$img'),
+                  fit: BoxFit.cover,
+                )),
+          ),
+          /*Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: index-1!=indik? Text('$text',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold
+                ),):Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text('$text',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold
+                    ),),
+                  Icon(Icons.check, color: Colors.white,)
+                ],
+              ),
+            )*/
+        ],
+      ),
+    ),
+  );
+}
+
+
+double getHeight(int index) {
+  switch (index) {
+    case 1:
+      return 500;
+    case 2:
+      return 400;
+    case 3:
+      return 450;
+    case 4:
+      return 450;
+  }
 }

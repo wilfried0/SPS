@@ -29,16 +29,16 @@ class _Retrait2State extends State<Retrait2> {
   int currentPage = 0;
   int choice = 0;
   int recenteLenght, archiveLenght, populaireLenght;
-  var _formKey = GlobalKey<FormState>();
+  GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   int flex4, flex6, taille, enlev, rest, enlev1, indik;
   double aj,fees, ajj,gauch, droit,_taill, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   List data, list;
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  GlobalKey<ScaffoldState> _scaffoldKey0 = new GlobalKey<ScaffoldState>();
   var _userTextController = new TextEditingController();
   var _phoneTextController = new TextEditingController();
   bool isLoading =false;
-  String url, _id, _to, payment_url, echec, _iso;
-  int temps = 500;
+  String url, _id, _to, payment_url, echec;
+  int temps = 200;
   // ignore: non_constant_identifier_names
   String kittyImage,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="",  _username, _password, deviseLocale;
 
@@ -48,7 +48,7 @@ class _Retrait2State extends State<Retrait2> {
     this.read();
     switch(int.parse(_code)){
       case 0:url = '$base_url/transfert/cashinMtn';break;
-      case 1:url = '$base_url/transfert/refillByOrange';break;
+      case 1:url = '$base_url/transfert/cashinOM';break;
       //case 3:url = '$base_url/transfert/refillByCard'; break;
     }
     indik = int.parse(_code)+1;
@@ -126,19 +126,50 @@ class _Retrait2State extends State<Retrait2> {
         var responseJson = json.decode(response.body);
         _id = responseJson['id'];
         String payment_url = responseJson['payment_url'];
-        if(payment_url != null){
+        if(_id == "INTERNAL_SERVER_ERROR"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Montant non autorisé!", _scaffoldKey0);
+        }else if(responseJson['payment_url'] == "THIS_CUSTOMER_HAS_EXCEEDED_HIS_LIMIT_NUMBER_OF_OPERATION"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Vous avez atteint le nombre max d'opérations!", _scaffoldKey0);
+        }else if(responseJson['payment_url'] == "THE_AMOUNT_OF_THIS_TRANSACTION_IS_GRATER_THAN_THE_THE_MAXIMUM_AMOUNT_PLANNED_FOR_YOUR_PROFILE"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Le montant de la transaction est supérieur à celui autorisé à votre profil", _scaffoldKey0);
+        }else if(responseJson['payment_url'] == "CLIENT_LOCKED_BY_SYSTEM"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Veuillez compléter vos informations dans mon profil pour continuer à effectuer les opérations", _scaffoldKey0);
+        }else if(responseJson['payment_url'] == "CLIENT_LOCKED_BY_BACK_OFFICE"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Votre compte a été bloqué veuillez contacyer le service client!", _scaffoldKey0);
+        }else if(responseJson['id'] == "NOT_FOUND"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Service indisponible!", _scaffoldKey0);
+        }else if(payment_url != null){
           setState(() {
             save(payment_url);
             _save(_id);
           });
           Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Webview(_code)));
-        }else
+        }else{
           this.getStatus(_id);
+        }
       }else {
         setState(() {
           isLoading = false;
         });
-        showInSnackBar("Echec de l'opération!", _scaffoldKey);
+        showInSnackBar("Echec de l'opération!", _scaffoldKey0);
       }
       return response.body;
     });
@@ -190,13 +221,13 @@ class _Retrait2State extends State<Retrait2> {
         setState(() {
           isLoading = false;
         });
-        showInSnackBar("Service indisponible!", _scaffoldKey);
+        showInSnackBar("Service indisponible!", _scaffoldKey0);
       }
     }else{
       setState(() {
         isLoading = false;
       });
-      showInSnackBar("Service indisponible", _scaffoldKey);
+      showInSnackBar("Service indisponible", _scaffoldKey0);
     }
     return null;
   }
@@ -302,78 +333,73 @@ class _Retrait2State extends State<Retrait2> {
     return new MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      home: new DefaultTabController(
-        length: 1,
-        child: new Scaffold(
-            appBar: PreferredSize(
-              preferredSize: Size.fromHeight(fromHeight),
-              child: new Container(
-                color: bleu_F,
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
-                      child: Row(
-                        children: <Widget>[
-                          GestureDetector(
-                              onTap: (){
-                                setState(() {
-                                  Navigator.pop(context);
-                                  //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
-                                });
-                              },
-                              child: Icon(Icons.arrow_back_ios,color: Colors.white,)
-                          ),
-                          GestureDetector(
+      home: new Scaffold(
+        key: _scaffoldKey0,
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(fromHeight),
+            child: new Container(
+              color: bleu_F,
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: EdgeInsets.only(top: 23, left: 20, right: 20),
+                    child: Row(
+                      children: <Widget>[
+                        GestureDetector(
                             onTap: (){
                               setState(() {
-                                //Navigator.pop(context);
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
-                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
+                                Navigator.pop(context);
                               });
                             },
-                            child: Text('Retour',
-                              style: TextStyle(color: Colors.white, fontSize: taille_champ),),
-                          )
-                        ],
-                      ),
+                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                        ),
+                        GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              //Navigator.pop(context);
+                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
+                              //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
+                            });
+                          },
+                          child: Text('Retour',
+                            style: TextStyle(color: Colors.white, fontSize: taille_champ),),
+                        )
+                      ],
                     ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 0, left: gauch, right: droit),
-                      child: Center(
-                        child: Text('Etape 2 sur 2',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: taille_libelle_etape,
-                              fontWeight: FontWeight.bold
-                          ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 0, left: gauch, right: droit),
+                    child: Center(
+                      child: Text('Etape 2 sur 2',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: taille_libelle_etape,
+                            fontWeight: FontWeight.bold
                         ),
                       ),
                     ),
+                  ),
 
-                    Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Text('Retirer de l\'argent',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: taille_titre-2,
-                              fontWeight: FontWeight.bold
-                          ),
+                  Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text('Retirer de l\'argent',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: taille_titre-2,
+                            fontWeight: FontWeight.bold
                         ),
                       ),
                     ),
-
-                    getSoldeWidget(),
-                  ],
-                ),
+                  ),
+                  getSoldeWidget(),
+                ],
               ),
             ),
-            body: _buildCarousel(context),
-            bottomNavigationBar: barreBottom
-        ),
+          ),
+          body: _buildCarousel(context),
+          bottomNavigationBar: barreBottom
       ),
     );
   }
@@ -391,7 +417,7 @@ class _Retrait2State extends State<Retrait2> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10.0)
             ),
-            child: Form(
+            child:  Form(
               key: _formKey,
               child: Stack(
                 children: <Widget>[
@@ -480,7 +506,7 @@ class _Retrait2State extends State<Retrait2> {
 
                   Padding(
                     padding: EdgeInsets.only(top: 330+aj, left: gauch, right: droit),
-                    child: Text(montant==""?"":'${getMillis(double.parse(montant).toString())} $deviseLocale',
+                    child: Text(montant==""?"":'${getMillis((double.parse(montant)+fees).toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
                           fontSize: taille_titre+15,
@@ -507,8 +533,8 @@ class _Retrait2State extends State<Retrait2> {
                         borderRadius: new BorderRadius.only(
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
-                          bottomLeft: Radius.circular(indik==1?10.0:0),
-                          bottomRight: Radius.circular(indik==1?10.0:0),
+                          bottomLeft: Radius.circular(indik==1|| indik==2?10.0:0),
+                          bottomRight: Radius.circular(indik==1|| indik==2?10.0:0),
                         ),
                         color: Colors.transparent,
                         border: Border.all(
@@ -523,7 +549,7 @@ class _Retrait2State extends State<Retrait2> {
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
-                              child: new Image.asset('images/Groupe18.png'),
+                              child: new Icon(Icons.phone_iphone, color: couleur_description_champ,),
                             ),
                           ),
                           new Expanded(
@@ -580,7 +606,7 @@ class _Retrait2State extends State<Retrait2> {
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
-                              child: new Image.asset('images/Groupe177.png'),
+                              child: new Icon(Icons.person, color: couleur_description_champ,),
                             ),
                           ),
                           new Expanded(
@@ -637,7 +663,7 @@ class _Retrait2State extends State<Retrait2> {
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
-                              child: new Image.asset('images/Groupe177.png'),
+                              child: new Icon(Icons.person, color: couleur_description_champ,),
                             ),
                           ),
                           new Expanded(
@@ -677,24 +703,28 @@ class _Retrait2State extends State<Retrait2> {
                     child: GestureDetector(
                       onTap: (){
                         setState(() {
-                          if(_formKey.currentState.validate()){
-                            var walletTr = _code == "0"? new walletTrans(
+                          if(isLoading == true){
+
+                          }else{
+                            if(_formKey.currentState.validate()){
+                              var walletTr = _code == "0"? new walletTrans(
                                 to:'$_to',
                                 amount: int.parse(this.montant),
+                                fees: fees,
                                 description: this.description,
                                 deviseLocale: this.deviseLocale,
                                 toFirstname: this._to,
                                 toCountryCode: "CMR",
-                            ):new orangeTrans(
-                                to:this._to,
-                                amount: int.parse(this.montant),
-                                description: this.description,
-                                deviseLocale: this.deviseLocale,
-                                successUrl: "http://www.sprintpay.com",
-                                failureUrl: "http://www.sprintpay.com"
-                            );
-                            print(json.encode(walletTr));
-                            checkConnection(json.encode(walletTr));
+                              ):new orangeRetrait(
+                                  to:this._to,
+                                  amount: int.parse(this.montant),
+                                  fees: fees,
+                                  description: this.description,
+                                  deviseLocale: this.deviseLocale
+                              );
+                              print(json.encode(walletTr));
+                              checkConnection(json.encode(walletTr));
+                            }
                           }
                         });
                       },
@@ -732,7 +762,6 @@ class _Retrait2State extends State<Retrait2> {
       _phoneTextController.text = _to;
       fees = double.parse(prefs.getString("fees"));
       deviseLocale = prefs.getString("deviseLocale");
-      _iso = prefs.getString("iso");
     });
   }
 
@@ -799,4 +828,16 @@ class _Retrait2State extends State<Retrait2> {
       ),
     );
   }
+}
+
+void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey0) {
+  _scaffoldKey0.currentState.showSnackBar(
+      new SnackBar(content: new Text(value,style:
+      TextStyle(
+          color: Colors.white,
+          fontSize: taille_description_champ+3
+      ),
+        textAlign: TextAlign.center,),
+        backgroundColor: couleur_fond_bouton,
+        duration: Duration(seconds: 5),));
 }

@@ -4,6 +4,47 @@ import 'package:http/http.dart' as http;
 import 'package:connectivity/connectivity.dart';
 import 'dart:async';
 
+class Composantes {
+  String fileUrl;
+  String name;
+
+  Composantes({
+    this.fileUrl,
+    this.name,
+  });
+
+  factory Composantes.fromJson(Map<String, dynamic> json) => Composantes(
+    fileUrl: json["fileUrl"],
+    name: json["name"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "fileUrl": fileUrl,
+    "name": name,
+  };
+}
+
+
+class Piece {
+  List<Composantes> composantes;
+  String pieceName;
+
+  Piece({
+    this.composantes,
+    this.pieceName,
+  });
+
+  factory Piece.fromJson(Map<String, dynamic> json) => Piece(
+    composantes: List<Composantes>.from(json["composantes"].map((x) => Composantes.fromJson(x))),
+    pieceName: json["pieceName"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "composantes": List<dynamic>.from(composantes.map((x) => x.toJson())),
+    "pieceName": pieceName,
+  };
+}
+
 class Role{
   final String roleName;
   final int idRole;

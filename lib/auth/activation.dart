@@ -3,7 +3,6 @@ import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:services/auth/connexion.dart';
 import 'package:services/auth/inscrip.dart';
 import 'package:services/composants/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -263,7 +262,7 @@ class _ActivationState extends State<Activation> {
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.only(top:10.0, bottom: 10.0),
-                              child: new Image.asset('images/Trace943.png'),
+                              child: Icon(Icons.lock, color: couleur_description_champ,),
                             ),
                           ),
 
@@ -494,12 +493,5 @@ class _ActivationState extends State<Activation> {
         );
       },
     );
-  }
-
-  void _save(String valeur) async {
-    final prefs = await SharedPreferences.getInstance();
-    final key = 'paiement';
-    final value = valeur;
-    prefs.setString(key, value);
   }
 }

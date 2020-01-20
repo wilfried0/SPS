@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:services/auth/connexion.dart';
-import 'package:services/auth/profile.dart';
 import 'package:http/http.dart' as http;
 import 'package:services/composants/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,12 +19,12 @@ class Inscrip extends StatefulWidget {
 class _InscripState extends State<Inscrip> {
 
   int ad = 3;
-  String _birthday="", _current, _url,_avatar, firstname, lastname, town, email=null, nature="Particulier", gender, adress, userImage, newPassword, typeMember;
+  String _birthday="", _current, _url, firstname, lastname, town, email, nature="Particulier", gender, adress, userImage, newPassword, typeMember;
   int _date = new DateTime.now().year, idUser;
   var _categorie = ['Madame', 'Monsieur', 'Mademoiselle'];
   var _formKey = GlobalKey<FormState>();
   bool isLoding =false, _loadImage = false;
-  File _image;
+  String _image;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
@@ -75,7 +74,6 @@ class _InscripState extends State<Inscrip> {
       print(image);
       setState(() {
         _loadImage = false;
-        _image = image;
       });
       Upload(image);
     return null;
@@ -88,7 +86,6 @@ class _InscripState extends State<Inscrip> {
     var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
     var length = await imageFile.length();
     var multipartFile = new http.MultipartFile('file', stream, length, filename: imageFile.path.split('/').last);
-    String val1, val2;
     var uri = Uri.parse('http://74.208.183.205:8086/spkyc-identitymanager/upload');
     var request = new http.MultipartRequest("POST", uri);
     request.headers.addAll(_header);
@@ -101,15 +98,12 @@ class _InscripState extends State<Inscrip> {
         _loadImage = false;
       });
       response.stream.transform(utf8.decoder).listen((value) {
-        print("la valeur: $value");
-        //val1 = value.split(',')[1];
-        val2 = value;//val1.substring(19, val1.length-1);
-        _avatar = val2;
+        setState(() {
+          _image = value;
+          _loadImage = false;
+        });
       });
-      setState(() {
-        _image = imageFile;
-        _loadImage = false;
-      });
+
     }else{
       print(response.request);
       setState(() {
@@ -143,7 +137,7 @@ class _InscripState extends State<Inscrip> {
 
   void _reg() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString('avatar', "${_image.toString()}");
+    prefs.setString('avatar', "$_image");
   }
 
   //final navigatorKey = GlobalKey<NavigatorState>();
@@ -186,7 +180,7 @@ class _InscripState extends State<Inscrip> {
                                   decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       image: DecorationImage(
-                                          image: _image==null? AssetImage("images/ellipse1.png"):FileImage(_image),
+                                          image: _image==null? AssetImage("images/ellipse1.png"):NetworkImage(_image),
                                           fit: BoxFit.cover
                                       )
                                   ),
@@ -312,7 +306,7 @@ class _InscripState extends State<Inscrip> {
                           flex:2,
                           child: Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.person, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                            child: new Icon(Icons.person, color: couleur_decription_page,),//
                           ),
                         ),
                         new Expanded(
@@ -664,7 +658,7 @@ class _InscripState extends State<Inscrip> {
                                     nature: this.nature,
                                     gender: this.gender,
                                     adress: "",
-                                    userImage: "${_image.toString()}",
+                                    userImage: "$_image",
                                     newPassword: this.newPassword,
                                     typeMember: "MSP",
                                     roleId: 1
@@ -751,9 +745,13 @@ class _InscripState extends State<Inscrip> {
         print(responseJson);
         setState(() {
           isLoding =false;
-          this._reg();
         });
-        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
+        if(responseJson['username'] == "CLIENT_NOT_MATURE"){
+          showInSnackBar("Echec de la création. Client immature!");
+        }else{
+          this._reg();
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
+        }
         //    navigatorKey.currentState.pushNamed("/connexion");
       }else {
         setState(() {

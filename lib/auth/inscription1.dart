@@ -14,15 +14,13 @@ import 'package:services/composants/components.dart';
 
 // ignore: must_be_immutable
 class Inscription1 extends StatefulWidget {
-  Inscription1(this._code);
-  String _code;
+  Inscription1();
   @override
-  _Inscription1State createState() => new _Inscription1State(_code);
+  _Inscription1State createState() => new _Inscription1State();
 }
 
 class _Inscription1State extends State<Inscription1> {
-  _Inscription1State(this._code);
-  String _code;
+  _Inscription1State();
   bool _check1=false, _check2=false;
   String _password, _verfiPassword, _url, iso3;
   var _usernameController = new TextEditingController();
@@ -343,7 +341,7 @@ class _Inscription1State extends State<Inscription1> {
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.all(5.0),
-                              child: new Image.asset('images/Groupe180.png'),
+                              child: new Icon(Icons.vpn_key, color: couleur_decription_page,),//
                             ),
                           ),
                           new Expanded(
@@ -417,7 +415,7 @@ class _Inscription1State extends State<Inscription1> {
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.all(5.0),
-                              child: new Image.asset('images/Groupe180.png'),
+                              child: new Icon(Icons.vpn_key, color: couleur_decription_page,),//
                             ),
                           ),
                           new Expanded(

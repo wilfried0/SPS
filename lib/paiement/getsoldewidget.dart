@@ -13,7 +13,6 @@ class getSoldeWidget extends StatefulWidget {
 class _getSoldeWidgetState extends State<getSoldeWidget> {
 
   String deviseLocale, devise, solde, local, _username, _password;
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   void initState(){
@@ -53,7 +52,8 @@ class _getSoldeWidgetState extends State<getSoldeWidget> {
         children: <Widget>[
           Text('SOLDE', style: TextStyle(
               color: Colors.white,
-              fontSize: taille_libelle_etape
+              fontSize: taille_libelle_etape,
+              fontWeight: FontWeight.bold
           ),),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -81,7 +81,8 @@ class _getSoldeWidgetState extends State<getSoldeWidget> {
               children: <Widget>[
                 Text('SOLDE', style: TextStyle(
                     color: Colors.white,
-                    fontSize: taille_libelle_etape
+                    fontSize: taille_libelle_etape,
+                    fontWeight: FontWeight.bold
                 ),),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -106,9 +107,10 @@ class _getSoldeWidgetState extends State<getSoldeWidget> {
             flex: 6,
             child: Column(
               children: <Widget>[
-                Text('MONAIE LOCALE', style: TextStyle(
+                Text('MONNAIE LOCALE', style: TextStyle(
                     color: Colors.white,
-                    fontSize: taille_libelle_etape
+                    fontSize: taille_libelle_etape,
+                    fontWeight: FontWeight.bold
                 ),),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,

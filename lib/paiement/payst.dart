@@ -15,7 +15,7 @@ class _PaystState extends State<Payst> {
 
   List data;
   List unfilterData;
-  String _code, route, deviseLocale;
+  String _code, route, deviseLocale, nomPays, codeIso3, codeIso2, from, dial;
   final navigatorKey = GlobalKey<NavigatorState>();
 
 
@@ -26,10 +26,13 @@ class _PaystState extends State<Payst> {
     this._read();
   }
 
-  void _reg(String value) async {
+  void _reg() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString('payst', "$value");
-    print(value);
+    prefs.setString('payst', "$codeIso3");
+    prefs.setString('codeIso2', "$codeIso2");
+    prefs.setString('nomPays', "$nomPays");
+    prefs.setString('from', "$from");
+    prefs.setString('DIAL', "$dial");
   }
 
   searchData(str){
@@ -215,7 +218,13 @@ class _PaystState extends State<Payst> {
                     onTap: (){
                       setState(() {
                         _code = '$dialCode^$code^$name^$code3^$currency';
-                        _reg(code3);
+                        codeIso3 = code3.toString();
+                        nomPays = name.toString();
+                        codeIso2 = code.toString();
+                        dial = dialCode.toString();
+                        from = _code.split('^')[4];
+                        print("Zone pays d'envoi $from");
+                        _reg();
                         navigatorKey.currentState.pushNamed("/transfert");
                       });
                       //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
@@ -255,7 +264,13 @@ class _PaystState extends State<Payst> {
                     onTap: (){
                       setState(() {
                         _code = '$dialCode^$code^$name^$code3^$currency';
-                        _reg(code3);
+                        codeIso3 = code3.toString();
+                        nomPays = name.toString();
+                        codeIso2 = code.toString();
+                        dial = dialCode.toString();
+                        from = _code.split('^')[4];
+                        print("Zone pays d'envoi $from");
+                        _reg();
                         navigatorKey.currentState.pushNamed("/transfert");
                         //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
                         //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Pays()));

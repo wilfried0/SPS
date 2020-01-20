@@ -1,73 +1,418 @@
+import 'dart:convert';
+import 'package:http_parser/http_parser.dart';
+import 'package:async/async.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:services/auth/profile.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:services/composants/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-
 import 'composants/components.dart';
 
 
 // ignore: must_be_immutable
 class Monprofile extends StatefulWidget {
-  Monprofile(this._code);
-  String _code;
+  Monprofile();
   @override
-  _MonprofileState createState() => new _MonprofileState(_code);
+  _MonprofileState createState() => new _MonprofileState();
 }
 
 class _MonprofileState extends State<Monprofile> {
-  _MonprofileState(this._code);
-  String _code;
+  _MonprofileState();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  TabController _tabController;
-  PageController pageController;
   int currentPage = 0;
   bool masque;
   int choice = 0, indik=1;
+  var _formKey = GlobalKey<FormState>();
   // ignore: non_constant_identifier_names
   int recenteLenght, archiveLenght, populaireLenght, flex1, flex2, id_kitty, montant;
-  bool isLoding = false;
+  bool isLoding = false, _isHidden = true, isLoadPiece = false, _isSelfie = false, _isRecto = false, _isVerso = false, _isAvatar = false;
   int flex4, flex6, taille, enlev, rest, enlev1, choix;
   double _tail, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
-  File _image;
+  String _image, _selfie, _recto, _verso, _username, _password, _password1;
+  var _nomController, _paysController, _villeController, _quartierController, _emailController, _contactController, _parrainController;
+  var _categorie = ['Carte Nationale d\'identité', 'Passeport', 'Carte de séjour'];
   // ignore: non_constant_identifier_names
-  String kittyImage, monstatus, momo_url, data, _reference, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, _xaf, endDate, startDate, title, suggested_amount, amount, description, number, _paie, nom, email, tel, mot, _nom, _ville, _quartier, _pays, _pathImage;
+  String kittyImage,pieceName, monstatus, momo_url, data, _email, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, endDate, startDate, title, suggested_amount, amount, description, number, nom, email, tel, mot, _nom, _ville, _quartier, _pays;
 
 
   @override
   void initState() {
     super.initState();
+    _nomController = TextEditingController();
+    _paysController = TextEditingController();
+    _villeController = TextEditingController();
+    _quartierController = TextEditingController();
+    _emailController = TextEditingController();
+    _contactController = TextEditingController();
+    _parrainController = TextEditingController();
     this.lire();
-    pageController = PageController(
-        initialPage: currentPage,
-        keepPage: false,
-        viewportFraction: 0.8
-    );
   }
 
   @override
   void dispose() {
-    //_tabController.dispose();
+    _nomController.dispose();
+    _paysController.dispose();
+    _villeController.dispose();
+    _quartierController.dispose();
+    _emailController.dispose();
+    _contactController.dispose();
+    _parrainController.dispose();
     super.dispose();
+  }
+
+  void checkConnection(var body) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      //print("Connected to Mobile");
+      setState(() {
+        isLoadPiece = true;
+      });
+      sendPiece(body);
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
+      setState(() {
+        isLoadPiece = true;
+      });
+      sendPiece(body);
+    } else {
+      _ackAlert(context, -1);
+    }
+  }
+
+  Future<String> changePass(String newPass) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print('Username: $_username');
+    print('Password: $_password');
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials"
+    };
+    var url = "$base_url/member/resetPassword/$newPass";
+    http.Response response = await http.get(url, headers: headers);
+    final int statusCode = response.statusCode;
+    print("${response.body}");
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      int code = responseJson['code'];
+      if(code == 200){
+        setState(() {
+          isLoding = false;
+        });
+        showInSnackBar("Mot de passe modifié avec succès!", _scaffoldKey);
+      }else if(code == 100){
+        setState(() {
+          isLoding = false;
+        });
+        showInSnackBar("Service indisponible!", _scaffoldKey);
+      }else if(code == 101){
+        setState(() {
+          isLoding = false;
+        });
+        showInSnackBar("Utilisateur inexistant!", _scaffoldKey);
+      }
+    }else{
+      setState(() {
+        isLoding = false;
+      });
+      showInSnackBar("Service indisponible!", _scaffoldKey);
+    }
+    //var responseJson = json.decode(response.body);
+    return null;
+  }
+
+  void _save() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('avatar', "$_image");
+    print("saved $_image");
+  }
+
+  Future<String> sendPiece(var body) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var _header = {
+      "accept": "application/json",
+      "content-type" : "application/json",
+      "Authorization": "Basic $credentials"
+    };
+    print('Mon url $base_url/sendPiece');
+    return await http.post("$base_url/sendPiece", body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print('voici le statusCode $statusCode');
+      print('voici le body ${response.body}');
+      if (statusCode < 200 || json == null) {
+        setState(() {
+          isLoadPiece =false;
+        });
+      }else if(statusCode == 200){
+        var responseJson = json.decode(response.body);
+        print(responseJson);
+        setState(() {
+          isLoadPiece =false;
+        });
+        showInSnackBar("Pièces envoyées avec succès!", _scaffoldKey);
+      }else {
+        setState(() {
+          isLoadPiece =false;
+        });
+        showInSnackBar("Service indisponible!", _scaffoldKey);
+      }
+      return response.body;
+    });
+  }
+
+
+  Future<void> _ackAlert(BuildContext context, int q) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(q == -1?'Oops!':'Caméra/Galerie'),
+          content: Text(q == -1?'Vérifier votre connexion internet.':'Prendre l\'image depuis la Galerie ou la caméra'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text(q == -1?'Ok':'Galerie'),
+              onPressed: () {
+                if(q == 0){//Galerie pour avatar
+                  Navigator.of(context).pop();
+                  getImage(0);
+                }else if(q == -1){
+                  Navigator.of(context).pop();
+                }else if(q == 1){//Galerie pour selfie
+                  Navigator.of(context).pop();
+                  getImage(1);
+                }
+              },
+            ),
+            q == -1?Container():FlatButton(
+              child: Text('Caméra'),
+              onPressed: () {
+                if(q == 0){//Caméra pour l'avatar
+                  Navigator.of(context).pop();
+                  getImage(4);
+                }else if(q == 1){//Caméra pour le selfie
+                  Navigator.of(context).pop();
+                  getImage(5);
+                }
+              },
+            ),
+            q == -1?Container():FlatButton(
+                onPressed: (){
+                  Navigator.of(context).pop();
+                }, child: Text('Annuler')
+            )
+          ],
+        );
+      },
+    );
   }
 
   lire() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+      _contactController.text = prefs.getString("username");
       _pays = prefs.getString("pays");
+      _paysController.text = _pays;
       _nom = prefs.getString("nom");
+      _nomController.text = _nom;
       _ville = prefs.getString("ville");
+      _villeController.text = _ville;
       _quartier = prefs.getString("quartier");
-      _pathImage = null;//prefs.getString("avatar")=="null"?null:prefs.getString("avatar").toString().split(": ")[1];
-      if(_pathImage == null){
-      } else {
-        _pathImage = "${_pathImage.replaceAll("'", "")}";
-      }
+      _quartierController.text = _quartier;
+      _image = prefs.getString("avatar");
+      _email = prefs.getString("email");
+      _emailController.text = _email;
     });
+  }
+
+  void _toggleVisibility(){
+    setState((){
+      _isHidden = !_isHidden;
+    });
+  }
+
+  Future<String> getImage(int q) async {
+    var image;
+      if(q == 0){
+        image = await ImagePicker.pickImage(source: ImageSource.gallery);
+        setState(() {
+          _isAvatar = true;
+        });
+      }else if(q == 1){
+        image = await ImagePicker.pickImage(source: ImageSource.gallery);
+        setState(() {
+          _isSelfie = true;
+        });
+      }else if(q == 2){
+        image = await ImagePicker.pickImage(source: ImageSource.gallery);
+        setState(() {
+          _isRecto = true;
+        });
+      }else if(q == 3){
+        image = await ImagePicker.pickImage(source: ImageSource.gallery);
+        setState(() {
+          _isVerso = true;
+        });
+      }else if(q == 4){
+        print("q vaut: $q");
+        image = await ImagePicker.pickImage(source: ImageSource.camera);
+        setState(() {
+          _isAvatar = true;
+        });
+      }else if(q == 5){
+        image = await ImagePicker.pickImage(source: ImageSource.camera);
+        setState(() {
+          _isSelfie = true;
+        });
+      }
+      print(image);
+    Upload(image, q);
+    return null;
+  }
+
+  uploadFile(File imageFile, int q) async {
+    var postUri = Uri.parse("http://74.208.183.205:8086/spkyc-identitymanager/upload");
+    var request = new http.MultipartRequest("POST", postUri);
+    var path = Uri.parse(imageFile.path);
+    //request.fields['user'] = 'blah';
+    request.files.add(new http.MultipartFile.fromBytes('file', await File.fromUri(path).readAsBytes(), contentType: new MediaType('image', 'jpeg')));
+
+    request.send().then((response) {
+      print(response.statusCode);
+      print(response.stream);
+      if(response.statusCode == 201){
+        if(q == 0 || q == 4){
+          setState(() {
+            //_image = value;
+            _isAvatar = false;
+          });
+          _save();
+        }else if(q == 1 || q == 5){
+          setState(() {
+            //_selfie = value;
+            _isSelfie = false;
+          });
+        }else if(q == 2){
+          setState(() {
+            //_recto = value;
+            _isRecto = false;
+          });
+        }else if(q == 3){
+          setState(() {
+            //_verso = value;
+            print("Mon verso $_verso");
+            _isVerso = false;
+          });
+        }
+      }else{
+        if(q == 0 || q == 4){
+          setState(() {
+            //_image = value;
+            _isAvatar = false;
+          });
+          _save();
+        }else if(q == 1 || q == 5){
+          setState(() {
+            //_selfie = value;
+            _isSelfie = false;
+          });
+        }else if(q == 2){
+          setState(() {
+            //_recto = value;
+            _isRecto = false;
+          });
+        }else if(q == 3){
+          setState(() {
+            //_verso = value;
+            print("Mon verso $_verso");
+            _isVerso = false;
+          });
+        }
+      }
+    }).catchError((error){
+      print(error);
+    });
+  }
+
+  void Upload(File imageFile, int q) async {
+    var _header = {
+      "content-type" :  "multipart/form-data",
+    };
+
+    var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
+    var length = await imageFile.length();
+    print("taille: $length");
+    var multipartFile = new http.MultipartFile('file', stream, length, filename: imageFile.path.split('/').last);
+    var uri = Uri.parse('http://74.208.183.205:8086/spkyc-identitymanager/upload');
+    var request = new http.MultipartRequest("POST", uri);
+    request.headers.addAll(_header);
+    request.files.add(multipartFile);
+    //request.files.add(await http.MultipartFile.fromPath('file', imageFile.path, contentType: new MediaType('image', 'jpeg')));
+    var response = await request.send();
+    print('la valeur de q: $q');
+    print('statuscode ${response.statusCode}');
+    if(response.statusCode == 201){
+      response.stream.transform(utf8.decoder).listen((value) {
+        print("la valeur: $value");
+        if(q == 0 || q == 4){
+          setState(() {
+            _image = value;
+            _isAvatar = false;
+          });
+          _save();
+        }else if(q == 1 || q == 5){
+          setState(() {
+            _selfie = value;
+            _isSelfie = false;
+          });
+        }else if(q == 2){
+          setState(() {
+            _recto = value;
+            _isRecto = false;
+          });
+        }else if(q == 3){
+          setState(() {
+            _verso = value;
+            print("Mon verso $_verso");
+            _isVerso = false;
+            print("Mon versoooooo $value");
+          });
+        }
+      });
+    }else{
+      response.stream.transform(utf8.decoder).listen((value) {
+        print("la valeur: $value");
+      });
+      if(q == 0 || q == 4){
+        setState(() {
+          _isAvatar = false;
+        });
+      }else if(q == 1 || q == 5){
+        setState(() {
+          _isSelfie = false;
+        });
+      }else if(q == 2){
+        setState(() {
+          _isRecto = false;
+        });
+      }else if(q == 3){
+        setState(() {
+          _isVerso = false;
+        });
+      }
+      showInSnackBar("Veuillez sélectionner une image de petite taille", _scaffoldKey);
+    }
   }
 
   @override
@@ -215,15 +560,6 @@ class _MonprofileState extends State<Monprofile> {
     );
   }
 
-  lecture() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      final key = 'choix';
-      choix = int.parse(prefs.getString(key));
-      print('je lis le choix: $choix');
-    });
-  }
-
 
   _buildCarousel(BuildContext context) {
     return Stack(
@@ -234,46 +570,49 @@ class _MonprofileState extends State<Monprofile> {
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10.0)
+                //borderRadius: BorderRadius.circular(10.0)
             ),
             child: Stack(
               children: <Widget>[
                 Container(
-                  height: 300,
+                  height: 215,
                   child: DrawerHeader(
                     decoration: BoxDecoration(
-                        color: couleur_fond_bouton
+                        color: bleu_F
                     ),
                     child: Padding(
-                      padding: EdgeInsets.only(top: 30),
+                      padding: EdgeInsets.only(top: 0),
                       child: Column(
                         //crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          SizedBox(
-                            child: Container(
-                              height: 150,
-                              width: 150,
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                      image: _pathImage==null? AssetImage("images/ellipse1.png"):FileImage(new File(_pathImage)),
-                                      fit: BoxFit.cover
-                                  )
+                          Container(
+                            height: 150,
+                            width: 150,
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                    image: _image==null || _image=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_image),
+                                    fit: BoxFit.cover
+                                ),
+                              border: new Border.all(
+                                color: Colors.white,
+                                width: 5.0,
                               ),
                             ),
                           ),
-                          Padding(
+
+                          /*Padding(
                             padding: EdgeInsets.only(top: 10),
                             child: Text(_nom==null?"":"$_nom", style: TextStyle(
                                 color: Colors.white,
                                 fontSize: taille_champ+3
                             ),),
-                          ),
+                          ),*/
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              _quartier=="null" && _ville=="null" && _pays=="null"?Container():Icon(Icons.location_on,color: orange_F,size: 15,),
-                              Row(
+                              _quartier=="null" && _ville=="null" && _pays=="null"?Container():Container(),//Icon(Icons.location_on,color: orange_F,size: 15,),
+                              /*Row(
                                 children: <Widget>[
                                   Text(_quartier=="null"?"":" $_quartier -", style: TextStyle(
                                       color: orange_F,
@@ -288,7 +627,7 @@ class _MonprofileState extends State<Monprofile> {
                                       fontSize: taille_champ
                                   ),),
                                 ],
-                              ),
+                              ),*/
                             ],
                           ),
                         ],
@@ -297,8 +636,8 @@ class _MonprofileState extends State<Monprofile> {
                   ),
                 ),
                 InkWell(
-                  onTap: (){
-                    Navigator.pop(context);
+                  onTap: () async {
+                    _ackAlert(context, 0);
                   },
                   child: new Container(
                     child: new Row(
@@ -306,12 +645,12 @@ class _MonprofileState extends State<Monprofile> {
                       children: <Widget>[
                         Padding(
                           padding: new EdgeInsets.only(
-                              top: 40,
+                              top: 150,
                               right:0.0,
                               left: MediaQuery.of(context).size.width-70),
                           child: SizedBox(
                             child: Container(
-                              child: Icon(Icons.camera_alt,size: 50, color: Colors.white,),
+                              child:_isAvatar == false? Icon(Icons.camera_alt,size: 50, color: Colors.white,):CupertinoActivityIndicator(radius: 30,),
                             ),
                           ),
                         ),
@@ -320,23 +659,15 @@ class _MonprofileState extends State<Monprofile> {
                   ),
                 ),
 
-                new Container(
-                  child: new Row(
-                    //mainAxisAlignment: MainAxisAlignment.spaceEvenly
-                    children: <Widget>[
-                      Padding(
-                        padding: new EdgeInsets.only(
-                            top: 40,
-                            //right:0.0,
-                            left: 20
-                        ),
-                        child: SizedBox(
-                          child: Container(
-                            child: Icon(Icons.arrow_back_ios,color: Colors.white,),
-                          ),
-                        ),
-                      ),
-                    ],
+                GestureDetector(
+                  onTap: (){
+                    Navigator.pop(context);
+                  },
+                  child: new Container(
+                    child: Padding(
+                      padding: new EdgeInsets.only(top: 40, left: 20),
+                      child: Icon(Icons.arrow_back_ios,color: Colors.white,),
+                    ),
                   ),
                 ),
                 getView(),
@@ -361,7 +692,7 @@ class _MonprofileState extends State<Monprofile> {
     return Container(
       width: MediaQuery.of(context).size.width,
       margin: EdgeInsets.symmetric(horizontal: 5.0),
-      height: 70,
+      //height: 70,
       decoration: BoxDecoration(
         borderRadius: new BorderRadius.only(
           topLeft: Radius.circular(10.0),
@@ -409,820 +740,928 @@ class _MonprofileState extends State<Monprofile> {
         color: orange_F,
         size: 40,
       );
+
+      default: return Container();
     }
   }
 
   Widget getView(){
     //if(choice == 0){
-      return Padding(
-          padding: EdgeInsets.only(top: 300, left: 0, right: 0),
-          child: Stack(
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(bottom: 20, left: 0, right: 0),
-                child: CarouselSlider(
-                  enlargeCenterPage: true,
-                  autoPlay: false,
-                  enableInfiniteScroll: true,
-                  onPageChanged: (value){
-                    setState(() {
-                      choice = value;
-                      print(choice);
-                    });
-                  },
-                  height: 80.0,
-                  items: [0,1,2].map((i) {
-                    return Builder(
-                      builder: (BuildContext context) {
-                        return getMoyen(i);
-                      },
-                    );
-                  }).toList(),
-                ),
+    return Padding(
+        padding: EdgeInsets.only(top: 210, left: 0, right: 0),
+        child: Stack(
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.only(bottom: 20, left: 0, right: 0),
+              child: CarouselSlider(
+                enlargeCenterPage: true,
+                autoPlay: false,
+                enableInfiniteScroll: true,
+                onPageChanged: (value){
+                  setState(() {
+                    choice = value;
+                    print(choice);
+                  });
+                },
+                height: 80.0,
+                items: [0,1,2].map((i) {
+                  return Builder(
+                    builder: (BuildContext context) {
+                      return getMoyen(i);
+                    },
+                  );
+                }).toList(),
               ),
-              Padding(
-                padding: EdgeInsets.only(top:90),
-                child: SingleChildScrollView(
-                  child:choice == 0? Column(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            borderRadius: new BorderRadius.only(
-                              topLeft: Radius.circular(10.0),
-                              topRight: Radius.circular(10.0),
-                            ),
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top:90),
+              child: SingleChildScrollView(
+                child:choice == 0? Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 0.0),
+                        decoration: new BoxDecoration(
+                          borderRadius: new BorderRadius.only(
+                            topLeft: Radius.circular(10.0),
+                            topRight: Radius.circular(10.0),
                           ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.person, color: couleur_fond_bouton,)
-                                ),
+                          color: Colors.transparent,
+                          border: Border.all(
+                            width: .5,
+                            color: couleur_fond_bouton,
+                          ),
+                        ),
+                        height: 50,
+                        child: Row(
+                          children: <Widget>[
+                            new Expanded(
+                              flex:2,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.person, color: couleur_champ,)
                               ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
+                            ),
+                            new Expanded(
+                              flex:10,
+                              child: Padding(
+                                padding: EdgeInsets.only(left:0.0),
+                                child: new TextFormField(
+                                  controller: _nomController,
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                    fontSize: taille_champ+3,
+                                    color: Colors.black,
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return "Champ prénom et nom vide !";
+                                    }else{
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'prénom (s) et nom(s)',
+                                    hintStyle: TextStyle(color: Colors.grey,
+                                      fontSize: taille_champ+3,
                                     ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Champ prénom vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'prénom',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
 
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 0.0),
+                        decoration: new BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(
+                            width: .5,
+                            color: couleur_fond_bouton,
                           ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.person, color: couleur_fond_bouton,)
-                                ),
+                        ),
+                        height: 50,
+                        child: Row(
+                          children: <Widget>[
+                            new Expanded(
+                              flex:2,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.location_on, color: couleur_champ,)
                               ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
+                            ),
+                            new Expanded(
+                              flex:10,
+                              child: Padding(
+                                padding: EdgeInsets.only(left:0.0),
+                                child: new TextFormField(
+                                  controller: _paysController,
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                      fontSize: taille_champ+3,
+                                      color: Colors.black
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return "Champ pays vide !";
+                                    }else{
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Pays de résidence',
+                                    hintStyle: TextStyle(color: Colors.grey,
+                                      fontSize: taille_champ+3,
                                     ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Champ nom vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Nom',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
                             ),
-                          ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.location_on, color: couleur_fond_bouton,)
-                                ),
-                              ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.black
-                                    ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Champ pays vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Pays de résidence',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
                       ),
+                    ),
 
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 0.0),
+                        decoration: new BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(
+                            width: .5,
+                            color: couleur_fond_bouton,
                           ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.add_location, color: couleur_fond_bouton,)
-                                ),
+                        ),
+                        height: 50,
+                        child: Row(
+                          children: <Widget>[
+                            new Expanded(
+                              flex:2,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.add_location, color: couleur_champ,)
                               ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.black
+                            ),
+                            new Expanded(
+                              flex:10,
+                              child: Padding(
+                                padding: EdgeInsets.only(left:0.0),
+                                child: new TextFormField(
+                                  controller: _ville=="null"||_ville==null?null:_villeController,
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                      fontSize: taille_champ+3,
+                                      color: Colors.black
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return "Champ ville vide !";
+                                    }else{
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Ville de résidence',
+                                    hintStyle: TextStyle(color: Colors.grey,
+                                      fontSize: taille_champ+3,
                                     ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Champ adresse vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Adresse',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
 
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 0.0),
+                        decoration: new BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(
+                            width: .5,
+                            color: couleur_fond_bouton,
                           ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.directions, color: couleur_fond_bouton,)
-                                ),
+                        ),
+                        height: 50,
+                        child: Row(
+                          children: <Widget>[
+                            new Expanded(
+                              flex:2,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.directions, color: couleur_champ,)
                               ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
+                            ),
+                            new Expanded(
+                              flex:10,
+                              child: Padding(
+                                padding: EdgeInsets.only(left:0.0),
+                                child: new TextFormField(
+                                  controller: _quartier == "null" || _quartier == null ?null:_quartierController,
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                    fontSize: taille_champ+3,
+                                    color: Colors.black,
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return "Quartier vide";
+                                    }else{
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Quartier de résidence',
+                                    hintStyle: TextStyle(color: Colors.grey,
+                                      fontSize: taille_champ+3,
                                     ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Code postal vide";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Code postal',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
 
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 0.0),
+                        decoration: new BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(
+                            width: .5,
+                            color: couleur_fond_bouton,
                           ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.email, color: couleur_fond_bouton,)
-                                ),
+                        ),
+                        height: 50,
+                        child: Row(
+                          children: <Widget>[
+                            new Expanded(
+                              flex:2,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.email, color: couleur_champ,)
                               ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
+                            ),
+                            new Expanded(
+                              flex:10,
+                              child: Padding(
+                                padding: EdgeInsets.only(left:0.0),
+                                child: new TextFormField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  style: TextStyle(
+                                    fontSize: taille_champ+3,
+                                    color: Colors.black,
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return "Champ email vide !";
+                                    }else{
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Email',
+                                    hintStyle: TextStyle(color: Colors.grey,
+                                      fontSize: taille_champ+3,
                                     ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Champ email vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Email',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
+                    ),
 
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            borderRadius: new BorderRadius.only(
-                              bottomLeft: Radius.circular(10.0),
-                              bottomRight: Radius.circular(10.0),
-                            ),
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 0.0),
+                        decoration: new BoxDecoration(
+                          borderRadius: new BorderRadius.only(
+                            bottomLeft: Radius.circular(10.0),
+                            bottomRight: Radius.circular(10.0),
                           ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.phone_android, color: couleur_fond_bouton,)
-                                ),
+                          color: Colors.transparent,
+                          border: Border.all(
+                            width: .5,
+                            color: couleur_fond_bouton,
+                          ),
+                        ),
+                        height: 50,
+                        child: Row(
+                          children: <Widget>[
+                            new Expanded(
+                              flex:2,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.phone_android, color: couleur_champ,)
                               ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.phone,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
+                            ),
+                            new Expanded(
+                              flex:10,
+                              child: Padding(
+                                padding: EdgeInsets.only(left:0.0),
+                                child: new TextFormField(
+                                  controller: _contactController,
+                                  keyboardType: TextInputType.phone,
+                                  style: TextStyle(
+                                    fontSize: taille_champ+3,
+                                    color: Colors.black,
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return "Champ téléphone vide !";
+                                    }else{
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Contact téléphonique',
+                                    hintStyle: TextStyle(color: Colors.grey,
+                                      fontSize: taille_champ+3,
                                     ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Champ téléphone vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Contact téléphonique',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(top:20,bottom: 20, right: 20, left: 20),
-                        child: InkWell(
-                          onTap: (){
-                            setState(() {
-                              showInSnackBar("Service pas encore disponible.", _scaffoldKey);
-                              //isLoding = true;
-                            });
-                          },
-                          child: Container(
-                            height: hauteur_bouton,
-                            width: MediaQuery.of(context).size.width,
-                            decoration: new BoxDecoration(
-                              color: couleur_fond_bouton,
-                              border: new Border.all(
-                                color: Colors.transparent,
-                                width: 0.0,
-                              ),
-                              borderRadius: new BorderRadius.only(
-                                bottomLeft: Radius.circular(10.0),
-                                bottomRight: Radius.circular(10.0),
-                                topRight: Radius.circular(10.0),
-                                topLeft: Radius.circular(10.0),
-                              ),
-                            ),
-                            child: new Center(
-                              child:isLoding==false?new Text('Modifier  mon profile', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),):CupertinoActivityIndicator(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ):choice == 1?Column(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            borderRadius: new BorderRadius.only(
-                              topLeft: Radius.circular(10.0),
-                              topRight: Radius.circular(10.0),
-                            ),
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
-                          ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:4,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new CountryCodePicker(
-                                      showFlag: true,
-                                      onChanged: (code){
-
-                                      },
-                                    )
-                                ),
-                              ),
-                              new Expanded(
-                                flex:8,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
-                                    ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Parrain vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Pays du parrain',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            borderRadius: new BorderRadius.only(
-                              bottomLeft: Radius.circular(10.0),
-                              bottomRight: Radius.circular(10.0),
-                            ),
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
-                          ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.phone_android, color: couleur_fond_bouton,)
-                                ),
-                              ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.phone,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
-                                    ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return null;
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Contact fu parrain (facultatif)',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top:20,bottom: 20, right: 20, left: 20),
-                        child: InkWell(
-                          onTap: (){
-                            setState(() {
-                              isLoding = true;
-                            });
-                          },
-                          child: Container(
-                            height: hauteur_bouton,
-                            width: MediaQuery.of(context).size.width,
-                            decoration: new BoxDecoration(
-                              color: couleur_fond_bouton,
-                              border: new Border.all(
-                                color: Colors.transparent,
-                                width: 0.0,
-                              ),
-                              borderRadius: new BorderRadius.only(
-                                bottomLeft: Radius.circular(10.0),
-                                bottomRight: Radius.circular(10.0),
-                                topRight: Radius.circular(10.0),
-                                topLeft: Radius.circular(10.0),
-                              ),
-                            ),
-                            child: new Center(
-                              child:isLoding==false?new Text('Valider', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),):CupertinoActivityIndicator(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ):Column(
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            borderRadius: new BorderRadius.only(
-                              topLeft: Radius.circular(10.0),
-                              topRight: Radius.circular(10.0),
-                            ),
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
-                          ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.person, color: couleur_fond_bouton,)
-                                ),
-                              ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.text,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
-                                    ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Code de récupération vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Code de récupération',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
-                          ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.email, color: couleur_fond_bouton,)
-                                ),
-                              ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.emailAddress,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
-                                    ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Nouveau mot de passe vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Nouveau mot de passe',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      Padding(
-                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                        child: Container(
-                          margin: EdgeInsets.only(top: 0.0),
-                          decoration: new BoxDecoration(
-                            borderRadius: new BorderRadius.only(
-                              bottomLeft: Radius.circular(10.0),
-                              bottomRight: Radius.circular(10.0),
-                            ),
-                            color: Colors.transparent,
-                            border: Border.all(
-                              width: .5,
-                              color: couleur_fond_bouton,
-                            ),
-                          ),
-                          height: 50,
-                          child: Row(
-                            children: <Widget>[
-                              new Expanded(
-                                flex:2,
-                                child: Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: new Icon(Icons.phone_android, color: couleur_fond_bouton,)
-                                ),
-                              ),
-                              new Expanded(
-                                flex:10,
-                                child: Padding(
-                                  padding: EdgeInsets.only(left:0.0),
-                                  child: new TextFormField(
-                                    keyboardType: TextInputType.phone,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black,
-                                    ),
-                                    validator: (String value){
-                                      if(value.isEmpty){
-                                        return "Vérification mot de passe vide !";
-                                      }else{
-                                        return null;
-                                      }
-                                    },
-                                    decoration: InputDecoration.collapsed(
-                                      hintText: 'Vérification du nouveau mot de passe',
-                                      hintStyle: TextStyle(color: Colors.grey,
-                                        fontSize: 12,
-                                      ),
-                                      //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(top:20,bottom: 20, right: 20, left: 20),
-                        child: InkWell(
-                          onTap: (){
-                            setState(() {
-                              showInSnackBar("Service pas encore disponible.", _scaffoldKey);
-                              //isLoding = true;
-                            });
-                          },
-                          child: Container(
-                            height: hauteur_bouton,
-                            width: MediaQuery.of(context).size.width,
-                            decoration: new BoxDecoration(
-                              color: couleur_fond_bouton,
-                              border: new Border.all(
-                                color: Colors.transparent,
-                                width: 0.0,
-                              ),
-                              borderRadius: new BorderRadius.only(
-                                bottomLeft: Radius.circular(10.0),
-                                bottomRight: Radius.circular(10.0),
-                                topRight: Radius.circular(10.0),
-                                topLeft: Radius.circular(10.0),
-                              ),
-                            ),
-                            child: new Center(
-                              child:isLoding==false?new Text('Modifier mon mot de passe', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton,),):CupertinoActivityIndicator(),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      InkWell(
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top:20,bottom: 20, right: 20, left: 20),
+                      child: InkWell(
                         onTap: (){
-
+                          setState(() {
+                            showInSnackBar("Service pas encore disponible.", _scaffoldKey);
+                            //isLoding = true;
+                          });
                         },
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 0, bottom: 20),
-                          child: Center(
-                            child: Text("Demander un nouveau code", style: TextStyle(
-                                color: couleur_fond_bouton,
-                                fontWeight: FontWeight.bold
-                            ),),
+                        child: Container(
+                          height: hauteur_bouton,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: new BoxDecoration(
+                            color: couleur_fond_bouton,
+                            border: new Border.all(
+                              color: Colors.transparent,
+                              width: 0.0,
+                            ),
+                            borderRadius: new BorderRadius.only(
+                              bottomLeft: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              topLeft: Radius.circular(10.0),
+                            ),
+                          ),
+                          child: new Center(
+                            child:isLoding==false?new Text('Modifier  mon profil', style: new TextStyle(fontSize: taille_champ+3, color: couleur_text_bouton),):CupertinoActivityIndicator(),
                           ),
                         ),
-                      )
+                      ),
+                    ),
+
+                    Padding(
+                      padding: EdgeInsets.only(top: 0),
+                      child:_selfie==null?GestureDetector(
+                        onTap: () async {
+                          _ackAlert(context, 1);
+                        },
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: <Widget>[
+                            _isSelfie == false?Icon(Icons.camera_alt, color: couleur_champ,size: 250,):CupertinoActivityIndicator(radius: 40,),
+                            Padding(
+                              padding: EdgeInsets.only(top: 205),
+                              child: Text("Ma photo", style: TextStyle(
+                                  color: couleur_fond_bouton,
+                                  fontSize: taille_champ+3
+                              ),),
+                            )
+                          ],
+                        ),
+                      ): Column(
+                        children: <Widget>[
+                          Container(
+                            height: MediaQuery.of(context).size.width,
+                            //width: 200,
+                            decoration: BoxDecoration(
+                                shape: BoxShape.rectangle,
+                                image: DecorationImage(
+                                    image: _selfie==null? AssetImage("images/ellipse1.png"):NetworkImage(_selfie),
+                                    fit: BoxFit.cover
+                                )
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () async {
+                              _ackAlert(context, 1);
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                Text("Modifier le selfie"),
+                                Icon(Icons.camera_alt, color: couleur_champ,size: 50,),
+                              ],
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+
+                    Padding(
+                      padding: const EdgeInsets.only(left: 0.0, right: 0.0),
+                      child: Container(
+                        decoration: new BoxDecoration(
+                          borderRadius: new BorderRadius.only(
+                            topLeft: Radius.circular(10.0),
+                            topRight: Radius.circular(10.0),
+                            bottomRight: Radius.circular(10.0),
+                            bottomLeft: Radius.circular(10.0),
+                          ),
+                          color: Colors.transparent,
+                          border: Border.all(
+                              color: couleur_bordure,
+                              width: bordure
+                          ),
+                        ),
+                        height: hauteur_champ,
+                        child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              icon: Padding(
+                                padding: EdgeInsets.only(right: 10),
+                                child: new Icon(Icons.arrow_drop_down_circle,
+                                  color: couleur_fond_bouton,),
+                              ),
+                              isDense: true,
+                              elevation: 1,
+                              isExpanded: true,
+                              onChanged: (String selected){
+                                setState(() {
+                                  pieceName = "$selected";
+                                });
+                              },
+                              value: pieceName,
+                              hint: Padding(
+                                padding: EdgeInsets.only(left: 20),
+                                child: Text('Choisissez la nature de votre pièce d\'identité',
+                                  style: TextStyle(
+                                    color: couleur_libelle_champ,
+                                    fontSize:taille_champ+3,
+                                  ),),
+                              ),
+                              items: _categorie.map((String name){
+                                return DropdownMenuItem<String>(
+                                  value: name,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 20),
+                                    child: Text(name,
+                                      style: TextStyle(
+                                          color: couleur_libelle_champ,
+                                          fontSize:taille_champ+3,
+                                          fontWeight: FontWeight.normal
+                                      ),),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                        ),
+                      ),
+                    ),
+
+
+                    Padding(
+                      padding: EdgeInsets.only(top: 20, bottom: 20),
+                      child: GestureDetector(
+                        onTap: () async {
+                          getImage(2);
+                        },
+                        child: Container(
+                          height: 40,
+                          color: orange_F,
+                          child: Center(child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text("Recto de votre pièce d'identité", style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: taille_champ+3
+                              ),),
+                              _isRecto == false?Icon(Icons.attach_file, color: Colors.white,):CupertinoActivityIndicator()
+                            ],
+                          )),
+                        ),
+                      ),
+                    ),
+
+                    _recto==null?Container():
+                    Padding(
+                      padding: EdgeInsets.only(top: 0),
+                      child: Container(
+                        height: MediaQuery.of(context).size.width,
+                        //width: 200,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            image: DecorationImage(
+                                image: _recto==null? AssetImage("images/ellipse1.png"):NetworkImage(_recto),
+                                fit: BoxFit.cover
+                            )
+                        ),
+                      ),
+                    ),
+
+                    Padding(
+                      padding: EdgeInsets.only(top: 20, bottom: 20),
+                      child: GestureDetector(
+                        onTap: () async {
+                          getImage(3);
+                        },
+                        child: Container(
+                          height: 40,
+                          color: orange_F,
+                          child: Center(child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text("Verso de votre pièce d'identité", style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: taille_champ+3
+                              ),),
+                              _isVerso == false?Icon(Icons.attach_file, color: Colors.white,):CupertinoActivityIndicator()
+                            ],
+                          )),
+                        ),
+                      ),
+                    ),
+                    _verso==null?Container():
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 20),
+                      child: Container(
+                        height: MediaQuery.of(context).size.width,
+                        //width: 200,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.rectangle,
+                            image: DecorationImage(
+                                image: _verso==null? AssetImage("images/ellipse1.png"):NetworkImage(_verso),
+                                fit: BoxFit.cover
+                            )
+                        ),
+                      ),
+                    ),
+
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 20, left: 20, right: 20),
+                      child: GestureDetector(
+                        onTap: () {
+                          if(pieceName == null){
+                            showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey);
+                          }else{
+                            if(_selfie == null || _recto == null || _verso == null){
+                              showInSnackBar("Veuillez entrer toutes les 3 pièces joinntes (photo, recto et le verso de la pièce d'identité)", _scaffoldKey);
+                            }else{
+                              Composantes composante1, composante2, composante3;
+                              composante1 = new Composantes(
+                                  fileUrl: "$_selfie",
+                                  name: "selfie"
+                              );
+                              composante2 = new Composantes(
+                                  fileUrl: "$_recto",
+                                  name: "recto"
+                              );
+                              composante3 = new Composantes(
+                                  fileUrl: "$_verso",
+                                  name: "verso"
+                              );
+                              List<Composantes> composantes = [composante1,composante2,composante3];
+                              var piece = new Piece(
+                                  composantes: composantes,
+                                  pieceName: pieceName!="Carte Nationale d'identité"?pieceName:"CNI"
+                              );
+                              print(json.encode(piece));
+                              checkConnection(json.encode(piece));
+                            }
+                          }
+                        },
+                        child: Container(
+                          decoration: new BoxDecoration(
+                            color: couleur_fond_bouton,
+                            borderRadius: new BorderRadius.only(
+                              bottomLeft: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              topLeft: Radius.circular(10.0),
+                            ),
+                          ),
+                          height: 50,
+                          child: Center(
+                              child:isLoadPiece==false? Text("Valider mes pièces", style: TextStyle(color: Colors.white, fontSize: taille_champ+3),):
+                              CupertinoActivityIndicator()
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ):choice == 1?Column(
+                  children: <Widget>[
+                    Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 0.0),
+                        decoration: new BoxDecoration(
+                          borderRadius: new BorderRadius.only(
+                            topLeft: Radius.circular(10.0),
+                            topRight: Radius.circular(10.0),
+                            bottomLeft: Radius.circular(10.0),
+                            bottomRight: Radius.circular(10.0),
+                          ),
+                          color: Colors.transparent,
+                          border: Border.all(
+                            width: .5,
+                            color: couleur_fond_bouton,
+                          ),
+                        ),
+                        height: 50,
+                        child: Row(
+                          children: <Widget>[
+                            new Expanded(
+                              flex:4,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new CountryCodePicker(
+                                    showFlag: true,
+                                    searchStyle: TextStyle(
+                                        color: couleur_champ,
+                                        fontSize: taille_champ+3
+                                    ),
+                                    onChanged: (code){
+
+                                    },
+                                  )
+                              ),
+                            ),
+                            new Expanded(
+                              flex:8,
+                              child: Padding(
+                                padding: EdgeInsets.only(left:0.0),
+                                child: new TextFormField(
+                                  controller: _parrainController,
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                    fontSize: taille_champ+3,
+                                    color: Colors.black,
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return "Contact du parrain vide !";
+                                    }else{
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Contact du parrain',
+                                    hintStyle: TextStyle(color: Colors.grey,
+                                      fontSize: taille_champ+3,
+                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top:20,bottom: 20, right: 20, left: 20),
+                      child: InkWell(
+                        onTap: (){
+                          setState(() {
+                            isLoding = true;
+                          });
+                        },
+                        child: Container(
+                          height: hauteur_bouton,
+                          width: MediaQuery.of(context).size.width,
+                          decoration: new BoxDecoration(
+                            color: couleur_fond_bouton,
+                            border: new Border.all(
+                              color: Colors.transparent,
+                              width: 0.0,
+                            ),
+                            borderRadius: new BorderRadius.only(
+                              bottomLeft: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              topLeft: Radius.circular(10.0),
+                            ),
+                          ),
+                          child: new Center(
+                            child:isLoding==false?new Text('Valider', style: new TextStyle(fontSize: taille_champ+3, color: couleur_text_bouton),):CupertinoActivityIndicator(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ):Form(
+                  key: _formKey,
+                  child: Column(
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                        child: Container(
+                          margin: EdgeInsets.only(top: 0.0),
+                          decoration: new BoxDecoration(
+                            borderRadius: new BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                            ),
+                            color: Colors.transparent,
+                            border: Border.all(
+                              width: .5,
+                              color: couleur_fond_bouton,
+                            ),
+                          ),
+                          height: 50,
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                flex:2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.vpn_key, color: couleur_description_champ,),
+                                ),
+                              ),
+                              new Expanded(
+                                flex:10,
+                                //child: Padding(
+
+                                child: new TextFormField(
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                      fontSize: taille_champ+3,
+                                      color: couleur_libelle_champ
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return 'Champ mot de passe vide !';
+                                    }else{
+                                      _password = value;
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Nouveau mot de passe',
+                                    hintStyle: TextStyle(color: couleur_libelle_champ,
+                                        fontSize: taille_champ+3),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                  ),
+                                  obscureText: _isHidden,
+                                  /*textAlign: TextAlign.end,*/
+                                ),
+                                //),
+                              ),
+                              Expanded(
+                                flex:2,
+                                child: new IconButton(
+                                  onPressed: _toggleVisibility,
+                                  icon: _isHidden? new Icon(Icons.visibility_off,):new Icon(Icons.visibility,),
+                                  color: couleur_bordure,
+                                  iconSize: 20.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                        child: Container(
+                          margin: EdgeInsets.only(top: 0.0),
+                          decoration: new BoxDecoration(
+                            borderRadius: new BorderRadius.only(
+                              bottomLeft: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                            ),
+                            color: Colors.transparent,
+                            border: Border.all(
+                              width: .5,
+                              color: couleur_fond_bouton,
+                            ),
+                          ),
+                          height: 50,
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                flex:2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.vpn_key, color: couleur_description_champ),
+                                ),
+                              ),
+                              new Expanded(
+                                flex:10,
+                                //child: Padding(
+
+                                child: new TextFormField(
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                      fontSize: taille_champ+3,
+                                      color: couleur_libelle_champ
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return 'Champ vérification mot de passe vide !';
+                                    }else{
+                                      _password1 = value;
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Vérification du mot de passe',
+                                    hintStyle: TextStyle(color: couleur_libelle_champ,
+                                        fontSize: taille_champ+3),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                  ),
+                                  obscureText: _isHidden,
+                                  /*textAlign: TextAlign.end,*/
+                                ),
+                                //),
+                              ),
+                              Expanded(
+                                flex:2,
+                                child: new IconButton(
+                                  onPressed: _toggleVisibility,
+                                  icon: _isHidden? new Icon(Icons.visibility_off,):new Icon(Icons.visibility,),
+                                  color: couleur_bordure,
+                                  iconSize: 20.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top:20,bottom: 20, right: 20, left: 20),
+                        child: InkWell(
+                          onTap: (){
+                            setState(() {
+                              if(_formKey.currentState.validate()){
+                                if(_password1 == _password){
+                                  isLoding = true;
+                                  this.changePass(_password);
+                                }else{
+                                  showInSnackBar("Les mots de passe ne sont pas identiques!", _scaffoldKey);
+                                }
+                              }
+                            });
+                          },
+                          child: Container(
+                            height: hauteur_bouton,
+                            width: MediaQuery.of(context).size.width,
+                            decoration: new BoxDecoration(
+                              color: couleur_fond_bouton,
+                              border: new Border.all(
+                                color: Colors.transparent,
+                                width: 0.0,
+                              ),
+                              borderRadius: new BorderRadius.only(
+                                bottomLeft: Radius.circular(10.0),
+                                bottomRight: Radius.circular(10.0),
+                                topRight: Radius.circular(10.0),
+                                topLeft: Radius.circular(10.0),
+                              ),
+                            ),
+                            child: new Center(
+                              child:isLoding==false?new Text('Modifier mon mot de passe', style: new TextStyle(fontSize: taille_champ+3, color: couleur_text_bouton,),):CupertinoActivityIndicator(),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-            ],
-          )
-      );
+            ),
+          ],
+        )
+    );
   }
 }

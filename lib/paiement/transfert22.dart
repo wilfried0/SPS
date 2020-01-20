@@ -1,11 +1,9 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
-import 'package:services/auth/inscrip.dart';
 import 'package:services/composants/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
@@ -26,14 +24,11 @@ class _Transfert22State extends State<Transfert22> {
 
   _Transfert22State(this._code);
   String _code;
-  String _user;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  final navigatorKey = GlobalKey<NavigatorState>();
-  String url, _username, _password, user;
+  String url, _username, _password, user, _country;
   List data, liste;
   List unfilterData, unfilterData2;
   String _name, _sername;
-  var _formKey = GlobalKey<FormState>();
   bool displayButton = true, isLoading=false;
 
   @override
@@ -70,7 +65,8 @@ class _Transfert22State extends State<Transfert22> {
       for(var i=0; i<unfilterData2.length; i++){
         String name = unfilterData2[i]['name'].toUpperCase();
         String username = unfilterData2[i]['username'].toUpperCase();
-        if(username.contains(str.toUpperCase()) || name.contains(str.toUpperCase())){
+        String country = unfilterData2[i]['country'].toUpperCase();
+        if((username.contains(str.toUpperCase()) || name.contains(str.toUpperCase())) && country == _country){
           filterData.add(unfilterData2[i]);
         }
       }
@@ -131,10 +127,14 @@ class _Transfert22State extends State<Transfert22> {
           isLoading = false;
         });
         if(responseJson['result'] == "Ok"){
-          this.getListUser();
+          setState(() {
+            this.getListUser();
+          });
           showInSnackBar("Utilisateur ajouté avec succès", _scaffoldKey);
         }else{
-          this.getListUser();
+          setState(() {
+            this.getListUser();
+          });
           showInSnackBar("Erreur lors de l'ajout de l'utilisateur", _scaffoldKey);
         }
       }else {
@@ -147,8 +147,9 @@ class _Transfert22State extends State<Transfert22> {
     });
   }
 
-  Future<String> findUser(String str) async {
+  Future<void> findUser(String str) async {
     final prefs = await SharedPreferences.getInstance();
+    _country = prefs.getString("payst");
     _username = prefs.getString("username");
     _password = prefs.getString("password");
     print("$_username, $_password");
@@ -176,6 +177,7 @@ class _Transfert22State extends State<Transfert22> {
 
   Future<void> getListUser() async {
     final prefs = await SharedPreferences.getInstance();
+    _country = prefs.getString("payst");
     _username = prefs.getString("username");
     _password = prefs.getString("password");
     print("$_username, $_password");
@@ -267,202 +269,214 @@ class _Transfert22State extends State<Transfert22> {
   @override
   Widget build(BuildContext context) {
     marge = (5*MediaQuery.of(context).size.width)/414;
-    return new Scaffold(
-      key: _scaffoldKey,
-      appBar: new AppBar(
-        elevation: 0.0,
-        backgroundColor: couleur_appbar,
-        flexibleSpace: barreTop,
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
+      routes: <String, WidgetBuilder>{
+        "/transfert": (BuildContext context) =>new Transfert1(_code)
+      },
+      home: new Scaffold(
+        key: _scaffoldKey,
+        appBar: new AppBar(
+          elevation: 0.0,
+          backgroundColor: couleur_appbar,
+          flexibleSpace: barreTop,
 
-        leading: InkWell(
-            onTap: (){
-              setState(() {
-                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
-                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
-              });
-            },
-            child: Icon(Icons.arrow_back_ios,)),
-        iconTheme: new IconThemeData(color: couleur_fond_bouton),
-      ),
-      body: Column(
-        children: <Widget>[
-          Container(
-            height: hauteur_logo,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 0.0, left: 40.0, right: 40.0),
-              child: new Image.asset('images/logo.png'),
-            ),
-          ),
-
-          Padding(padding: EdgeInsets.only(top: marge_apres_logo),),
-
-          Padding(
-            padding: EdgeInsets.only(left: 20.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: new Text("Ajouter le bénéficiaire",
-                  style: TextStyle(
-                      color: couleur_titre,
-                      fontSize: taille_titre,
-                      fontWeight: FontWeight.bold
-                  )),
-            ),
-          ),
-
-          Padding(padding: EdgeInsets.only(top: marge_apres_titre),),
-          Padding(
-            padding: EdgeInsets.only(left: 20.0, right: 20, bottom: 10),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: new Text("Faite une recherche sur le nom, prénom ou le numéro de téléphone.",
-                  style: TextStyle(
-                      color: couleur_titre,
-                      fontSize: taille_description_champ+3,
-                      fontWeight: FontWeight.normal
-                  ), textAlign: TextAlign.justify,),
-            ),
-          ),
-
-          Padding(
-            padding: EdgeInsets.only(left: 20, right: 20),
-            child: Container(
-              decoration: new BoxDecoration(
-                borderRadius: new BorderRadius.only(
-                  bottomLeft: Radius.circular(10.0),
-                  bottomRight: Radius.circular(10.0),
-                  topLeft: Radius.circular(10.0),
-                  topRight: Radius.circular(10.0),
-                ),
-                color: couleur_champ,
-                border: Border.all(
-                    width: .1,
-                    color: couleur_champ
-                ),
+          leading: InkWell(
+              onTap: (){
+                setState(() {
+                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
+                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
+                });
+              },
+              child: Icon(Icons.arrow_back_ios,)),
+          iconTheme: new IconThemeData(color: couleur_fond_bouton),
+        ),
+        body: Column(
+          children: <Widget>[
+            Container(
+              height: hauteur_logo,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 0.0, left: 40.0, right: 40.0),
+                child: new Image.asset('images/logo.png'),
               ),
-              height: 50.0,
-              child: Row(
-                children: <Widget>[
-                  new Expanded(
-                    flex: 6,
-                    child: Padding(
-                      padding: EdgeInsets.only(left:20),
-                      child: new TextField(
-                        keyboardType: TextInputType.text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: couleur_libelle_champ,
+            ),
+
+            Padding(padding: EdgeInsets.only(top: marge_apres_logo),),
+
+            Padding(
+              padding: EdgeInsets.only(left: 20.0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: new Text("Ajouter le bénéficiaire",
+                    style: TextStyle(
+                        color: couleur_titre,
+                        fontSize: taille_titre,
+                        fontWeight: FontWeight.bold
+                    )),
+              ),
+            ),
+
+            Padding(padding: EdgeInsets.only(top: marge_apres_titre),),
+            Padding(
+              padding: EdgeInsets.only(left: 20.0, right: 20, bottom: 10),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: new Text("Faites une recherche sur le nom, prénom ou le numéro de téléphone.",
+                    style: TextStyle(
+                        color: couleur_titre,
+                        fontSize: taille_description_champ+3,
+                        fontWeight: FontWeight.normal
+                    ), textAlign: TextAlign.justify,),
+              ),
+            ),
+
+            Padding(
+              padding: EdgeInsets.only(left: 20, right: 20),
+              child: Container(
+                decoration: new BoxDecoration(
+                  borderRadius: new BorderRadius.only(
+                    bottomLeft: Radius.circular(10.0),
+                    bottomRight: Radius.circular(10.0),
+                    topLeft: Radius.circular(10.0),
+                    topRight: Radius.circular(10.0),
+                  ),
+                  color: couleur_champ,
+                  border: Border.all(
+                      width: .1,
+                      color: couleur_champ
+                  ),
+                ),
+                height: 50.0,
+                child: Row(
+                  children: <Widget>[
+                    new Expanded(
+                      flex: 6,
+                      child: Padding(
+                        padding: EdgeInsets.only(left:20),
+                        child: new TextField(
+                          keyboardType: TextInputType.text,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: couleur_libelle_champ,
+                          ),
+                          decoration: InputDecoration.collapsed(
+                            hintText: 'Rechercher',
+                            hintStyle: TextStyle(color: couleur_libelle_champ,),
+                            //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                          ),
+                          onChanged: (String str){
+                            user = str;
+                            this.searchData(str);
+                          },
+                          /*textAlign: TextAlign.end,*/
                         ),
-                        decoration: InputDecoration.collapsed(
-                          hintText: 'Rechercher',
-                          hintStyle: TextStyle(color: couleur_libelle_champ,),
-                          //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                        ),
-                        onChanged: (String str){
-                          user = str;
-                          this.searchData(str);
+                      ),
+                    ),
+                    Expanded(
+                      flex:1,
+                      child: GestureDetector(
+                        onTap: (){
+                          if(user.isEmpty){
+                            showInSnackBar("Veuillez entrer un mot clef!", _scaffoldKey);
+                          }else
+                          this.findUser(user);
                         },
-                        /*textAlign: TextAlign.end,*/
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex:1,
-                    child: GestureDetector(
-                      onTap: (){
-                        if(user.isEmpty){
-                          showInSnackBar("Veuillez entrer un mot clef!", _scaffoldKey);
-                        }else
-                        this.findUser(user);
-                      },
-                      child: Container(
-                        height: 50,
-                        decoration: new BoxDecoration(
-                          color: couleur_fond_bouton,
-                          borderRadius: new BorderRadius.only(
-                            bottomLeft: Radius.circular(0.0),
-                            bottomRight: Radius.circular(10.0),
-                            topLeft: Radius.circular(0.0),
-                            topRight: Radius.circular(10.0),
+                        child: Container(
+                          height: 50,
+                          decoration: new BoxDecoration(
+                            color: couleur_fond_bouton,
+                            borderRadius: new BorderRadius.only(
+                              bottomLeft: Radius.circular(0.0),
+                              bottomRight: Radius.circular(10.0),
+                              topLeft: Radius.circular(0.0),
+                              topRight: Radius.circular(10.0),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left:15.0, right: 15),
+                            child:isLoading==false? new Icon(Icons.search,
+                              size: 20.0,
+                              color: Colors.white,):CupertinoActivityIndicator(),
                           ),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left:15.0, right: 15),
-                          child:isLoading==false? new Icon(Icons.search,
-                            size: 20.0,
-                            color: Colors.white,):CupertinoActivityIndicator(),
-                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: 20, top: 20),
-              child: ListView.builder(
-                  itemCount: data==null?0:data.length,
-                  itemBuilder: (BuildContext context, int i){
-                    var name = data[i]['name'];
-                    var username = data[i]['username'];
-                    return InkWell(
-                      child: Column(
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.only(left: 0.0),
-                            child: Divider(color: couleur_bordure,
-                              height: .1,),
-                          ),
-                          Row(
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: 20, top: 20),
+                child: ListView.builder(
+                    itemCount: data==null?0:data.length,
+                    itemBuilder: (BuildContext context, int i){
+                      var name = data[i]['name'];
+                      var username = data[i]['username'];
+                      var country = data[i]['country'];
+                      if(country == _country){
+                        return InkWell(
+                          child: Column(
                             children: <Widget>[
                               Padding(
-                                padding: const EdgeInsets.only(right: 10.0, top: 10.0, bottom: 10.0),
-                                child: SizedBox(
-                                  height: 30,
-                                  width: 40,
-                                  child: Image.asset("images/ellipse1.png"),
-                                ),
+                                padding: const EdgeInsets.only(left: 0.0),
+                                child: Divider(color: couleur_bordure,
+                                  height: .1,),
                               ),
-                              SizedBox(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Text(name, //vérifier les débordement
-                                      style: TextStyle(
-                                          color: couleur_libelle_champ,
-                                          fontSize: taille_champ,
-                                          fontFamily: police_titre,
-                                          fontWeight: FontWeight.bold
-                                      ),),
-                                    Text(username,
-                                      style: TextStyle(
-                                          color: couleur_libelle_etape,
-                                          fontSize: taille_champ,
-                                          fontFamily: police_titre
-                                      ),),
-                                  ],
-                                ),
+                              Row(
+                                children: <Widget>[
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 10.0, top: 10.0, bottom: 10.0),
+                                    child: SizedBox(
+                                      height: 30,
+                                      width: 40,
+                                      child: Image.asset("images/ellipse1.png"),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Text(name, //vérifier les débordement
+                                          style: TextStyle(
+                                              color: couleur_libelle_champ,
+                                              fontSize: taille_champ,
+                                              fontFamily: police_titre,
+                                              fontWeight: FontWeight.bold
+                                          ),),
+                                        Text(username,
+                                          style: TextStyle(
+                                              color: couleur_libelle_etape,
+                                              fontSize: taille_champ,
+                                              fontFamily: police_titre
+                                          ),),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      onTap: (){
-                        setState(() {
-                          _sername = username.toString();
-                          _name = name.toString();
-                          this.ackAlert(context, username);
-                        });
-                      },
-                    );
-                  }
+                          onTap: (){
+                            setState(() {
+                              _sername = username.toString();
+                              _name = name.toString();
+                              this.ackAlert(context, username);
+                            });
+                          },
+                        );
+                      }else{
+                        return Container();
+                      }
+                    }
+                ),
               ),
-            ),
-          )
-        ],
+            )
+          ],
+        ),
+        bottomNavigationBar: barreBottom,
       ),
-      bottomNavigationBar: barreBottom,
     );
   }
 

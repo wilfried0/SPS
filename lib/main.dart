@@ -5,30 +5,28 @@ import 'package:services/accueil.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'app_localizations.dart';
 import 'auth/connexion.dart';
 import 'composants/components.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((_) {
     runApp(new MaterialApp(
       title: '',
       theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
       debugShowCheckedModeBanner: false,
-    /*routes: <String, WidgetBuilder>{
-        "/connexion": (BuildContext context) =>new Connexion(),
-        "/accueil": (BuildContext context) =>new Accueil()
-      },
      localizationsDelegates: [
       // ... app-specific localization delegate[s] here
+      AppLocalizations.delegate,
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: [
-      const Locale('en'), // English
-      const Locale('fr'), // French
+      const Locale('en', 'US'), // English
+      const Locale('fr', 'FR'), // French
     ],
     localeResolutionCallback: (locale, supportedLocales){
       for(var supportedLocale in supportedLocales){
@@ -37,11 +35,10 @@ void main() async{
         }
       }
       return supportedLocales.first;
-    },*/
+    },
       home: SplashScreen(),
     ));
   });
-
 }
 
 class SplashScreen extends StatefulWidget {

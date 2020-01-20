@@ -5,7 +5,7 @@ import 'package:page_transition/page_transition.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:services/auth/connexion.dart';
 import 'package:services/composants/components.dart';
-import 'package:services/composants/services.dart';
+import 'package:services/marketplace/lib/Home.dart';
 import 'package:services/monprofile.dart';
 import 'package:services/paiement/encaisser1.dart';
 import 'package:services/paiement/historique.dart';
@@ -29,22 +29,99 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   _ProfileState(this._code);
   String _code;
-  final logout = '$base_url/user/Auth/signout';
   PageController pageController;
   int currentPage = 0, choix;
-  String _token, solde,urlPath = "", local, idUser, userImage, _pathImage, _nom, _ville, _quartier, _pays, _username, _password, deviseLocale, devise;
+  String solde,urlPath = "", local, idUser, userImage, _pathImage, _nom, _ville, _quartier, _pays, _username, _password, deviseLocale, devise;
   bool isLoding = false, loadImage = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb;
+  int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb, nbNotif = 0;
   int flex4, flex6, taille, enlev, rest, enlev1, enl;
   double haut,ad, _taill,topi, bottomsolde,sold,topo22,top33, top34, top1, top, top2, top3,top4, topo1, topo2, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext;
   final navigatorKey = GlobalKey<NavigatorState>();
+  String smsCode, mesNotif;
+  List<String> listSms;
 
   @override
   void initState(){
+    //print("************** "+MediaQuery.of(context).size.width.toString()+" **********");
     super.initState();
+    //lireNotif();
     this.lire();
     this.getSolde();
+  }
+
+  void reg() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('notif', null);
+  }
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(
+          child: ListView.builder(
+              itemCount: listSms == null?0:listSms.length,
+              itemBuilder: (BuildContext context, int i){
+                String sms = listSms[i];
+                return AlertDialog(
+                  title:i == 0? Center(child: Column(
+                    children: <Widget>[
+                      Text("Notifications"),
+                      Padding(
+                        padding: EdgeInsets.only(left: 20, right: 20),
+                        child: Divider(color: Colors.black,
+                          height: 5,),
+                      )
+                    ],
+                  )):Container(),
+                  content: Padding(
+                    padding: EdgeInsets.only(top:i == 0? 20:0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text("$sms",style: TextStyle(
+                          color: Colors.black,
+                          fontSize: taille_champ+3
+                        ),textAlign: TextAlign.justify,),
+                        i==listSms.length-1?Padding(
+                          padding: EdgeInsets.only(top: 20),
+                          child: GestureDetector(
+                            onTap: (){
+                              setState(() {
+                                listSms = null;
+                                nbNotif = 0;
+                                mesNotif = null;
+                                this.reg();
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: Container(
+                              height: hauteur_champ,
+                              width: MediaQuery.of(context).size.width - 40,
+                              decoration: new BoxDecoration(
+                                color: couleur_fond_bouton,
+                                border: new Border.all(
+                                  color: Colors.transparent,
+                                  width: 0.0,
+                                ),
+                                borderRadius: new BorderRadius.circular(10.0),
+                              ),
+                              child: new Center(
+                                  child: new Text('Valider', style: new TextStyle(fontSize: taille_champ+3, color: couleur_text_bouton),)
+                              ),
+                            ),
+                          ),
+                        ):Container(),
+                      ],
+                    ),
+                  ),
+                );
+              }
+            ),
+        );
+      },
+    );
   }
 
   Future<File> getPdfFromUrl(String url) async {
@@ -61,10 +138,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     }
   }
 
-  Future<bool> _onWillPop() {
-    navigatorKey.currentState.pushNamed("/connexion");
-    return null;
-  }
 
   void showInSnackBar(String value) {
     _scaffoldKey.currentState.showSnackBar(
@@ -78,19 +151,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
           duration: Duration(seconds: 5),));
   }
 
-  onDoneLoading() async {
-    setState(() {
-      isLoding = false;
-      _code = "";
-    });
-  }
-
-  bool myInterceptor(bool stopDefaultButtonEvent) {
-    navigatorKey.currentState.pushNamed("/connexion"); // Do some stuff.
-    return true;
-  }
-
-
   lire() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -98,12 +158,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       _nom = prefs.getString("nom");
       _ville = prefs.getString("ville");
       _quartier = prefs.getString("quartier");
-      print("_pathImage correspond à: $_pathImage");
-      //_pathImage = prefs.getString("avatar")==null?null:prefs.getString("avatar").toString().split(": ")[1];
-      if(_pathImage == null){
-      } else {
-        _pathImage = "${_pathImage.replaceAll("'", "")}";
-      }
+      _pathImage = prefs.getString("avatar");
+      print("mon avatar: $_pathImage");
     });
   }
 
@@ -143,6 +199,18 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     print("Mon solde $solde");
   }
 
+  lireNotif() async {
+    final prefs = await SharedPreferences.getInstance();
+    if(prefs.getString("notif")!=null && prefs.getString("notif")!= "null")
+      prefs.getString("notif") != "null" && prefs.getString("notif") != null?mesNotif = prefs.getString("notif"):mesNotif=null;
+
+    if(mesNotif == null){
+      nbNotif = 0;
+    }else{
+      listSms = mesNotif.split("^");
+      nbNotif = listSms.length;
+    }
+  }
   @override
   void dispose() {
     super.dispose();
@@ -152,15 +220,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    lireNotif();
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
-    double fromHeight, leftcagnotte, rightcagnotte, topcagnotte, bottomcagnotte, ad=100;
+    double ad=100;
     if(_large<=320){
-      fromHeight = 120;
-      leftcagnotte = 20;
-      rightcagnotte = 30;
-      topcagnotte = 50; //espace entre mes tabs et le slider
-      bottomcagnotte = 30;
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ-2;
@@ -179,11 +243,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       enl = 2;
       ad = 3;
     }else if(_large>320 && _large<=360 && _haut==738){
-      fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 50;
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ-1;
@@ -202,11 +261,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       enl = 2;
       ad = 3;
     }else if(_large>320 && _large<=360){
-      fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 50;
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ-1;
@@ -225,11 +279,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       enl = 2;
       ad = 3;
     }else if(_large == 375.0){
-      fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 50;
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ;
@@ -248,11 +297,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       enl = 2;
       ad = 0;
     }else if(_large>360){
-      fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 50;
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ;
@@ -271,11 +315,6 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       enl = 2;
       ad = 3;
     }else if(_large>411 && _large<412){
-      fromHeight = 130;
-      leftcagnotte = 20;
-      rightcagnotte = 40;
-      topcagnotte = 50;
-      bottomcagnotte = 40;
       bottomsolde = 400;
       sold = 330;
       _taill = taille_description_champ;
@@ -348,20 +387,38 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                   //deviseLocale=="EUR"?deviseLocale="XAF":deviseLocale="EUR";
                 });
               },
-              child: Stack(
-                children: <Widget>[
-                  Padding(
-                    padding: EdgeInsets.only(left: 8, top: 8),
-                    child: Text("0",style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold
-                    ),),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(right: 20,top: 20),
-                    child: Icon(Icons.email,color: orange_F),
-                  ),
-                ],
+              child: GestureDetector(
+                onTap: (){
+                  if(nbNotif == 0){
+                    showInSnackBar("Aucune notification enregistrée");
+                  }else
+                  this._ackAlert(context);
+                },
+                child: Stack(
+                  children: <Widget>[
+                    nbNotif==0?Container():Padding(
+                      padding: EdgeInsets.only(bottom: 23, left: 3.5),
+                      child: Container(
+                        width: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: nbNotif==0?8:10, top: 8),
+                      child: Text(nbNotif.toString(),style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold
+                      ),),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(right: 20,top: 20),
+                      child: Icon(Icons.email,color: orange_F),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -380,20 +437,28 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
-                            image: _pathImage==null? AssetImage("images/ellipse1.png"):FileImage(new File(_pathImage)), //AssetImage("images/ellipse1.png"),
+                            image: _pathImage==null || _pathImage=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_pathImage), //AssetImage("images/ellipse1.png"),
                             fit: BoxFit.cover
                         )
                     ),
                   ),
                 ),
               ),
-              Padding(
-                padding: EdgeInsets.only(top: 120, ),//solde du compte
+              deviseLocale == null?Padding(
+                padding: EdgeInsets.only(top: 110, ),
+                child: Center(
+                  child: Theme(
+                      data: Theme.of(context).copyWith(accentColor: orange_F),
+                      child: CupertinoActivityIndicator(radius: 20)),
+                ),
+              ):Padding(
+                padding: EdgeInsets.only(top: 110, ),//solde du compte
                 child:deviseLocale=='EUR'? Column(
                   children: <Widget>[
                     Text('SOLDE', style: TextStyle(
                         color: Colors.white,
-                        fontSize: taille_libelle_etape
+                        fontSize: taille_libelle_etape,
+                        fontWeight: FontWeight.bold
                     ),),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -421,7 +486,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                         children: <Widget>[
                           Text('SOLDE', style: TextStyle(
                               color: Colors.white,
-                              fontSize: taille_libelle_etape
+                              fontSize: taille_libelle_etape,
+                            fontWeight: FontWeight.bold
                           ),),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -446,9 +512,10 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                       flex: 6,
                       child: Column(
                         children: <Widget>[
-                          Text('MONAIE LOCALE', style: TextStyle(
+                          Text('MONNAIE LOCALE', style: TextStyle(
                               color: Colors.white,
-                              fontSize: taille_libelle_etape
+                              fontSize: taille_libelle_etape,
+                              fontWeight: FontWeight.bold
                           ),),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -512,7 +579,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                 Container(
                                     height: 50,
                                     width: 50,
-                                    child: new Image.asset('images/import_down_blue.png')),
+                                    child: new Image.asset('images/growth.png')),
                                 Text('Recharger mon compte',
                                   style: TextStyle(
                                       color: couleur_libelle_etape,
@@ -559,7 +626,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                 Container(
                                     height: 50,
                                     width: 50,
-                                    child: new Image.asset('images/import_up_blue.png')),
+                                    child: new Image.asset('images/hand.png')),
                                 Text('Faire un retrait',
                                   style: TextStyle(
                                       color: couleur_libelle_etape,
@@ -617,7 +684,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                 Container(
                                     height: 50,
                                     width: 50,
-                                    child: new Image.asset('images/Groupe3.png')),
+                                    child: new Image.asset('images/exchange.png')),
                                 Text('Mes transactions',
                                   style: TextStyle(
                                       color: couleur_libelle_etape,
@@ -664,7 +731,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                 Container(
                                     height: 50,
                                     width: 50,
-                                    child: new Image.asset('images/Groupe6.png')),
+                                    child: new Image.asset('images/payment-method.png')),
                                 Text('Transfert d\'argent',
                                   style: TextStyle(
                                       color: couleur_libelle_etape,
@@ -757,8 +824,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                           padding: EdgeInsets.only(top: haut),
                           child: GestureDetector(
                             onTap: () {
-                              showInSnackBar("Pas encore disponible.");
-                              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: _Drawer()));
+                              //showInSnackBar("Pas encore disponible.");
+                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Home()));
                             },
                             child: Column(
                               children: <Widget>[
@@ -766,7 +833,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                     height: 50,
                                     width: 100,
                                     child: new Icon(Icons.add_shopping_cart, color: couleur_fond_bouton,size: 50,)),//Image.asset('images/ellipse1.png')),
-                                Text('Market Place',
+                                Text('MarketPlace',
                                   style: TextStyle(
                                       color: couleur_libelle_etape,
                                       fontSize: _taill,
@@ -919,7 +986,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
-                            image: _pathImage==null? AssetImage("images/ellipse1.png"):FileImage(new File(_pathImage)),
+                            image: _pathImage==null || _pathImage=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_pathImage),
                             fit: BoxFit.cover
                         )
                     ),
@@ -980,7 +1047,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
-              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Monprofile("")));
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Monprofile()));
             },
           ),
 
@@ -1298,7 +1365,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex:11,
                     child: Padding(
                       padding: EdgeInsets.only(left: 20),
-                      child: new Text('Déconnection',style: TextStyle(
+                      child: new Text('Déconnexion',style: TextStyle(
                           color: couleur_fond_bouton,
                           fontWeight: FontWeight.bold,
                           fontFamily: police_titre

@@ -29,13 +29,13 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
   //TabController _tabController;
   PageController pageController;
   int currentPage = 1, nb1, nb2, nb3, nb;
-  String _username,deviseLocale, _password, _date, _fromCountry, _toCountry, _status, _amount, _name, _transactionId, _fees, _heure;
+  String _username,deviseLocale, _password;
   DateTime date;
   bool isLoding = true;
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, xval, choix=1, indik=1, enlvb, enlevt, ind=2017;
   int flex4, flex6, taille, enlev, rest, enlev1, idUser, grand;
-  double _width,r,l,_height, filtre,rating,star, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, _larg;
-  var _cagnottes= [], cagnottes = [], _trans = [], _liste = [];
+  double r,l,_height, filtre,rating,star, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext;
+  var cagnottes = [];
   final Color barBackgroundColor = const Color(0xff72d8bf);
   final Duration animDuration = Duration(milliseconds: 250);
   List data;
@@ -48,21 +48,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     this.getHistorique();
     _url = "http://74.208.183.205:8086/corebanking/rest/transaction/getTransactions";
     super.initState();
-  }
-
-  String getLieu(String nature){
-    String lieu;
-    if(nature == "WALLET_TO_WARI"){
-      lieu = "3";
-    }else if(nature == "WALLET_TO_WALLET"){
-      lieu = "0";
-    }else if(nature == "OM_TO_WALLET"){
-      lieu = "2";
-    }else if(nature == "MOMO_TO_WALLET"){
-
-    }else if(nature == "EU_TO_WALLET"){
-      lieu = "2";
-    }
   }
 
 
@@ -80,7 +65,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     prefs.setString("payst", "$_toCountry");
     prefs.setString("paysf", "$_fromCountry");
     prefs.setString("serviceName", "$_serviceName");
-    prefs.setString("named", "$_name");
     prefs.setString("montant", "$_amount");
     prefs.setString("fees", "$_fees");
     prefs.setString("status", "$_status");
@@ -139,17 +123,14 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
-    double fromHeight, leftcagnotte, rightcagnotte, topcagnotte, bottomcagnotte;
+    double fromHeight,topcagnotte, bottomcagnotte;
     if(_large<=320){
-      _width = MediaQuery.of(context).size.width-124;
       _height = MediaQuery.of(context).size.height;
       filtre = taille_libelle_etape-1.5;
       if(_height <= 568)
         fromHeight = 204.333333333333333333334;
       else
         fromHeight = 215;
-      leftcagnotte = 30;
-      rightcagnotte = 30;
       topcagnotte = 10; //espace entre mes tabs et le slider
       bottomcagnotte = 50;
       hauteurcouverture = 150;
@@ -173,7 +154,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       taille = 150;
       enlev = 0;
       rest = 30;
-      _larg = 30;
       enlev1 = 3;
       xval = 34;
       star = 30;
@@ -182,11 +162,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       enlevt = 0;
       r = 0.9;l=0.9;
     }else if(_large>320 && _large<=360 && _haut==738){
-      _width = MediaQuery.of(context).size.width-132;
       filtre = taille_libelle_etape;
       fromHeight = 185;
-      leftcagnotte = 40;
-      rightcagnotte = 40;
       topcagnotte = 40;
       bottomcagnotte = 70;
       hauteurcouverture = 203;
@@ -210,7 +187,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       taille = 437;
       enlev = 104;
       rest = 40;
-      _larg = 40;
       enlev1 = 2;
       xval = 40;
       star = 30;
@@ -219,11 +195,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       enlevt = 20;
       r = 1;l=1;
     }else if(_large>320 && _large<360){
-      _width = MediaQuery.of(context).size.width-132;
       filtre = taille_libelle_etape;
       fromHeight = 185;
-      leftcagnotte = 40;
-      rightcagnotte = 40;
       topcagnotte = 40;
       bottomcagnotte = 70;
       hauteurcouverture = 203;
@@ -247,7 +220,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       taille = 437;
       enlev = 104;
       rest = 40;
-      _larg = 40;
       enlev1 = 2;
       xval = 40;
       star = 30;
@@ -256,11 +228,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       enlevt = 20;
       r = 1;l=1;
     }else if(_large==360){
-      _width = MediaQuery.of(context).size.width-132;
       filtre = taille_libelle_etape;
       fromHeight = 189;
-      leftcagnotte = 40;
-      rightcagnotte = 40;
       topcagnotte = 40;
       bottomcagnotte = 70;
       hauteurcouverture = 203;
@@ -284,7 +253,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       taille = 437;
       enlev = 104;
       rest = 40;
-      _larg = 40;
       enlev1 = 2;
       xval = 40;
       star = 30;
@@ -293,11 +261,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       enlevt = 20;
       r = 1;l=1;
     }else if(_large == 375){//    >=Iphone 8 && 6
-      _width = MediaQuery.of(context).size.width-143;
       filtre = taille_libelle_etape;
       fromHeight = 200;
-      leftcagnotte = 40;
-      rightcagnotte = 40;
       topcagnotte = 40;
       bottomcagnotte = 70;
       hauteurcouverture = 300;
@@ -321,7 +286,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       taille = 437;
       enlev = 104;
       rest = 40;
-      _larg = 40;
       enlev1 = 2;
       xval = 40;
       star = 30;
@@ -330,11 +294,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       enlevt = 20;
       r = 1;l=1;
     }else if(_large> 411 && _large<412){
-      _width = MediaQuery.of(context).size.width-143;
       filtre = taille_libelle_etape;
       fromHeight = 200;
-      leftcagnotte = 40;
-      rightcagnotte = 40;
       topcagnotte = 40;
       bottomcagnotte = 70;
       hauteurcouverture = 300;
@@ -358,7 +319,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       taille = 437;
       enlev = 104;
       rest = 40;
-      _larg = 40;
       enlev1 = 2;
       xval = 40;
       star = 30;
@@ -367,11 +327,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       r = 1;l=1;
     }
     else if(_large>360){
-      _width = MediaQuery.of(context).size.width-143;
       filtre = taille_libelle_etape;
       fromHeight = 200;
-      leftcagnotte = 40;
-      rightcagnotte = 40;
       topcagnotte = 40;
       bottomcagnotte = 100;
       hauteurcouverture = 300;
@@ -395,7 +352,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       taille = 437;
       enlev = 104;
       rest = 40;
-      _larg = 40;
       enlev1 = 2;
       xval = 40;
       star = 30;
@@ -447,14 +403,16 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                     ),
                     new Padding(
                         padding: EdgeInsets.only(top: topcagnotte-enlevt, bottom: bottomcagnotte-enlvb, left: 20, right: 20),
-                        child: Text('Historique de compte',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: taille_titre+grand,
-                            color: Colors.white,),
-                          textAlign: TextAlign.right,)),
+                        child: Center(
+                          child: Text('Historique de compte',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: taille_titre+grand,
+                              color: Colors.white,),
+                            ),
+                        )),
                     AspectRatio(
-                      aspectRatio: 1.5,
+                      aspectRatio: MediaQuery.of(context).size.width>=520? 2.2: 1.5,//hauteur max des bandes de l'histogramme
                       child: Card(
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
                         color: bleu_F,
@@ -494,32 +452,28 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
               itemBuilder: (BuildContext context, int i){
                var _amount = data[i]['amount'];
                var _date = data[i]['date'].split(" ")[0];
-               var _heure = data[i]['date'].split(" ")[1];
                var _fees = data[i]['fees'];
                var _toCountry = data[i]['tocountry'];
                var _status = data[i]['status'];
                var _nature = data[i]['typeOper'];
                var _fromCountry = data[i]['fromcountry'];
-               var _tocountry = data[i]['tocountry'];
-               var _tofirstname = data[i]['tofirstname'];
                var _serviceName = data[i]['serviceName'];
                var _transactionid = data[i]['transactionid'];
-               var _tolastname = data[i]['tolastname'];
                var _name;
-               if(data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null")
-                  _name = "${data[i]['tolastname']}";
-               else if(data[i]['tolastname'] == null || data[i]['tolastname'] == "null"){
-                 _name = "${data[i]['tofirstname']}";
-               }else if((data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null") && (data[i]['tolastname'] == null || data[i]['tolastname'] == "null")){
-                 _name="";
-               }else
-                 _name = "${data[i]['tofirstname']} ${data[i]['tolastname']}";
-               var _transactionId = data[i]['transactionid'];
+
                 return Padding(
                   padding: EdgeInsets.only(left: 20, right: 20, top: 20),
                   child: GestureDetector(
                     onTap: (){
-                      _save(_fromCountry, _toCountry, _serviceName ,_name,_amount.toString(), _fees.toString(), _status, _nature ,_transactionid, _date);
+                      if(data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null")
+                        _name = "${data[i]['tolastname']}";
+                      else if(data[i]['tolastname'] == null || data[i]['tolastname'] == "null"){
+                        _name = "${data[i]['tofirstname']}";
+                      }else if((data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null") && (data[i]['tolastname'] == null || data[i]['tolastname'] == "null")){
+                        _name="";
+                      }else
+                        _name = "${data[i]['tofirstname']} ${data[i]['tolastname']}";
+                      _save(_fromCountry, _toCountry, _serviceName ,_name,_amount.toString().split('.')[0], _fees.toString(), _status, _nature ,_transactionid, _date);
                       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                     },
                     child: Card(
@@ -639,11 +593,11 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
 
   String getNature(String nature){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU"){
       _nature = "Transfert d'argent";
     }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
       _nature = "Recharge d'argent";
-    }else if(nature == "WALLET_TO_MOMO" || nature == "WALLET_TO_OM"){
+    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE"){
       _nature = "Retrait d'argent";
     }
     return _nature;

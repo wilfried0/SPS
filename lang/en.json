@@ -1,0 +1,13 @@
+{
+  "bienvenu": "Welcome to\nSprint-Pay",
+  "connexion_titre": "First financial services interoperability platform.",
+  "numero_tel": "Phone number",
+  "commencer": "Start",
+  "contactez_nous": "Contact-us",
+
+  "pas_disponible": "Not yet available",
+  "tel_invalide": "Invalid phone number!",
+  "tel_vide": "Empty phone field !",
+  "service_indisponible": "Service unavailable",
+  "verif_connexion": "Check your internet connection."
+}

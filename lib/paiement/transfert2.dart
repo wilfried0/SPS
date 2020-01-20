@@ -25,7 +25,7 @@ class _Transfert2State extends State<Transfert2> {
   List data;
   _Transfert2State(this._code);
   String _code;
-  String _firstname, _lastname, _to, _adresse, _lieu;
+  String _firstname, codeIso2, _lastname, _to, _adresse, _lieu, dial;
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   String _name, _sername;
@@ -51,6 +51,9 @@ class _Transfert2State extends State<Transfert2> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _lieu = prefs.getString("lieu");
+      codeIso2 = prefs.getString("codeIso2");
+      dial = prefs.getString("DIAL");
+      print("mon code iso2 ==> $codeIso2");
     });
   }
 
@@ -311,20 +314,20 @@ class _Transfert2State extends State<Transfert2> {
                         ),
                       ),
                       height: hauteur_champ,
-                      child: Row(
+                      child:codeIso2==null?Container():  Row(
                         children: <Widget>[
                           new Expanded(
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
-                              child: new Image.asset('flags/'+_code.split('^')[1].toLowerCase()+'.png'),
+                              child:new Image.asset('flags/'+codeIso2.toLowerCase()+'.png'),
                             ),
                           ),
                           Expanded(
                             flex:2,
                             child: Padding(
                                 padding: const EdgeInsets.only(left:0.0,),
-                                child: new Text(this._code.split('^')[0],
+                                child:dial == null?Container(): new Text(dial,
                                   style: TextStyle(
                                     color: couleur_champ,
                                     fontSize: taille_champ+3,
@@ -428,15 +431,13 @@ class Transfer extends StatefulWidget {
 class _TransferState extends State<Transfer> {
   _TransferState(this._code);
   String _code;
-  String _firstname, _lastname, _to, _fromCountryISO, _pays,_fromPays, _fromCardType, _fromCardNumber, _fromCardIssuingDate="", _fromCardExpirationDate="";
+  String  _fromCountryISO, _pays,_fromPays, _fromCardType, fromCardType, _fromCardNumber, _fromCardIssuingDate="", _fromCardExpirationDate="";
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  String _name, _sername;
   final navigatorKey = GlobalKey<NavigatorState>();
   double marge;
   var _categorie = ['Carte Nationale d\'identité', 'Passeport', 'Carte de séjour'];
   var _paystt = ['hi'];
-  var _flag;
   List data;
   int _date = new DateTime.now().year;
 
@@ -499,7 +500,7 @@ class _TransferState extends State<Transfer> {
         initialDate: new DateTime(1960),
         firstDate: new DateTime(1960),
         //locale : const Locale("fr","FR"),
-        lastDate: new DateTime(_date+1)
+        lastDate:q == 0? new DateTime(_date+1):new DateTime(_date+20)
     );
     if(picked != null){
       if(q == 0){
@@ -518,7 +519,6 @@ class _TransferState extends State<Transfer> {
   @override
   Widget build(BuildContext context) {
     marge = (5*MediaQuery.of(context).size.width)/414;
-
     return new MaterialApp(
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
@@ -616,10 +616,16 @@ class _TransferState extends State<Transfer> {
                             isExpanded: true,
                             onChanged: (String selected){
                               setState(() {
+                                fromCardType = selected;
+                                if(selected == 'Carte Nationale d\'identité'){
+                                  _fromCardType = 'CNI';
+                                }else if(selected == 'Carte de séjour'){
+                                  _fromCardType = 'Carte de sejour';
+                                }else
                                 _fromCardType = selected;
                               });
                             },
-                            value: _fromCardType,
+                            value: fromCardType,
                             hint: Padding(
                               padding: EdgeInsets.only(left: 20),
                               child: Text('Choisissez la nature de votre pièce d\'identité',

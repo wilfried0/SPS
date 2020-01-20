@@ -11,7 +11,7 @@ class Accueil extends StatefulWidget {
 }
 
 class _AccueilState extends State<Accueil> {
-  @override
+
   static final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   var scrollDirection =Axis.horizontal;
   int ad = 3;

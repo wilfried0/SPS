@@ -2,15 +2,14 @@ import 'dart:convert';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/paiement/getsoldewidget.dart';
-import 'encaisser2.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -35,10 +34,9 @@ class _Retrait1State extends State<Retrait1> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   // ignore: non_constant_identifier_names
   int recenteLenght, archiveLenght, populaireLenght, id_kitty;
-  var _formKey = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   int flex4, flex6, taille, enlev, rest, enlev1, indik=0;
   double aj,ajj,_taill,gauch,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
-  File _image;
   List data, list;
   Color color;
   bool isLoading = false;
@@ -272,75 +270,72 @@ class _Retrait1State extends State<Retrait1> {
     return new MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      home: new DefaultTabController(
-        length: 1,
-        child: new Scaffold(
-          key: _scaffoldKey,
-            appBar: PreferredSize(
-              preferredSize: Size.fromHeight(fromHeight),
-              child: new Container(
-                color: bleu_F,
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
-                      child: Row(
-                        children: <Widget>[
-                          GestureDetector(
-                              onTap: (){
-                                setState(() {
-                                  Navigator.pop(context);
-                                  //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
-                                });
-                              },
-                              child: Icon(Icons.arrow_back_ios,color: Colors.white,)
-                          ),
-                          GestureDetector(
+      home: new Scaffold(
+        key: _scaffoldKey,
+          appBar: PreferredSize(
+            preferredSize: Size.fromHeight(fromHeight),
+            child: new Container(
+              color: bleu_F,
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
+                    child: Row(
+                      children: <Widget>[
+                        GestureDetector(
                             onTap: (){
                               setState(() {
-                                //Navigator.pop(context);
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
+                                Navigator.pop(context);
+                                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                                 //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
                               });
                             },
-                            child: Text('Retour',
-                              style: TextStyle(color: Colors.white, fontSize: taille_champ),),
-                          )
-                        ],
+                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                        ),
+                        GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              //Navigator.pop(context);
+                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
+                              //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
+                            });
+                          },
+                          child: Text('Retour',
+                            style: TextStyle(color: Colors.white, fontSize: taille_champ),),
+                        )
+                      ],
+                    ),
+                  ),
+                  Center(
+                    child: Text('Etape 1 sur 2',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: taille_libelle_etape,
+                          fontWeight: FontWeight.bold
                       ),
                     ),
-                    Center(
-                      child: Text('Etape 1 sur 2',
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Text('Retirer de l\'argent',
                         style: TextStyle(
                             color: Colors.white,
-                            fontSize: taille_libelle_etape,
+                            fontSize: taille_titre-2,
                             fontWeight: FontWeight.bold
                         ),
                       ),
                     ),
-
-                    Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Text('Retirer de l\'argent',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: taille_titre-2,
-                              fontWeight: FontWeight.bold
-                          ),
-                        ),
-                      ),
-                    ),
-                    getSoldeWidget(),
-                  ],
-                ),
+                  ),
+                  getSoldeWidget(),
+                ],
               ),
             ),
-            body: _buildCarousel(context),
-            bottomNavigationBar: barreBottom
-        ),
+          ),
+          body: _buildCarousel(context),
+          bottomNavigationBar: barreBottom
       ),
     );
   }
@@ -673,7 +668,18 @@ class _Retrait1State extends State<Retrait1> {
                           }
                           if(_formKey.currentState.validate()) {
                             if(_code == "1"){
-                              showInSnackBar("Service indisponible");
+                              if(_to.startsWith('23769') || _to.startsWith('237655') || _to.startsWith('237656') || _to.startsWith('237657') || _to.startsWith('237658') || _to.startsWith('237659')){
+                                var getcommission = getCommission(
+                                    typeOperation:code,
+                                    country: "$country",
+                                    amount: int.parse(this.montant.replaceAll(".", "")),
+                                    deviseLocale: deviseLocale
+                                );
+                                print(json.encode(getcommission));
+                                checkConnection(json.encode(getcommission), indik);
+                              }else{
+                                showInSnackBar("Le numéro du bénéficiaire n'est pas un compte MTN MoMo valide!");
+                              }
                             }else{
                               if(_to.startsWith('23767') || _to.startsWith('23768') || _to.startsWith('237654') || _to.startsWith('237653') || _to.startsWith('237652') || _to.startsWith('237651') || _to.startsWith('237650')){
                                 var getcommission = getCommission(
@@ -702,7 +708,9 @@ class _Retrait1State extends State<Retrait1> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: new Center(child: new Text('Poursuivre', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),),),
+                        child: new Center(child:isLoading == false? new Text('Poursuivre', style: new TextStyle(fontSize: taille_champ+3, color: couleur_text_bouton),):
+                          CupertinoActivityIndicator()
+                        ),
                       ),
                     ),
                   ),

@@ -1,35 +1,130 @@
+import 'package:connectivity/connectivity.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:services/auth/connexion1.dart';
+import 'package:services/auth/verification3.dart';
 import 'package:services/composants/components.dart';
-import 'connexion.dart';
-import 'verification3.dart';
-import 'verification1.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 // ignore: must_be_immutable
 class Verification2 extends StatefulWidget {
 
-  Verification2(this._code);
-  String _code;
+  Verification2();
 
   @override
-  _Verification2State createState() => new _Verification2State(_code);
+  _Verification2State createState() => new _Verification2State();
 }
 
 class _Verification2State extends State<Verification2> {
 
-  _Verification2State(this._code);
-  String _code;
+  _Verification2State();
 
   var _formKey = GlobalKey<FormState>();
+  bool isLoading = false, isResend = false;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  String code, _username, _urlc;
+
+  @override
+  void initState(){
+    super.initState();
+    this._lect();
+    _urlc = '$base_url/user/resendCode/';
+  }
+
+  void _reg() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('code', "$code");
+    print("code: $code");
+  }
+
+  _lect() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _username = prefs.getString('username')!=null?prefs.getString('username'):"";
+    });
+    print(_username);
+  }
+
+  Future<void> getCode() async {
+    var headers = {
+      "Accept": "application/json"
+    };
+    var url = "${this._urlc}$_username";
+    http.Response response = await http.get(url, headers: headers);
+    final int statusCode = response.statusCode;
+    print("${response.body}");
+    if(statusCode == 200){
+      setState(() {
+        isResend = false;
+      });
+      showInSnackBar("Patientez un instant!");
+    }else{
+      print(statusCode);
+      setState(() {
+        isResend = false;
+      });
+      showInSnackBar("Service indisponible! Réessayez plus tard.");
+    }
+    return null;
+  }
+
+  void showInSnackBar(String value) {
+    _scaffoldKey.currentState.showSnackBar(
+        new SnackBar(content: new Text(value,style:
+        TextStyle(
+            color: Colors.white,
+            fontSize: taille_champ+3
+        ),
+          textAlign: TextAlign.center,),
+          backgroundColor: couleur_fond_bouton,
+          duration: Duration(seconds: 5),));
+  }
+
+  void checkConnection() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      setState(() {
+        isResend = true;
+      });
+      getCode();
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      setState(() {
+        isResend = true;
+      });
+      getCode();
+    } else {
+      _ackAlert(context);
+    }
+  }
+
+  Future<void> _ackAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Oops!'),
+          content: const Text('Vérifier votre connexion internet.'),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final espace = (MediaQuery.of(context).size.height - 533.3333333333334)<0?0.0:MediaQuery.of(context).size.height - 533.3333333333334;
     final pas = (MediaQuery.of(context).size.height - 533.3333333333334)<0?0.0:42.0;
-
-
-    //double sp = MediaQuery.of(context).size.height;
     return new Scaffold(
+      key: _scaffoldKey,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(55.0),
         child: new AppBar(
@@ -40,7 +135,7 @@ class _Verification2State extends State<Verification2> {
           leading: GestureDetector(
               onTap: (){
                 setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Verification1(_code)));
+                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion1()));
                 });
                 //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Verification1(_code)));
               },
@@ -74,7 +169,6 @@ class _Verification2State extends State<Verification2> {
                           style: TextStyle(
                               color: couleur_titre,
                               fontSize: taille_titre,
-                              fontFamily: police_titre,
                               fontWeight: FontWeight.bold
                           )),
                     ),
@@ -87,11 +181,10 @@ class _Verification2State extends State<Verification2> {
                     padding: EdgeInsets.only(left: 20.0),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: new Text("Etape 2 sur 3",
+                      child: new Text("Etape 1 sur 2",
                           style: TextStyle(
                               color: couleur_libelle_etape,
                               fontSize: taille_libelle_etape,
-                              fontFamily: police_libelle_etape,
                               fontWeight: FontWeight.bold
                           )),
                     ),
@@ -102,11 +195,10 @@ class _Verification2State extends State<Verification2> {
 
                   Padding(
                     padding: EdgeInsets.only(left:20.0, right:20.0),
-                    child: new Text("Veuillez saisir le code de validation qui vous a été envoyé par SMS à votre numéro de téléphone",
+                    child: new Text("Veuillez saisir le code de récupération qui vous a été envoyé par SMS à votre numéro de téléphone",
                       style: TextStyle(
                           color: couleur_decription_page,
-                          fontSize: taille_description_page,
-                          fontFamily: police_description_page
+                          fontSize: taille_champ+2,
                       ),textAlign: TextAlign.justify,),
                   ),
 
@@ -137,7 +229,7 @@ class _Verification2State extends State<Verification2> {
                             flex:2,
                             child: Padding(
                               padding: const EdgeInsets.all(10.0),
-                              child: new Image.asset('images/Trace943.png'),
+                              child: new Icon(Icons.lock, color: couleur_description_champ,),
                             ),
                           ),
 
@@ -147,21 +239,20 @@ class _Verification2State extends State<Verification2> {
                               keyboardType: TextInputType.phone,
                               style: TextStyle(
                                   color: couleur_libelle_champ,
-                                  fontSize: taille_champ,
-                                  fontFamily: police_champ
+                                  fontSize: taille_champ+3,
                               ),
                               validator: (String value){
                                 if(value.isEmpty){
-                                  return "Code de validation vide !";
+                                  return "Code de récupération vide !";
                                 }
+                                code = value;
                                 return null;
                               },
                               decoration: InputDecoration.collapsed(
-                                hintText: "Saisissez le code de validation reçu",
+                                hintText: "Code de récupération reçu",
                                 hintStyle: TextStyle(
                                     color: couleur_libelle_champ,
-                                    fontSize: taille_champ,
-                                    fontFamily: police_champ
+                                    fontSize: taille_champ+3,
                                 ),
                                 //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                               ),
@@ -177,7 +268,10 @@ class _Verification2State extends State<Verification2> {
                     child: GestureDetector(
                       onTap: (){
                         setState(() {
-                          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Verification3(_code)));
+                          if(_formKey.currentState.validate()){
+                            _reg();
+                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Verification3('')));
+                          }
                         });
                       },
                       child: new Container(
@@ -191,18 +285,17 @@ class _Verification2State extends State<Verification2> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: Center(child: new Text("Valider", style: new TextStyle(fontSize: taille_text_bouton, color: Colors.white, fontFamily: police_bouton),)),
+                        child: Center(child:isLoading ==false? new Text("Valider", style: new TextStyle(fontSize: taille_champ+3, color: Colors.white),):CupertinoActivityIndicator()),
                       ),
                     ),
                   ),
 
                   Padding(
                     padding: EdgeInsets.only(left:20.0, right:20.0, top: 20),
-                    child: new Text("Vous n'avez toujours pas reçu de code par SMS ?",
+                    child: new Text("Vous n'avez toujours pas reçu de code ?",
                       style: TextStyle(
                           color: couleur_decription_page,
-                          fontSize: taille_description_page,
-                          fontFamily: police_description_page
+                          fontSize: taille_champ+2,
                       ),),
                   ),
 
@@ -211,85 +304,10 @@ class _Verification2State extends State<Verification2> {
                     child: GestureDetector(
                       onTap: (){
                         setState(() {
-                          //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Verification3(_code)));
+                          checkConnection();
                         });
                       },
-                      child: new Container(
-                        height: hauteur_champ,
-                        width: MediaQuery.of(context).size.width-40,
-                        decoration: new BoxDecoration(
-                          color: couleur_fond_bouton,
-                          border: new Border.all(
-                            color: Colors.transparent,
-                            width: 0.0,
-                          ),
-                          borderRadius: new BorderRadius.circular(10.0),
-                        ),
-                        child: Center(child: new Text("Renvoyer le code", style: new TextStyle(fontSize: taille_text_bouton, color: Colors.white, fontFamily: police_bouton),)),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(top:20.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text("Vous avez déjà un compte ? ",
-                          style: TextStyle(
-                              color: couleur_decription_page,
-                              fontSize: taille_description_champ,
-                              fontFamily: police_description_champ
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: (){
-                            setState(() {
-                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
-                            });
-                            //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
-                          },
-                          child: Text("Connectez-vous !",
-                            style: TextStyle(
-                                color: couleur_fond_bouton,
-                                fontSize: taille_description_champ,
-                                fontFamily: police_description_champ,
-                                fontWeight: FontWeight.bold
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Padding(
-                    padding: EdgeInsets.only(top:20.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text("Vous n'avez pas de compte ? ",
-                          style: TextStyle(
-                              color: couleur_decription_page,
-                              fontSize: taille_description_champ,
-                              fontFamily: police_description_champ
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: (){
-                            setState(() {
-                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
-                            });
-                            //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
-                          },
-                          child: Text("Inscrivez-vous !",
-                            style: TextStyle(
-                                color: couleur_fond_bouton,
-                                fontSize: taille_description_champ,
-                                fontFamily: police_description_champ,
-                                fontWeight: FontWeight.bold
-                            ),
-                          ),
-                        ),
-                      ],
+                      child: Center(child:isResend==false? new Text("Renvoyer le code", style: new TextStyle(fontSize: taille_champ+3, color: couleur_fond_bouton, fontWeight: FontWeight.bold),):CupertinoActivityIndicator()),
                     ),
                   ),
                 ],

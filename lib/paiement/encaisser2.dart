@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/paiement/getsoldewidget.dart';
+import 'package:services/paiement/ioswebview.dart';
 import 'package:services/paiement/webview.dart';
 import 'confirma.dart';
 import 'echec.dart';
@@ -13,6 +15,8 @@ import 'encaisser1.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'dart:async';
+import 'package:get_ip/get_ip.dart';
 
 
 // ignore: must_be_immutable
@@ -36,11 +40,11 @@ class _Encaisser2State extends State<Encaisser2> {
   double gauch,fees, droit,_taill, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   List data, list;
   bool isLoading = false;
-  String url, _id, _to, payment_url;
+  String url, _id, _to, payment_url, _ip;
   int temps = 500;
   var _userTextController = new TextEditingController();
   // ignore: non_constant_identifier_names
-  String kittyImage,_xaf="XAF",_mySelection="+237",solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
+  String kittyImage,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
 
   @override
   void initState() {
@@ -52,8 +56,26 @@ class _Encaisser2State extends State<Encaisser2> {
       case 2:url = '$base_url/transfert/refillByCard'; break;
     }
     super.initState();
-
+    print("mone adresse: $_ip");
+    initPlatformState();
     indik = int.parse(_code)+1;
+  }
+
+  Future<void> initPlatformState() async {
+    String ipAddress;
+    try {
+      ipAddress = await GetIp.ipAddress;
+    } on PlatformException {
+      print("mon adresse: $_ip");
+      setState(() {
+        initPlatformState();
+      });
+    }
+    if (!mounted) return;
+    setState(() {
+      _ip = ipAddress;
+      print("Adresse IP: $_ip");
+    });
   }
 
   @override
@@ -133,18 +155,53 @@ class _Encaisser2State extends State<Encaisser2> {
         var responseJson = json.decode(response.body);
         _id = responseJson['id'];
         String payment_url = responseJson['payment_url'];
-        if(payment_url != null){
+        if(_id == "INTERNAL_SERVER_ERROR"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Montant non autorisé!", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "THIS_CUSTOMER_HAS_EXCEEDED_HIS_LIMIT_NUMBER_OF_OPERATION"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Vous avez atteint le nombre max d'opérations!", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "THE_AMOUNT_OF_THIS_TRANSACTION_IS_GRATER_THAN_THE_THE_MAXIMUM_AMOUNT_PLANNED_FOR_YOUR_PROFILE"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Le montant de la transaction est supérieur à celui autorisé à votre profil", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "CLIENT_LOCKED_BY_SYSTEM"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Veuillez compléter vos informations dans mon profil pour continuer à effectuer les opérations", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "CLIENT_LOCKED_BY_BACK_OFFICE"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Votre compte a été bloqué veuillez contacyer le service client!", _scaffoldKey);
+        }else if(responseJson['id'] == "NOT_FOUND"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Service indisponible!", _scaffoldKey);
+        }else if(payment_url != null){
           setState(() {
             save(payment_url);
             _save(_id);
           });
+          if(Platform.isIOS){
+            navigatorKey.currentState.pushNamed("/ioswebview");
+          }else
           navigatorKey.currentState.pushNamed("/webview");
-        }else
-        this.getStatus(_id);
+        }else{
+          this.getStatus(_id);
+        }
       }else {
         setState(() {
           isLoading = false;
         });
+        print(response.body);
         showInSnackBar("Echec de l'opération!", _scaffoldKey);
       }
       return response.body;
@@ -306,7 +363,8 @@ class _Encaisser2State extends State<Encaisser2> {
         "/echec": (BuildContext context) =>new Echec("_code^&"),
         "/confirma": (BuildContext context) =>new Confirma("recharge"),
         "/encaisser": (BuildContext context) =>new Encaisser1(_code),
-        "/webview": (BuildContext context) =>new Webview(_code)
+        "/webview": (BuildContext context) =>new Webview(_code),
+        "/ioswebview": (BuildContext context) =>new IosWebview(_code),
       },
       home: new DefaultTabController(
         length: 1,
@@ -451,18 +509,18 @@ class _Encaisser2State extends State<Encaisser2> {
                   ),
 
                   Padding(
-                    padding: EdgeInsets.only(top: 260, left: gauch, right: droit),
+                    padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?280 :260, left: gauch, right: droit),
                     child: Text(montant==""?"":'${getMillis(double.parse(montant).toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
-                          fontSize: taille_titre+15,
+                          fontSize:MediaQuery.of(context).size.width<=320 && montant.length>=6? taille_titre+10:taille_titre+15,
                           fontWeight: FontWeight.bold
                       ),
                     ),
                   ),
 
                   Padding(
-                    padding: EdgeInsets.only(top: 330, left: gauch, right: droit),
+                    padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?350: 330, left: gauch, right: droit),
                     child: Text("Commission de la transaction",
                       style: TextStyle(
                           color: couleur_titre,
@@ -473,18 +531,18 @@ class _Encaisser2State extends State<Encaisser2> {
                   ),
 
                   Padding(
-                    padding: EdgeInsets.only(top: 350, left: gauch, right: droit),
+                    padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?370: 350, left: gauch, right: droit),
                     child: Text(fees==null?"":'${getMillis(fees.toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
-                          fontSize: taille_titre+15,
+                          fontSize:MediaQuery.of(context).size.width<=320 && montant.length>=6? taille_titre+10: taille_titre+15,
                           fontWeight: FontWeight.bold
                       ),
                     ),
                   ),
 
                   Padding(
-                    padding: EdgeInsets.only(top: 420, left: gauch, right: droit),
+                    padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?440: 420, left: gauch, right: droit),
                     child: Text("Montant total de la transaction",
                       style: TextStyle(
                           color: couleur_titre,
@@ -495,18 +553,18 @@ class _Encaisser2State extends State<Encaisser2> {
                   ),
 
                   Padding(
-                    padding: EdgeInsets.only(top: 440, left: gauch, right: droit),
-                    child: Text(montant==""?"":'${getMillis(double.parse(montant).toString())} $deviseLocale',
+                    padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?460: 440, left: gauch, right: droit),
+                    child: Text(montant==""?"":'${getMillis((double.parse(montant)+fees).toString())} $deviseLocale',
                       style: TextStyle(
                           color: couleur_libelle_etape,
-                          fontSize: taille_titre+15,
+                          fontSize:MediaQuery.of(context).size.width<=320 && montant.length>=6? taille_titre+10: taille_titre+15,
                           fontWeight: FontWeight.bold
                       ),
                     ),
                   ),
 
                   indik==3||deviseLocale!="XAF"?Container():Padding(
-                    padding: EdgeInsets.only(top: 510, left: gauch, right: droit),
+                    padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?530: 510, left: gauch, right: droit),
                     child: Text(indik==1?"Téléphone MoMo à débiter":indik==2?"Téléphone OM à débiter":"Téléphone bénéficiaire",
                       style: TextStyle(
                           color: couleur_titre,
@@ -517,7 +575,7 @@ class _Encaisser2State extends State<Encaisser2> {
                   ),
 
                   indik==3||deviseLocale!="XAF"?Container():Padding(
-                    padding: EdgeInsets.only(left: gauch, right: droit, top: 540),
+                    padding: EdgeInsets.only(left: gauch, right: droit, top:MediaQuery.of(context).size.width<=320?560 :540),
                     child: Container(
                       decoration: new BoxDecoration(
                         borderRadius: new BorderRadius.only(
@@ -542,7 +600,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                 child: CountryCodePicker(
                                   showFlag: true,
                                   onChanged: (CountryCode code){
-                                    _mySelection = code.dialCode.toString();
+                                    //_mySelection = code.dialCode.toString();
                                   },
                                 )
                             ),
@@ -568,7 +626,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                   hintText: 'Contact du débiteur',
                                   hintStyle: TextStyle(
                                       color: couleur_libelle_champ,
-                                      fontSize: taille_libelle_champ+3
+                                      fontSize: taille_champ+3
                                   ),
                                 ),
                               ),
@@ -579,52 +637,58 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top:indik==3||deviseLocale!="XAF"?510:620,left: gauch, right: droit, bottom: 20),
+                    padding: EdgeInsets.only(top:(MediaQuery.of(context).size.width<=320 && indik==3||deviseLocale!="XAF")?520:(MediaQuery.of(context).size.width<=320 && indik!=3)?640:indik==3||deviseLocale!="XAF"?510:620,left: gauch, right: droit, bottom: 20),
                     child: GestureDetector(
                       onTap: () async {
                         setState(() {
-                          if(_formKey.currentState.validate()){
-                            if(_code == "0"){//MTN
-                              if(_to.startsWith('67') || _to.startsWith('68') || _to.startsWith('654') || _to.startsWith('653') || _to.startsWith('652') || _to.startsWith('651') || _to.startsWith('650')){
-                                var walletTr = new walletTrans(
-                                    to:'$_to',
-                                    amount: int.parse(this.montant),
-                                    description: this.description,
-                                    deviseLocale: this.deviseLocale
-                                );
-                                print(json.encode(walletTr));
-                                checkConnection(json.encode(walletTr));
-                              }else{
-                                showInSnackBar("Le numéro à débiter n'est pas un compte MTN MoMo valide!", _scaffoldKey);
-                              }
-                            }else if(_code == "2"){
-                              var walletTr = new orangeTrans(
-                                  to:this._to,
-                                  amount: int.parse(this.montant),
-                                  description: this.description,
-                                  deviseLocale: this.deviseLocale,
-                                  successUrl: "http://www.sprintpay.com",
-                                  failureUrl: "http://www.sprintpay.com"
-                              );
-                              print(json.encode(walletTr));
-                              checkConnection(json.encode(walletTr));
-                            }else{//ORANGE
-                              if(_to.startsWith('69') || _to.startsWith('655') || _to.startsWith('656') || _to.startsWith('657') || _to.startsWith('658') || _to.startsWith('659')){
-                                var walletTr = new orangeTrans(
+                          if(isLoading == true){
+                          }else{
+                            if(_formKey.currentState.validate()){
+                              if(_code == "0"){//MTN
+                                if(_to.startsWith('67') || _to.startsWith('68') || _to.startsWith('654') || _to.startsWith('653') || _to.startsWith('652') || _to.startsWith('651') || _to.startsWith('650')){
+                                  var walletTr = new walletTrans(
+                                      to:'$_to',
+                                      amount: int.parse(this.montant),
+                                      fees: fees,
+                                      description: this.description,
+                                      deviseLocale: this.deviseLocale
+                                  );
+                                  print(json.encode(walletTr));
+                                  checkConnection(json.encode(walletTr));
+                                }else{
+                                  showInSnackBar("Le numéro à débiter n'est pas un compte MTN MoMo valide!", _scaffoldKey);
+                                }
+                              }else if(_code == "2"){
+                                var walletTr = new cardTrans(
                                     to:this._to,
                                     amount: int.parse(this.montant),
+                                    fees: fees,
                                     description: this.description,
+                                    ipAddress: this._ip,
                                     deviseLocale: this.deviseLocale,
                                     successUrl: "http://www.sprintpay.com",
                                     failureUrl: "http://www.sprintpay.com"
                                 );
                                 print(json.encode(walletTr));
                                 checkConnection(json.encode(walletTr));
-                              }else{
-                                showInSnackBar("Le numéro à débiter n'est pas un compte ORANGE MONEY valide!", _scaffoldKey);
+                              }else{//ORANGE
+                                if(_to.startsWith('69') || _to.startsWith('655') || _to.startsWith('656') || _to.startsWith('657') || _to.startsWith('658') || _to.startsWith('659')){
+                                  var walletTr = new orangeTrans(
+                                      to:this._to,
+                                      amount: int.parse(this.montant),
+                                      fees: fees,
+                                      description: this.description,
+                                      deviseLocale: this.deviseLocale,
+                                      successUrl: "http://www.sprintpay.com",
+                                      failureUrl: "http://www.sprintpay.com"
+                                  );
+                                  print(json.encode(walletTr));
+                                  checkConnection(json.encode(walletTr));
+                                }else{
+                                  showInSnackBar("Le numéro à débiter n'est pas un compte ORANGE MONEY valide!", _scaffoldKey);
+                                }
                               }
-                            }
-                            /*var walletTr = _code == "0"? new walletTrans(
+                              /*var walletTr = _code == "0"? new walletTrans(
                                 to:'$_to',
                                 amount: int.parse(this.montant),
                                 description: this.description,
@@ -639,6 +703,7 @@ class _Encaisser2State extends State<Encaisser2> {
                             );
                             print(json.encode(walletTr));
                             checkConnection(json.encode(walletTr));*/
+                            }
                           }
                         });
                       },

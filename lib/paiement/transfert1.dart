@@ -38,13 +38,12 @@ class _Transfert1State extends State<Transfert1> {
   Color color;
   bool isLoadClient = false, isLoadDirect = false;
   // ignore: non_constant_identifier_names
-  String kittyImage,_motif, from, firstnameBenef,solde,kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
+  String kittyImage,_motif,nomPays,codeIso2, from, firstnameBenef,solde,kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
 
   @override
   void initState() {
-    from = _code.split('^')[4];
+    //from = _code.split('^')[4];
     super.initState();
-    print("Zone pays d'envoi $from");
     _code = "$_code^$indik";
     this.read();
     //_userTextController = new MoneyMaskedTextController(decimalSeparator: '', thousandSeparator: '.', precision: 0);
@@ -129,6 +128,7 @@ class _Transfert1State extends State<Transfert1> {
       }else if(statusCode == 200){
         var responseJson = json.decode(response.body);
         fees = responseJson['fees'];
+        if(q == 0 && prefs.get("dial") == prefs.get("DIAL")) fees = 0.0;
         newSolde = double.parse(montant)+fees;
         print(newSolde.toString());
         print(double.parse(local));
@@ -138,10 +138,10 @@ class _Transfert1State extends State<Transfert1> {
           setState(() {
             if(q == 0){
               isLoadClient = false;
-              navigatorKey.currentState.pushNamed("/transfert22");
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22(_code)));
             }else{
               isLoadDirect = false;
-              navigatorKey.currentState.pushNamed("/transfert2");
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2(_code)));
             }
           });
         }else{
@@ -203,7 +203,7 @@ class _Transfert1State extends State<Transfert1> {
                       if(q == 0){
                         Navigator.pop(context);
                         var getcommission = getCommission(
-                            typeOperation: "EU_TO_WALLET",
+                            typeOperation: "WALLET_TO_EUC",
                             country: "$country",
                             amount: int.parse(this.montant),
                             deviseLocale: deviseLocale
@@ -249,7 +249,7 @@ class _Transfert1State extends State<Transfert1> {
                         if(q == 0){
                           Navigator.pop(context);
                           var getcommission = getCommission(
-                              typeOperation: "EU_TO_WALLET",
+                              typeOperation: "WALLET_TO_EUM",
                               country: "$country",
                               amount: int.parse(this.montant),
                               deviseLocale: deviseLocale
@@ -282,7 +282,7 @@ class _Transfert1State extends State<Transfert1> {
                             ),
                             borderRadius: new BorderRadius.circular(10.0),
                           ),
-                          child: new Center(child:new Text(from=="UEMOA"?"Vers un compte bancaire WARI":'Vers un compte EU', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
+                          child: new Center(child:new Text(from=="UEMOA"?"Vers un compte bancaire WARI":'Vers un compte EU Mobile', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
                           ),
                         ),
                       ),
@@ -295,6 +295,27 @@ class _Transfert1State extends State<Transfert1> {
         );
       },
     );
+  }
+
+  Future<bool>_onBackPressed(){
+    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
+    return null;
+      /*showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Exit ?"),
+        actions: <Widget>[
+          FlatButton(
+            child: Text("No"),
+              onPressed: () => Navigator.pop(context, false),
+          ),
+          FlatButton(
+            child: Text("Yes"),
+            onPressed: () => Navigator.pop(context, true),
+          )
+        ],
+      )
+    );*/
   }
 
   @override
@@ -369,86 +390,73 @@ class _Transfert1State extends State<Transfert1> {
       gauch = 20;
       droit = 20;
     }
-    return new MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      routes: <String, WidgetBuilder>{
-        "/transfert2": (BuildContext context) =>new Transfert2(_code),
-        "/transfert22": (BuildContext context) =>new Transfert22(_code),
-        "/pays": (BuildContext context) =>new Payst(),
-      },
-      home: new DefaultTabController(
-        length: 1,
-        child: new Scaffold(
-          key: _scaffoldKey,
-            appBar: PreferredSize(
-              preferredSize: Size.fromHeight(fromHeight),
-              child: new Container(
-                color: bleu_F,
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
-                      child: Row(
-                        children: <Widget>[
-                          GestureDetector(
-                              onTap: (){
-                                setState(() {
-                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
-                                });
-                              },
-                              child: Icon(Icons.arrow_back_ios,color: Colors.white,)
-                          ),
-                          GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                //Navigator.pop(context);
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
-                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
-                              });
-                            },
-                            child: Text('Retour',
-                              style: TextStyle(color: Colors.white, fontSize: taille_champ),),
-                          )
-                        ],
+    return new Scaffold(
+      key: _scaffoldKey,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(fromHeight),
+          child: new Container(
+            color: bleu_F,
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
+                  child: Row(
+                    children: <Widget>[
+                      GestureDetector(
+                          onTap: (){
+                            setState(() {
+                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+                            });
+                          },
+                          child: Icon(Icons.arrow_back_ios,color: Colors.white,)
                       ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.only(top: 0, left: gauch, right: droit),
-                      child: Center(
-                        child: Text('Etape 1 sur 3',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: taille_libelle_etape,
-                              fontWeight: FontWeight.bold
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: Align(
-                        alignment: Alignment.center,
-                        child: Text('Transférer de l\'argent',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: taille_titre-2,
-                              fontWeight: FontWeight.bold
-                          ),
-                        ),
-                      ),
-                    ),
-                    getSoldeWidget(),
-                  ],
+                      GestureDetector(
+                        onTap: (){
+                          setState(() {
+                            //Navigator.pop(context);
+                            Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+                            //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
+                          });
+                        },
+                        child: Text('Retour',
+                          style: TextStyle(color: Colors.white, fontSize: taille_champ),),
+                      )
+                    ],
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: EdgeInsets.only(top: 0, left: gauch, right: droit),
+                  child: Center(
+                    child: Text('Etape 1 sur 3',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: taille_libelle_etape,
+                          fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                ),
+
+                Padding(
+                  padding: EdgeInsets.only(top: 20),
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text('Transférer de l\'argent',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: taille_titre-2,
+                          fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                ),
+                getSoldeWidget(),
+              ],
             ),
-            body: _buildCarousel(context),
-            bottomNavigationBar: barreBottom
+          ),
         ),
-      ),
+        body: _buildCarousel(context),
+        bottomNavigationBar: barreBottom
     );
   }
 
@@ -504,7 +512,7 @@ class _Transfert1State extends State<Transfert1> {
                             flex: 2,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 20.0),
-                              child: new Image.asset('flags/'+_code.split('^')[1].toLowerCase()+'.png'),
+                              child:codeIso2==null?Container(): new Image.asset('flags/'+codeIso2.toLowerCase()+'.png'),
                             ),
                           ),
 
@@ -512,7 +520,7 @@ class _Transfert1State extends State<Transfert1> {
                             flex:12,
                             child: Padding(
                                 padding: const EdgeInsets.only(left:10.0,),
-                                child: new Text(this._code.split('^')[2],
+                                child:nomPays==null?Container(): new Text(nomPays,
                                   style: TextStyle(
                                       color: couleur_description_champ,
                                       fontSize: taille_champ+3,
@@ -718,7 +726,7 @@ class _Transfert1State extends State<Transfert1> {
                                     this._Alert(context, 0);
                                   }else if(from == "UEMOA"){
                                     var getcommission = getCommission(
-                                        typeOperation: "WARI_TO_WALLET",
+                                        typeOperation: "WALLET_TO_WARI",
                                         country: "$country",
                                         amount: int.parse(this.montant),
                                         deviseLocale: deviseLocale
@@ -778,6 +786,9 @@ class _Transfert1State extends State<Transfert1> {
       //montant = prefs.getString("wallet")==null?"":prefs.getString("wallet");
       //_userTextController.text = montant==""?"0":montant;
       country = prefs.getString("iso3");
+      nomPays = prefs.getString("nomPays");
+      codeIso2 = prefs.getString("codeIso2");
+      from = prefs.getString("from");
       solde = prefs.getString("solde");
       devise = prefs.getString("devise");
       local = prefs.getString("local");

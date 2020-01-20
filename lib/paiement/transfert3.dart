@@ -3,14 +3,13 @@ import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:services/composants/components.dart';
+import 'package:services/monprofile.dart';
 import 'confirma.dart';
 import 'echec.dart';
 import 'transfert2.dart';
-
 import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'transfert22.dart';
@@ -28,10 +27,10 @@ class _Transfert3State extends State<Transfert3> {
   _Transfert3State(this._code);
   String _code;
   bool isLoading = false;
-  String _current, _name, _to, _username, _password, montant, description, deviseLocale, fees, _lieu, _adresse, _fromCountryISO, _fromCardType, _fromCardNumber, _fromCardIssuingDate, _fromCardExpirationDate, _fromPays, _pays;
+  String _name, _to, _username, _password, montant, amount, devisebenef, description, deviseLocale, fees, _lieu, _adresse, _fromCountryISO, _fromCardType, _fromCardNumber, _fromCardIssuingDate, _fromCardExpirationDate, _fromPays, _pays;
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  String url, _id, _payst;
+  String url, _id, _payst, _urlc, nomPays, codeIso2;
   var _feesController, _montantController, _motifController, _nameController, _toController, _descriptionController, _deviseLocaleController, _adresseController, _fromCountryISOController, _fromCardTypeController, _fromCardNumberController, _fromCardIssuingDateController, _fromCardExpirationDateController, _fromPaysController, _fromPaysNameController;
   int temps = 200;
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -42,6 +41,7 @@ class _Transfert3State extends State<Transfert3> {
     this.read();
     super.initState();
     url = '$base_url/transfert/wallet';
+    _urlc = "$base_url/user/soldeBeneficiaire/";
     _feesController = TextEditingController();
     _montantController = TextEditingController();
     _motifController = TextEditingController();
@@ -79,6 +79,26 @@ class _Transfert3State extends State<Transfert3> {
     super.dispose();
   }
 
+  Future<void> getCode() async {
+    var headers = {
+      "Accept": "application/json"
+    };
+
+    http.Response response = await http.get(_urlc, headers: headers);
+    final int statusCode = response.statusCode;
+    print("voilà**************************************************** $_urlc ${response.body}");
+    if(statusCode == 200){
+      var responseJson = json.decode(response.body);
+      setState(() {
+        amount = "${responseJson['balance'].toString()}" ;
+        devisebenef = "${responseJson['formattedBalance'].toString()}";
+      });
+    }else{
+      amount = null;
+    }
+    return null;
+  }
+
   read() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -99,13 +119,21 @@ class _Transfert3State extends State<Transfert3> {
       montant = prefs.getString("montant");
       deviseLocale = prefs.getString("deviseLocale");
       _payst = prefs.getString("payst");
-      print("_payst********************: $_payst");
+
+      nomPays = prefs.getString("nomPays");
+      codeIso2 = prefs.getString("codeIso2");
+
       _adresse = prefs.getString("adresse");
       _adresseController.text = _adresse;
       _fromCountryISO = prefs.getString("fromCountryISO");
       _fromCountryISOController.text = _fromCountryISO;
       _fromCardType = prefs.getString("fromCardType");
-      _fromCardTypeController.text = _fromCardType;
+      if(_fromCardType == "CNI"){
+        _fromCardTypeController.text = "Carte Nationale d'identité";
+      }else if(_fromCardType == "Carte de sejour"){
+        _fromCardTypeController.text = "Carte de séjour";
+      }else _fromCardTypeController.text = _fromCardType;
+      //_fromCardTypeController.text = _fromCardType;
       _fromCardNumber = prefs.getString("fromCardNumber");
       _fromCardNumberController.text = _fromCardNumber;
       _fromCardIssuingDate = prefs.getString("fromCardIssuingDate");
@@ -116,6 +144,8 @@ class _Transfert3State extends State<Transfert3> {
       _fromPaysController.text = _fromPays;
       _pays = prefs.getString("fromPaysName");
       _fromPaysNameController.text = _pays;
+      _urlc = "${this._urlc}$deviseLocale/${double.parse(montant)}/$_payst";
+      this.getCode();
     });
   }
 
@@ -136,7 +166,7 @@ class _Transfert3State extends State<Transfert3> {
       });
       //this.getUser();
     } else {
-      _ackAlert(context);
+      _ackAlert(context, 0);
     }
   }
 
@@ -190,6 +220,22 @@ class _Transfert3State extends State<Transfert3> {
             isLoading = false;
           });
           showInSnackBar("Le montant de la transaction est supérieur à celui autorisé à votre profil", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "CLIENT_LOCKED_BY_SYSTEM"){
+          setState(() {
+            isLoading = false;
+          });
+          this._ackAlert(context, 1);
+          //showInSnackBar("Veuillez compléter vos informations dans mon profil pour continuer à effectuer les opérations", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "CLIENT_LOCKED_BY_BACK_OFFICE"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Votre compte a été bloqué veuillez contacyer le service client!", _scaffoldKey);
+        }else if(responseJson['id'] == "NOT_FOUND"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Service indisponible!", _scaffoldKey);
         }else{
           this.getStatus(_id);
         }
@@ -254,20 +300,27 @@ class _Transfert3State extends State<Transfert3> {
   }
 
 
-  Future<void> _ackAlert(BuildContext context) {
+  Future<void> _ackAlert(BuildContext context, int q) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Oops!'),
-          content: const Text('Vérifier votre connexion internet.'),
+          title: Text(q==0?'Oops!':'Compléter vos informations'),
+          content: Text(q==0?'Vérifier votre connexion internet.':"Veuillez compléter vos informations pour continuer à effectuer les opérations"),
           actions: <Widget>[
             FlatButton(
-              child: Text('Ok'),
+              child: Text(q==0?'Ok':'Compléter'),
+              onPressed: () {
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Monprofile()));
+              },
+            ),
+
+            q==0?Container():FlatButton(
+              child: Text('Annuler'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
-            ),
+            )
           ],
         );
       },
@@ -356,7 +409,7 @@ class _Transfert3State extends State<Transfert3> {
                       ),
                       Expanded(
                         flex: 6,
-                        child: Text(fees==null?"":"${double.parse(fees)} $deviseLocale", style: TextStyle(
+                        child: Text(fees==null?"":"${getMillis(double.parse(fees).toString())} $deviseLocale", style: TextStyle(
                           color: couleur_fond_bouton,
                           fontSize: taille_champ+3,
                           fontWeight: FontWeight.bold
@@ -386,10 +439,40 @@ class _Transfert3State extends State<Transfert3> {
                       ),
                       Expanded(
                         flex: 6,
-                        child: Text(montant==null || fees==null?"":"${double.parse(montant)+double.parse(fees)} $deviseLocale", style: TextStyle(
+                        child: Text(montant==null || fees==null?"":"${getMillis((double.parse(montant)+double.parse(fees)).toString())} $deviseLocale", style: TextStyle(
                           color: couleur_fond_bouton,
                           fontSize: taille_champ+3,
                           fontWeight: FontWeight.bold
+                        ),textAlign: TextAlign.end,),
+                      )
+                    ],
+                  ),
+                ),
+
+                amount==null?Container():Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20, top: 10),
+                  child: Divider(
+                    color: couleur_champ,
+                    height: 2,
+                  ),
+                ),
+                amount==null?Container() :Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20, top: 10),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        flex: 6,
+                        child: Text("Le bénéficiaire recevra", style: TextStyle(
+                            color: couleur_libelle_champ,
+                            fontSize: taille_champ+3
+                        ),),
+                      ),
+                      Expanded(
+                        flex: 6,
+                        child: Text("${getMillis(double.parse(amount).toString())} $devisebenef", style: TextStyle(
+                            color: couleur_fond_bouton,
+                            fontSize: taille_champ+3,
+                            fontWeight: FontWeight.bold
                         ),textAlign: TextAlign.end,),
                       )
                     ],
@@ -409,7 +492,7 @@ class _Transfert3State extends State<Transfert3> {
                   padding: EdgeInsets.only(left: 20, right: 20),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Vous transférer vers',
+                    child: Text('Vous transférez vers',
                       style: TextStyle(
                           color: couleur_libelle_champ,
                           fontSize: taille_libelle_champ,
@@ -443,7 +526,7 @@ class _Transfert3State extends State<Transfert3> {
                           flex: 2,
                           child: Padding(
                             padding: const EdgeInsets.only(left: 20.0),
-                            child: new Image.asset('flags/'+_code.split('^')[1].toLowerCase()+'.png'),
+                            child:codeIso2==null?Container(): new Image.asset('flags/'+codeIso2.toLowerCase()+'.png'),
                           ),
                         ),
 
@@ -451,7 +534,7 @@ class _Transfert3State extends State<Transfert3> {
                           flex:12,
                           child: Padding(
                               padding: const EdgeInsets.only(left:10.0,),
-                              child: new Text(this._code.split('^')[2],
+                              child:nomPays==null?Container(): new Text(nomPays,
                                 style: TextStyle(
                                   color: couleur_description_champ,
                                   fontSize: taille_champ+3,
@@ -566,7 +649,7 @@ class _Transfert3State extends State<Transfert3> {
                           flex:2,
                           child: Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: new Image.asset('images/Groupe177.png'),
+                            child: new Icon(Icons.person, color: couleur_description_champ,),
                           ),
                         ),
                         new Expanded(
@@ -672,7 +755,7 @@ class _Transfert3State extends State<Transfert3> {
                           flex:2,
                           child: Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: new Image.asset('images/Groupe182.png'),
+                            child: new Icon(Icons.phone_iphone, color: couleur_description_champ,),
                           ),
                         ),
                         new Expanded(
@@ -842,7 +925,7 @@ class _Transfert3State extends State<Transfert3> {
                           flex:2,
                           child: Padding(
                             padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.location_on, color: couleur_description_champ,),
+                            child: new Icon(Icons.calendar_today, color: couleur_description_champ,),
                           ),
                         ),
                         new Expanded(
@@ -984,35 +1067,41 @@ class _Transfert3State extends State<Transfert3> {
                   child: InkWell(
                     onTap: () async {
                       setState(() {
-                        if(_lieu == "3"){
-                          var _wariTrans = new wariTrans(
-                            to:this._to,
-                            amount: int.parse(this.montant),
-                            description: this.description,
-                            deviseLocale: this.deviseLocale,
-                            toFirstname: ".",
-                            toCountryCode: this._payst,
-                            fromCardExpirationDate: _fromCardExpirationDate,
-                            fromCardIssuingDate: _fromCardIssuingDate,
-                            fromCardNumber: _fromCardNumber,
-                            fromCardType: _fromCardType,
-                            fromCountryISO: _fromCountryISO,
-                            toAdress: _adresse,
-                            toLastname: this._name
-                          );
-                          print(json.encode(_wariTrans));
-                          checkConnection(json.encode(_wariTrans));
+                        if(isLoading == true){
+
                         }else{
-                          var walletTr = new walletTrans(
-                            to:this._to,
-                            amount: int.parse(this.montant),
-                            description: this.description,
-                            deviseLocale: this.deviseLocale,
-                            toFirstname: this._name,
-                            toCountryCode: this._payst,
-                          );
-                          print(json.encode(walletTr));
-                          checkConnection(json.encode(walletTr));
+                          if(_lieu == "3"){
+                            var _wariTrans = new wariTrans(
+                                to:this._to,
+                                amount: int.parse(this.montant),
+                                fees: double.parse(fees),
+                                description: this.description,
+                                deviseLocale: this.deviseLocale,
+                                toFirstname: ".",
+                                toCountryCode: this._payst,
+                                fromCardExpirationDate: _fromCardExpirationDate,
+                                fromCardIssuingDate: _fromCardIssuingDate,
+                                fromCardNumber: _fromCardNumber,
+                                fromCardType: _fromCardType,
+                                fromCountryISO: _fromCountryISO,
+                                toAdress: _adresse,
+                                toLastname: this._name
+                            );
+                            print(json.encode(_wariTrans));
+                            checkConnection(json.encode(_wariTrans));
+                          }else{
+                            var walletTr = new walletTrans(
+                              to:this._to,
+                              amount: int.parse(this.montant),
+                              fees: double.parse(fees),
+                              description: this.description,
+                              deviseLocale: this.deviseLocale,
+                              toFirstname: this._name,
+                              toCountryCode: this._payst,
+                            );
+                            print(json.encode(walletTr));
+                            checkConnection(json.encode(walletTr));
+                          }
                         }
                       });
                     },
