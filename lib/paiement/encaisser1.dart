@@ -93,22 +93,27 @@ class _Encaisser1State extends State<Encaisser1> {
           getSoldeCommission(body, q);
         }else if(q == 2){//CARD
           getSoldeCommission(body, q);
+        }else if(q == 4){//YUP
+          isLoading = false;
+          showInSnackBar("Service pas encore disponible!");
+          //getSoldeCommission(body, q);
         }else{
           isLoading = false;
-          showInSnackBar("Service non disponible!");
+          showInSnackBar("Service pas encore disponible!");
         }
       });
       //this.getUser();
     } else if (connectivityResult == ConnectivityResult.wifi) {
       //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
       setState(() {
-        print("q vaut $q");
         isLoading = true;
         if(q == 0){//MTN
           getSoldeCommission(body, q);
         }else if(q == 1){//ORANGE
           getSoldeCommission(body, q);
         }else if(q == 2){//CARD
+          getSoldeCommission(body, q);
+        }else if(q == 4){//YUP
           getSoldeCommission(body, q);
         }else{
           isLoading = false;
@@ -428,7 +433,7 @@ class _Encaisser1State extends State<Encaisser1> {
                             });
                           },
                           height: 136.0,
-                          items: [1,2,3,4].map((i) {
+                          items: [1,2,3,4,5].map((i) {
                             return Builder(
                               builder: (BuildContext context) {
                                 return getMoyen(i);
@@ -519,6 +524,7 @@ class _Encaisser1State extends State<Encaisser1> {
                                 case 1: code = "OM_TO_WALLET";break;
                                 case 2: code = "CARD_TO_WALLET";break;
                                 case 3: code = "EU_TO_WALLET";break;
+                                case 4: code = "CARD_TO_WALLET";break;//YUP_TO_WALLET
                               }
                               if(_formKey.currentState.validate()) {
                                 var getcommission = getCommission(
@@ -581,13 +587,15 @@ class _Encaisser1State extends State<Encaisser1> {
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MTN MOBILE MONEY";img = 'mtn.jpg';
+      case 1: text = "MTN MOBILE MONEY";img = 'images/mtn.jpg';
       break;
-      case 2: text = "ORANGE MONEY";img = 'orange.png';
+      case 2: text = "ORANGE MONEY";img = 'images/orange.png';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
+      case 3: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
       break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 4: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
+      break;
+      case 5: text = "YUP";img = 'marketimages/yup.jpg';
       break;
     }
     return Container(
@@ -626,7 +634,7 @@ class _Encaisser1State extends State<Encaisser1> {
                       bottomLeft: Radius.circular(10.0),
                     ),
                     image: DecorationImage(
-                      image: AssetImage('images/$img'),
+                      image: AssetImage('$img'),
                       fit: BoxFit.cover,
                     )
                 ),),

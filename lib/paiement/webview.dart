@@ -23,7 +23,7 @@ class _WebviewState extends State<Webview> {
   String _code;
   String url, uri, _status,transactionId;
   final navigatorKey = GlobalKey<NavigatorState>();
-  int temps = 200;
+  int temps = 600;
   String _username, _password, payment_url, _id;
   FlutterWebviewPlugin flutterWebviewPlugin = FlutterWebviewPlugin();
   double _progress = 0;
@@ -34,36 +34,6 @@ class _WebviewState extends State<Webview> {
     // TODO: implement initState
     super.initState();
     this.read();
-   /* _onUrlChanged = flutterWebviewPlugin.onUrlChanged.listen((String url) {
-      if (mounted) {
-        print("mon url $payment_url et mon id $_id");
-        print("Current URL: $url");
-        if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
-          print("la valeur de i $i et filet 1");
-          if(i == 0){
-            this._getStatus(_id);
-          }else if(i == 1){
-            Navigator.of(context).push(SlideLeftRoute(enterWidget: Confirma("recharge"), oldWidget: Webview(_code)));
-          }else if(i == -1){
-            Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: Webview(_code)));
-          }
-        }else if(url.split("/").last == "card"){
-          i = -1;
-          Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: Webview(_code)));
-        }
-      }
-    });
-   flutterWebviewPlugin.onStateChanged.listen((WebViewStateChanged webViewStateChanged){
-    url = webViewStateChanged.url;
-    print("Current url: $url");
-    if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
-      this._getStatus(_id);
-    }else if(url.split("/").last == "notification"){
-      print("status: $_status");
-    }else{
-      print("déjà $_status");
-    }
-   });*/
   }
 
   _getStatus(String id) async {
@@ -89,7 +59,7 @@ class _WebviewState extends State<Webview> {
       _status = responseJson['status'];
       if(_status == "CREATED"){
         if(temps <= 0){
-          Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: Webview(_code)));
+          Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec('$_code^&'), oldWidget: Webview(_code)));
         }else if(temps > 0){
           temps--;
           _getStatus(id);
@@ -110,44 +80,11 @@ class _WebviewState extends State<Webview> {
 
   @override
   void dispose() {
-    //flutterWebviewPlugin.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    //flutterWebviewPlugin.resize(rect);
-    /*return WebviewScaffold(
-            key: _scaffoldKey,
-            url: payment_url,
-            clearCache: true,
-            appCacheEnabled: false,
-            withLocalStorage: true,
-            hidden: true,
-            appBar: AppBar(
-              title: Text("Sprint-pay paiement",style: TextStyle(
-                color: couleur_titre,
-                fontSize: taille_libelle_etape,
-              ),),
-              elevation: 0.0,
-              backgroundColor: couleur_appbar,
-              flexibleSpace: barreTop,
-              leading: InkWell(
-                  onTap: (){
-                    setState(() {
-                      Navigator.of(context).push(SlideLeftRoute(enterWidget: Encaisser2(_code), oldWidget: Webview(_code)));
-                    });
-                    //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Pays()));
-                  },
-                  child: Icon(Icons.arrow_back_ios,)),
-              iconTheme: new IconThemeData(color: couleur_fond_bouton),
-            ),
-            //supportMultipleWindows: true,
-            initialChild:Center(
-                child: CupertinoActivityIndicator(radius: 30,)
-            )
-      );*/
-    //final Completer<WebViewController> _controller = Completer<WebViewController>();
     return Scaffold(
       appBar: AppBar(
         title: Text("Sprint-pay paiement",style: TextStyle(
@@ -191,7 +128,7 @@ class _WebviewState extends State<Webview> {
                         cacheEnabled: true,
                         clearCache: true,
                         debuggingEnabled: true,
-                        javaScriptCanOpenWindowsAutomatically: true,
+                        javaScriptCanOpenWindowsAutomatically: false,
                         javaScriptEnabled: true,
                       ),
                       iosInAppWebViewOptions: IosInAppWebViewOptions(
@@ -205,11 +142,16 @@ class _WebviewState extends State<Webview> {
                       ),
                     ),
                     onWebViewCreated: (InAppWebViewController controller) {
+                      if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
+                        //controller.loadUrl(url: null);
+                        controller.stopLoading();
+                      }else
                       controller.loadUrl(url: payment_url);
                     },
                     onLoadStart: (InAppWebViewController controller, String url) {
                       print("URL actuelle: $url");
                       if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
+                        controller.stopLoading();
                         this._getStatus(_id);
                       }
                     },
@@ -220,7 +162,7 @@ class _WebviewState extends State<Webview> {
                     },
                   ),
                 )
-            )
+            ),
           ].where((Object o) => o != null).toList()
         )
       )

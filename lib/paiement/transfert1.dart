@@ -30,7 +30,7 @@ class _Transfert1State extends State<Transfert1> {
   // ignore: non_constant_identifier_names
   int recenteLenght, archiveLenght, populaireLenght, id_kitty;
   var _formKey = GlobalKey<FormState>();
-  var _categorie = ['Soutien familial', 'Frais médicaux', 'Achat marchandise', 'Financement projet', 'Investissement', 'Autre'];
+  var _categorie = ['Soutien familial', 'Frais medicaux', 'Achat marchandise', 'Financement projet', 'Investissement', 'Autre'];
   int flex4, flex6, taille, enlev, rest, enlev1, indik=0, lieu, selectedRadio;
   double ad,_taill,gauch,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -202,14 +202,21 @@ class _Transfert1State extends State<Transfert1> {
                     onTap: (){
                       if(q == 0){
                         Navigator.pop(context);
-                        var getcommission = getCommission(
-                            typeOperation: "WALLET_TO_EUC",
-                            country: "$country",
-                            amount: int.parse(this.montant),
-                            deviseLocale: deviseLocale
-                        );
-                        print(json.encode(getcommission));
-                        checkConnection(json.encode(getcommission), 1);
+                        if(int.parse(this.montant)<500){
+                          setState(() {
+                            isLoadDirect = false;
+                          });
+                          showInSnackBar("Le montant doit être supérieur ou égal à 500");
+                        }else{
+                          var getcommission = getCommission(
+                              typeOperation: "WALLET_TO_EUC",
+                              country: "$country",
+                              amount: int.parse(this.montant),
+                              deviseLocale: deviseLocale
+                          );
+                          print(json.encode(getcommission));
+                          checkConnection(json.encode(getcommission), 1);
+                        }
                       }else{
                         Navigator.pop(context);//Vers un compte mobile WARI
                         showInSnackBar("Pas encore disponible.");
@@ -248,14 +255,21 @@ class _Transfert1State extends State<Transfert1> {
                       onTap: (){
                         if(q == 0){
                           Navigator.pop(context);
-                          var getcommission = getCommission(
-                              typeOperation: "WALLET_TO_EUM",
-                              country: "$country",
-                              amount: int.parse(this.montant),
-                              deviseLocale: deviseLocale
-                          );
-                          print(json.encode(getcommission));
-                          checkConnection(json.encode(getcommission), 2);
+                          if(int.parse(this.montant)<500){
+                            setState(() {
+                              isLoadDirect = false;
+                            });
+                            showInSnackBar("Le montant doit être supérieur ou égal à 500");
+                          }else{
+                            var getcommission = getCommission(
+                                typeOperation: "WALLET_TO_EUM",
+                                country: "$country",
+                                amount: int.parse(this.montant),
+                                deviseLocale: deviseLocale
+                            );
+                            print(json.encode(getcommission));
+                            checkConnection(json.encode(getcommission), 2);
+                          }
                         }else{
                           Navigator.pop(context);//Vers un compte bancaire WARI
                           showInSnackBar("Pas encore disponible.");
@@ -785,7 +799,7 @@ class _Transfert1State extends State<Transfert1> {
     setState(() {
       //montant = prefs.getString("wallet")==null?"":prefs.getString("wallet");
       //_userTextController.text = montant==""?"0":montant;
-      country = prefs.getString("iso3");
+      country = prefs.getString("payst");
       nomPays = prefs.getString("nomPays");
       codeIso2 = prefs.getString("codeIso2");
       from = prefs.getString("from");

@@ -6,7 +6,7 @@
 
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="Sprint-Pay Services"
+        android:label="SP Transfert d'argent"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
         <activity

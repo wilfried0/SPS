@@ -169,7 +169,7 @@ class Services {
     Merchant merchant;
     Merchant temp;
     merchants.forEach((json) =>
-        {temp = Merchant.fromJson(json), if (temp.id == id) merchant = temp});
+      {temp = Merchant.fromJson(json), if (temp.id == id) merchant = temp});
     return merchant;
   }
 }

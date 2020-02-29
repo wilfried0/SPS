@@ -5,8 +5,8 @@ import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:services/auth/connexion.dart';
 import 'package:http/http.dart' as http;
+import 'package:services/auth/sendpiece.dart';
 import 'package:services/composants/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,19 +19,71 @@ class Inscrip extends StatefulWidget {
 class _InscripState extends State<Inscrip> {
 
   int ad = 3;
-  String _birthday="", _current, _url, firstname, lastname, town, email, nature="Particulier", gender, adress, userImage, newPassword, typeMember;
+  String _birthday="", _current, _url,jr, mo, an, firstname, lastname, town, email, nature, gender, adress, userImage, newPassword, typeMember;
   int _date = new DateTime.now().year, idUser;
   var _categorie = ['Madame', 'Monsieur', 'Mademoiselle'];
+  var _nature = ['Particulier', 'Entreprise', 'Association', 'PME', 'Etablissement'];
   var _formKey = GlobalKey<FormState>();
-  bool isLoding =false, _loadImage = false;
+  var _annee = ['1960'];
+  var _mois = ['01'];
+  var _jour = ['01'];
+  bool isLoding =false, _loadImage = false, isClicked = false;
   String _image;
+  DateTime _dateTime = DateTime.now();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   void initState(){
+    this.getListNature();
     this.lire();
     _url = '$base_url/member';
     super.initState();
+    this.ChargeAnnee();
+    this.ChargeMois();
+    this.ChargeJour();
+  }
+
+  ChargeAnnee(){
+    for(int i=1961;i<=DateTime.now().year+30;i++){
+      _annee.add(i.toString());
+    }
+    print(_annee);
+  }
+
+  ChargeMois(){
+    for(int i=2;i<=12;i++){
+      if(i<10){
+        _mois.add('0'+i.toString());
+      }else
+        _mois.add(i.toString());
+    }
+  }
+
+  ChargeJour(){
+    for(int i=2;i<=31;i++){
+      if(i<10){
+        _jour.add('0'+i.toString());
+      }else
+        _jour.add(i.toString());
+    }
+  }
+
+  Future<String> getListNature() async {
+    var headers = {
+      "Accept": "application/json",
+      "content-type": "application/json"
+    };
+    http.Response response = await http.get("http://74.208.183.205:8086/spkycgateway/api/administration/getNatureClientByService/773", headers: headers);
+    final int statusCode = response.statusCode;
+    if(statusCode == 200){
+      List responseJson = json.decode(response.body);
+      _nature = [];
+      setState(() {
+        for(int i=0; i<responseJson.length; i++)
+          _nature.add(responseJson[i]['name']);
+      });
+    }
+    return null;
   }
 
   bool isEmail(String em) {
@@ -112,7 +164,7 @@ class _InscripState extends State<Inscrip> {
     }
   }
 
-  Future _selectDate() async {
+  /*Future _selectDate() async {
     print(_date);
     DateTime picked = await showDatePicker(
         context: context,
@@ -124,7 +176,7 @@ class _InscripState extends State<Inscrip> {
     if(picked != null) setState(
        () => _birthday = picked.toString().split(" ")[0] //.replaceAll("-", "/")
     );
-  }
+  }*/
 
   lire() async {
     final prefs = await SharedPreferences.getInstance();
@@ -287,7 +339,66 @@ class _InscripState extends State<Inscrip> {
                     ),
                   ),
                 ),
-
+                Padding(
+                  padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    decoration: new BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(
+                          color: couleur_bordure,
+                          width: bordure
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.assignment_ind, color: couleur_decription_page,),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 10,
+                          child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                icon: Padding(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: new Icon(Icons.arrow_drop_down_circle,
+                                    color: couleur_fond_bouton,),
+                                ),
+                                isDense: false,
+                                elevation: 1,
+                                isExpanded: true,
+                                onChanged: (String selected){
+                                  setState(() {
+                                    nature = selected;
+                                  });
+                                },
+                                value: nature,
+                                hint:Text('Sélectionner votre nature',
+                                  style: TextStyle(
+                                    color: couleur_libelle_champ,
+                                    fontSize:taille_champ+ad,
+                                  ),),
+                                items: _nature.map((String name){
+                                  return DropdownMenuItem<String>(
+                                    value: name,
+                                    child: Text(name,
+                                      style: TextStyle(
+                                        color: couleur_libelle_champ,
+                                        fontSize:taille_champ+ad,
+                                      ),),
+                                  );
+                                }).toList(),
+                              )
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0),
                   child: Container(
@@ -559,7 +670,7 @@ class _InscripState extends State<Inscrip> {
                   ),
                 ),*/
 
-                Padding(
+                isClicked == true?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -588,7 +699,9 @@ class _InscripState extends State<Inscrip> {
                           flex:10,
                           child: GestureDetector(
                             onTap: (){
-                              _selectDate();
+                              setState(() {
+                                isClicked = true;
+                              });
                             },
                             child: Container(
                               margin: EdgeInsets.only(top: 0.0),
@@ -639,6 +752,150 @@ class _InscripState extends State<Inscrip> {
                   ),
                 ),
 
+                isClicked == false?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        bottomRight: Radius.circular(10.0),
+                        bottomLeft: Radius.circular(10.0),
+                      ),
+                      color: Colors.transparent,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.calendar_today, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                          ),
+                        ),
+                        Expanded(
+                          flex:3,
+                          child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isDense: true,
+                                elevation: 1,
+                                isExpanded: true,
+                                onChanged: (String selected){
+                                  setState(() {
+                                    jr = selected;
+                                  });
+                                },
+                                value: jr,
+                                hint: Padding(
+                                  padding: EdgeInsets.only(left: 20),
+                                  child: Text('Jour',
+                                    style: TextStyle(
+                                      color: couleur_libelle_champ,
+                                      fontSize:taille_champ+3,
+                                    ),),
+                                ),
+                                items: _jour.map((String name){
+                                  return DropdownMenuItem<String>(
+                                    value: name,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(left: 20),
+                                      child: Text(name,
+                                        style: TextStyle(
+                                            color: couleur_libelle_champ,
+                                            fontSize:taille_champ+3,
+                                            fontWeight: FontWeight.normal
+                                        ),),
+                                    ),
+                                  );
+                                }).toList(),
+                              )
+                          ),
+                        ),
+                        Expanded(
+                          flex:3,
+                          child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isDense: true,
+                                elevation: 1,
+                                isExpanded: true,
+                                onChanged: (String selected){
+                                  setState(() {
+                                    mo = selected;
+                                  });
+                                },
+                                value: mo,
+                                hint: Padding(
+                                  padding: EdgeInsets.only(left: 20),
+                                  child: Text('Mois',
+                                    style: TextStyle(
+                                      color: couleur_libelle_champ,
+                                      fontSize:taille_champ+3,
+                                    ),),
+                                ),
+                                items: _mois.map((String name){
+                                  return DropdownMenuItem<String>(
+                                    value: name,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(left: 20),
+                                      child: Text(name,
+                                        style: TextStyle(
+                                            color: couleur_libelle_champ,
+                                            fontSize:taille_champ+3,
+                                            fontWeight: FontWeight.normal
+                                        ),),
+                                    ),
+                                  );
+                                }).toList(),
+                              )
+                          ),
+                        ),
+                        Expanded(
+                          flex:4,
+                          child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isDense: true,
+                                elevation: 1,
+                                isExpanded: true,
+                                onChanged: (String selected){
+                                  setState(() {
+                                    an = selected;
+                                  });
+                                },
+                                value: an,
+                                hint: Padding(
+                                  padding: EdgeInsets.only(left: 20),
+                                  child: Text('Année',
+                                    style: TextStyle(
+                                      color: couleur_libelle_champ,
+                                      fontSize:taille_champ+3,
+                                    ),),
+                                ),
+                                items: _annee.map((String name){
+                                  return DropdownMenuItem<String>(
+                                    value: name,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(left: 20),
+                                      child: Text(name,
+                                        style: TextStyle(
+                                            color: couleur_libelle_champ,
+                                            fontSize:taille_champ+3,
+                                            fontWeight: FontWeight.normal
+                                        ),),
+                                    ),
+                                  );
+                                }).toList(),
+                              )
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 Padding(
                   padding: EdgeInsets.only(top: 10.0, bottom: 10),
                   child: new GestureDetector(
@@ -646,25 +903,30 @@ class _InscripState extends State<Inscrip> {
                       setState(() {
                         if(_formKey.currentState.validate()){
                           if(isEmail(email)==true){
-                            if(_birthday.isNotEmpty){
+                            if(jr != null && mo != null && an != null){
+                              _birthday = "$an-$mo-$jr";
                               if(gender != null){
-                                var createAccount = new createMemberAccount(
-                                    id_user: this.idUser,
-                                    firstname: this.firstname,
-                                    lastname: this.lastname,
-                                    town: "",
-                                    birthday: this._birthday,
-                                    email: this.email==null?"":this.email,
-                                    nature: this.nature,
-                                    gender: this.gender,
-                                    adress: "",
-                                    userImage: "$_image",
-                                    newPassword: this.newPassword,
-                                    typeMember: "MSP",
-                                    roleId: 1
-                                );
-                                print(json.encode(createAccount));
-                                this.checkConnection(json.encode(createAccount));
+                                if(nature != null){
+                                  var createAccount = new createMemberAccount(
+                                      id_user: this.idUser,
+                                      firstname: this.firstname,
+                                      lastname: this.lastname,
+                                      town: "",
+                                      birthday: this._birthday,
+                                      email: this.email==null?"":this.email,
+                                      nature: this.nature,
+                                      gender: this.gender,
+                                      adress: "",
+                                      userImage: "$_image",
+                                      newPassword: this.newPassword,
+                                      typeMember: "MSP",
+                                      roleId: 1
+                                  );
+                                  print(json.encode(createAccount));
+                                  this.checkConnection(json.encode(createAccount));
+                                }else{
+                                  showInSnackBar("Sélectionner la nature du client");
+                                }
                               }else{
                                 showInSnackBar("Sélectionner un genre Mme/M/Mlle");
                               }
@@ -750,7 +1012,7 @@ class _InscripState extends State<Inscrip> {
           showInSnackBar("Echec de la création. Client immature!");
         }else{
           this._reg();
-          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Sendpiece()));
         }
         //    navigatorKey.currentState.pushNamed("/connexion");
       }else {

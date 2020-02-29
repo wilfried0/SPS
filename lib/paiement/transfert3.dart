@@ -185,7 +185,7 @@ class _Transfert3State extends State<Transfert3> {
     };
 
     if(_lieu == "0"){
-      url = '$base_url/transfert/wallet';
+      url = '$base_url/transfert/user/wallettowallet';
     }else if(_lieu == "2"){
       url = '$base_url/transfert/eu/cashin';
     }else if(_lieu == "3"){
@@ -209,17 +209,22 @@ class _Transfert3State extends State<Transfert3> {
           setState(() {
             isLoading = false;
           });
-          showInSnackBar("Montant non autorisé!", _scaffoldKey);
+          showInSnackBar("Montant non autorisé!", _scaffoldKey, 5);
         }else if(responseJson['payment_url'] == "THIS_CUSTOMER_HAS_EXCEEDED_HIS_LIMIT_NUMBER_OF_OPERATION"){
           setState(() {
             isLoading = false;
           });
-          showInSnackBar("Vous avez atteint le nombre max d'opérations!", _scaffoldKey);
+          showInSnackBar("Vous avez atteint le nombre max d'opérations!", _scaffoldKey, 5);
         }else if(responseJson['payment_url'] == "THE_AMOUNT_OF_THIS_TRANSACTION_IS_GRATER_THAN_THE_THE_MAXIMUM_AMOUNT_PLANNED_FOR_YOUR_PROFILE"){
           setState(() {
             isLoading = false;
           });
-          showInSnackBar("Le montant de la transaction est supérieur à celui autorisé à votre profil", _scaffoldKey);
+          showInSnackBar("Le montant de la transaction est supérieur à celui autorisé à votre profil", _scaffoldKey, 5);
+        }else if(responseJson['payment_url'] == "CLIENT_IS_BLACKLISTED"){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Vos opérations ont été suspendues pour des raisons de conformité. Veuillez contacter le service client !", _scaffoldKey, 5);
         }else if(responseJson['payment_url'] == "CLIENT_LOCKED_BY_SYSTEM"){
           setState(() {
             isLoading = false;
@@ -230,12 +235,12 @@ class _Transfert3State extends State<Transfert3> {
           setState(() {
             isLoading = false;
           });
-          showInSnackBar("Votre compte a été bloqué veuillez contacyer le service client!", _scaffoldKey);
+          showInSnackBar("Votre compte a été bloqué veuillez contacyer le service client!", _scaffoldKey, 5);
         }else if(responseJson['id'] == "NOT_FOUND"){
           setState(() {
             isLoading = false;
           });
-          showInSnackBar("Service indisponible!", _scaffoldKey);
+          showInSnackBar("Service indisponible!", _scaffoldKey, 5);
         }else{
           this.getStatus(_id);
         }
@@ -243,7 +248,7 @@ class _Transfert3State extends State<Transfert3> {
         setState(() {
           isLoading = false;
         });
-        showInSnackBar("Echec de l'opération!", _scaffoldKey);
+        showInSnackBar("Echec de l'opération!", _scaffoldKey, 5);
       }
       return response.body;
     });
@@ -294,7 +299,7 @@ class _Transfert3State extends State<Transfert3> {
       setState(() {
         isLoading = false;
       });
-      showInSnackBar("Service indisponible", _scaffoldKey);
+      showInSnackBar("Service indisponible", _scaffoldKey, 5);
     }
     return null;
   }
@@ -1131,15 +1136,4 @@ class _Transfert3State extends State<Transfert3> {
     )
     );
   }
-}
-void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
-  _scaffoldKey.currentState.showSnackBar(
-      new SnackBar(content: new Text(value,style:
-      TextStyle(
-          color: Colors.white,
-          fontSize: taille_description_champ+3
-      ),
-        textAlign: TextAlign.center,),
-        backgroundColor: couleur_fond_bouton,
-        duration: Duration(seconds: 5),));
 }

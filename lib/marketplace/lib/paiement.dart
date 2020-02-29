@@ -79,18 +79,17 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
     _commission = _serviceItem.spCommissionAmount;
     getDefaultComminion();
     print("ma commission: $_commission");
+    print("ma commission: $beneficiaryPhoneNumber");
   }
 
-  getTotal(double amount, double commission){
-    return amount+commission;
+  getTotal(double amount, double commission) {
+    return amount + commission;
   }
 
-  getDefaultComminion(){
+  getDefaultComminion() {
     setState(() {
-      _commission = Amount.getCommission(
-          _serviceItem.commissionType,
-          _serviceItem.spCommissionAmount,
-          double.parse(_transaction.amount));
+      _commission = Amount.getCommission(_serviceItem.commissionType,
+          _serviceItem.spCommissionAmount, double.parse(_transaction.amount));
     });
   }
 
@@ -206,11 +205,13 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                             style: TextStyle(color: couleur_libelle_champ),
                           ),
                         ),
-                        _merchant.category == Services.TV_CATEGORY ||
+                        (_merchant.category == Services.TV_CATEGORY ||
                             _merchant.category ==
                                 Services.UTILITY_CATEGORY ||
-                            (_merchant.logoFileId.contains("tv.png") &&
-                                _recepteur == "null")
+                            _merchant.category ==
+                                Services.PHARMACY_CATEGORY ||
+                            _merchant.logoFileId.contains("tv.png")) &&
+                            beneficiaryPhoneNumber == null
                             ? Container()
                             : Padding(
                           padding: EdgeInsets.only(top: 5, bottom: 5),
@@ -219,13 +220,17 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                               Expanded(
                                 flex: 1,
                                 child: Text(
-                                  _merchant.category ==
+                                  (_merchant.category ==
                                       Services.TELCO_CATEGORY ||
                                       _merchant.category ==
                                           Services.UTILITY_CATEGORY ||
+                                      _merchant.category ==
+                                          Services
+                                              .PHARMACY_CATEGORY ||
                                       (_merchant.logoFileId
-                                          .contains("tv.png") &&
-                                          _recepteur != "null")
+                                          .contains("tv.png")) &&
+                                          beneficiaryPhoneNumber !=
+                                              null)
                                       ? "Numéro bénéficiaire"
                                       : _merchant.category ==
                                       Services.PHARMACY_CATEGORY
@@ -242,10 +247,15 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                       Services.TELCO_CATEGORY ||
                                       _merchant.category ==
                                           Services.UTILITY_CATEGORY ||
+                                      _merchant.category ==
+                                          Services
+                                              .PHARMACY_CATEGORY ||
                                       (_merchant.logoFileId
                                           .contains("tv.png") &&
-                                          _recepteur != "null") ||
-                                      _merchant.category == Services.PHARMACY_CATEGORY
+                                          beneficiaryPhoneNumber !=
+                                              null) ||
+                                      _merchant.category ==
+                                          Services.PHARMACY_CATEGORY
                                       ? "+${_transaction.beneficiaryPhoneNumber} "
                                       : "Non Réquis",
                                   style: TextStyle(
@@ -429,7 +439,9 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                               showFlag: true,
                                               onChanged:
                                                   (CountryCode code) {
-                                                countryCode = code.dialCode.replaceAll("+", "");
+                                                countryCode = code
+                                                    .dialCode
+                                                    .replaceAll("+", "");
                                                 //_mySelection = code.dialCode.toString();
                                               },
                                             )),
@@ -642,7 +654,9 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                               showFlag: true,
                                               onChanged:
                                                   (CountryCode code) {
-                                                    countryCode = code.dialCode.replaceAll("+", "");
+                                                countryCode = code
+                                                    .dialCode
+                                                    .replaceAll("+", "");
                                               },
                                             )),
                                         new Expanded(
@@ -868,19 +882,21 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                     if (_transaction.buyerId == null) {
                       _transaction.buyerId = "123";
                       _transaction.buyerEmail = emailController.text;
-                      _transaction.buyerPhoneNumber =
-                      "${phoneController.text}";
+                      _transaction.buyerPhoneNumber = "${phoneController.text}";
                       _transaction.spauthToken = 'Basic ' +
                           base64.encode(utf8.encode(
                               '${phoneController.text}:${passwordController.text}'));
                     }
 
                     _transaction.paymentType = method;
-                    _transaction.mobileMoneyPaymentNumber = phoneController.text;
+                    _transaction.mobileMoneyPaymentNumber =
+                        phoneController.text;
 
-                   coched == "false"? _transaction.buyerIsBeneficiary = true:_transaction.buyerIsBeneficiary = false;
+                    coched == "false"
+                        ? _transaction.buyerIsBeneficiary = true
+                        : _transaction.buyerIsBeneficiary = false;
 
-                   print("on a coché: $coched");
+                    print("on a coché: $coched");
 
                     try {
                       setState(() {
@@ -939,5 +955,42 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
       backgroundColor: couleur_fond_bouton,
       duration: Duration(seconds: 5),
     ));
+  }
+
+  String reversed(String str) {
+    String nombre = "";
+    for (int i = str.length - 1; i >= 0; i--) {
+      nombre = nombre + str.substring(i, i + 1);
+    }
+    return nombre;
+  }
+
+  String getMillis(String amount) {
+    String reste = amount.split('.')[1];
+    if (reste.length > 2) {
+      reste = reste.substring(0, 2);
+    }
+    amount = reversed(amount.split('.')[0]);
+    String nombre = "";
+    if (amount.length <= 3) {
+      return reversed(amount) + ',' + reste;
+    } else if (amount.length == 4) {
+      for (int i = amount.length - 1; i >= 0; i--) {
+        nombre = nombre + amount.substring(i, i + 1);
+        if (i == amount.length - 1) {
+          nombre = nombre + '.';
+        } else {}
+      }
+    } else
+      for (int i = amount.length - 1; i >= 0; i--) {
+        nombre = nombre + amount.substring(i, i + 1);
+        if (i == 0 || i == amount.length - 1) {
+        } else {
+          if ((i) % 3 == 0) {
+            nombre = nombre + '.';
+          }
+        }
+      }
+    return nombre.toString() + ',' + reste;
   }
 }

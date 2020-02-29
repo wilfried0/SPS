@@ -15,6 +15,8 @@ class _RecuState extends State<Recu> {
   List<Receipt> receipts = new List();
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   String buyerPhone;
+  bool isEmpty = false;
+  bool hasError = false;
 
   @override
   void initState() {
@@ -25,7 +27,9 @@ class _RecuState extends State<Recu> {
 
   getPhone() async {
     final prefs = await SharedPreferences.getInstance();
+    setState(() {
       buyerPhone = prefs.getString("BUYER_PHONE");
+    });
   }
 
   @override
@@ -43,25 +47,59 @@ class _RecuState extends State<Recu> {
     );
   }
 
-  Widget _buildList(context) {
-
+  ListView _buildList(context) {
     //SysSnackBar().show(_scaffoldKey, "Téléchargement des reçus encours ....");
-    new BillController().list(buyerPhone, (List<dynamic> json) {
-      List<Receipt> list = new List();
-      json.forEach((item) => list.add(Receipt.fromJson(item)));
-      setState(() {
-        receipts = list;
+    if (!isEmpty && !hasError)
+      new BillController().list(buyerPhone, (List<dynamic> json) {
+        List<Receipt> list = new List();
+        json.forEach((item) => list.add(Receipt.fromJson(item)));
+        setState(() {
+          isEmpty = list.isEmpty;
+          receipts = list;
+        });
+      }, (ServerResponseValidator validator) {
+        SysSnackBar().error(_scaffoldKey);
+        setState(() {
+          hasError = true;
+        });
+      }, (ServerResponseValidator validator) {}).catchError((e) {
+        SysSnackBar().error(_scaffoldKey);
+        setState(() {
+          hasError = true;
+        });
       });
-    }, (ServerResponseValidator validator) {
-      SysSnackBar().error(_scaffoldKey);
-    }, (ServerResponseValidator validator) {}).catchError((e) {
-      SysSnackBar().error(_scaffoldKey);
-    });
 
-    return receipts.length == 0? Center(
-        child: CupertinoActivityIndicator(radius: 30,)
-    ) :
-    ListView.builder(
+    return getItem();
+  }
+
+  StatelessWidget getItem() {
+    return receipts.isEmpty
+        ? (isEmpty || hasError
+        ? ListView.builder(
+      // Must have an item count equal to the number of items!
+      itemCount: 1,
+      // A callback that will return a widget.
+      itemBuilder: (context, int) {
+        // In our case, .
+        return Center(
+            child: Text(hasError
+                ? "Une erreur est survenue"
+                : "Vous n'avez fait aucun payement !!"));
+      },
+    )
+        : ListView.builder(
+      // Must have an item count equal to the number of items!
+      itemCount: 1,
+      // A callback that will return a widget.
+      itemBuilder: (context, int) {
+        // In our case, .
+        return Center(
+            child: CupertinoActivityIndicator(
+              radius: 30,
+            ));
+      },
+    ))
+        : ListView.builder(
       // Must have an item count equal to the number of items!
       itemCount: receipts.length,
       // A callback that will return a widget.
@@ -78,17 +116,17 @@ class ReceiptCard extends StatelessWidget {
 
   ReceiptCard(this._receipt);
 
-  String getMoyenPaiement(String moyen){
+  String getMoyenPaiement(String moyen) {
     String retour = "";
-    if(moyen == "CREDIT_CARD"){
+    if (moyen == "CREDIT_CARD") {
       retour = "Carte de crédit";
-    }else if(moyen == "SPRINT_PAY"){
+    } else if (moyen == "SPRINT_PAY") {
       retour = "Sprint-Pay Wallet";
-    }else if(moyen == "MTN_MOMO_CM"){
+    } else if (moyen == "MTN_MOMO_CM") {
       retour = "Mtn Mobile Money";
-    }else if(moyen == "ORANGE_MONEY_CM"){
+    } else if (moyen == "ORANGE_MONEY_CM") {
       retour = "Orange Money";
-    }else if(moyen == "YUP_CM"){
+    } else if (moyen == "YUP_CM") {
       retour = "Yup Cameroun";
     }
     return retour;
@@ -121,7 +159,9 @@ class ReceiptCard extends StatelessWidget {
                   style: TextStyle(color: couleur_fond_bouton),
                 ),
               ),
-              _receipt.referenceNumber == null?Container():Padding(
+              _receipt.referenceNumber == null
+                  ? Container()
+                  : Padding(
                 padding: const EdgeInsets.only(left: 10, bottom: 10),
                 child: Text(
                   "Référence: ${_receipt.referenceNumber}",
@@ -156,7 +196,7 @@ class ReceiptCard extends StatelessWidget {
                   ? Padding(
                 padding: EdgeInsets.only(left: 10, bottom: 10),
                 child: Text(
-                  "Date et heure: ${_receipt.executionDate.split("T")[0] +"    "+ _receipt.executionDate.split("T")[1]}",
+                  "Date et heure: ${_receipt.executionDate.split("T")[0] + "    " + _receipt.executionDate.split("T")[1]}",
                   style: TextStyle(color: couleur_libelle_champ),
                 ),
               )
@@ -164,7 +204,7 @@ class ReceiptCard extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.only(left: 10, bottom: 10),
                 child: Text(
-                  "Montant: ${_receipt.amount} ${_receipt.currency}",
+                  "Montant : ${_receipt.amount} ${_receipt.currency}",
                   style: TextStyle(
                       color: couleur_fond_bouton, fontWeight: FontWeight.bold),
                 ),
@@ -245,7 +285,7 @@ class Receipt {
         this.requiresMerchantVerification,
         this.buyerIsBeneficiary,
         this.transactionId,
-      this.referenceNumber});
+        this.referenceNumber});
 
   Receipt.fromJson(Map<String, dynamic> json) {
     id = json['id'];

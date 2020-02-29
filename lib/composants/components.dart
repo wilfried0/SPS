@@ -121,9 +121,10 @@ final marge_libelle_champ = 5.0;
 // ignore: non_constant_identifier_names
 double marge_champ_libelle = 20.0;
 // ignore: non_constant_identifier_names
-final base_url = "http://74.208.183.205:8086/corebanking/rest";
+final base_url = "http://pcs.sprint-pay.com/corebanking/rest";//"http://74.208.183.205:8086/corebanking/rest";
 //final baseUrl = "http://74.208.183.205:8086/SpAuthentication/contacts";//"http://192.168.45.145:8080/negprod/api";
-final baseUrl = "http://74.208.183.205:7086/paymentcore/rest/users/contact";
+final baseUrl = "http://pcs.sprint-pay.com/paymentcore/rest/users/contact";//"http://74.208.183.205:7086/paymentcore/rest/users/contact";
+final base = "http://kyc.sprint-pay.com/spkyc-identitymanager/upload";//"http://74.208.183.205:8086/spkyc-identitymanager/upload";
 
 bool search = false;
 
@@ -135,6 +136,29 @@ String reversed(String str){
   }
   return nombre;
 }
+
+String changeAccent(String str){
+  String string = str;
+  for(int i=0;i<str.length; i++){
+    print(str.substring(i));
+  }
+  return string;
+}
+
+////if(str.contains("é") || str.contains("è") || str.contains("ê")){
+//      str.replaceAll("é", "e");
+//      str.replaceAll("è", "e");
+//      str.replaceAll("ê", "e");
+//      string = str;
+//    }else if(str.contains("à") || str.contains("â") || str.contains("ã")){
+//      str.replaceAll("à", "a");
+//      str.replaceAll("â", "a");
+//      str.replaceAll("ã", "a");
+//      string = str;
+//    }else if(str.contains("ô")){
+//      str.replaceAll("ô", "o");
+//      string = str;
+//    }
 
 String getMillis(String amount){
   String reste=amount.split('.')[1];
@@ -196,13 +220,13 @@ Future<String> getMonSolde(GlobalKey<ScaffoldState> _scaffoldKey, String _userna
     print(responseJson);
       return response.body;
   } else {
-    showInSnackBar(json.decode(utf8.decode(response.bodyBytes)), _scaffoldKey);
+    showInSnackBar("Service indisponible", _scaffoldKey, 5);
     return null;
   }
 }
 
 
-void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
+void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey, int val) {
   _scaffoldKey.currentState.showSnackBar(
       new SnackBar(content: new Text(value,style:
       TextStyle(
@@ -211,7 +235,7 @@ void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
       ),
         textAlign: TextAlign.center,),
         backgroundColor: couleur_fond_bouton,
-        duration: Duration(seconds: 5),));
+        duration: Duration(seconds: val),));
 }
 
 final barreBottom = BottomAppBar(
@@ -279,7 +303,7 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
               child: Container(
                   height: 20,
                   width: 20,
-                  child: new Icon(Icons.thumb_up, color: orange_F)
+                  child: new Icon(Icons.thumb_up, )
               ),//Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
@@ -294,7 +318,8 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
                 child: Text('Recommander à un ami',
                   style: TextStyle(
                       fontSize: taille_text_bouton,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
+                      color: orange_F
                   ),),
               ),
             ),
@@ -308,7 +333,7 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
               child: Container(
                   height: 20,
                   width: 20,
-                  child: new Icon(Icons.help_outline, color: orange_F)//Image.asset('images/creer.png')),
+                  child: new Icon(Icons.help_outline, )//Image.asset('images/creer.png')),
               ),
             ),
             title: GestureDetector(
@@ -319,7 +344,8 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
               child: Text('Service client',
                 style: TextStyle(
                     fontSize: taille_text_bouton,
-                    fontWeight: FontWeight.bold
+                    fontWeight: FontWeight.bold,
+                    color: orange_F
                 ),),
             ),
           ),
@@ -332,7 +358,7 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
               child: Container(
                   height: 20,
                   width: 20,
-                  child: new Icon(Icons.lock, color: orange_F)),//Image.asset('images/creer.png')),
+                  child: new Icon(Icons.lock,)),//Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
               onTap:(){
@@ -342,7 +368,8 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
               child: Text('Déconnexion',
                 style: TextStyle(
                     fontSize: taille_text_bouton,
-                    fontWeight: FontWeight.bold
+                    fontWeight: FontWeight.bold,
+                    color: orange_F
                 ),),
             ),
           ),
@@ -435,6 +462,36 @@ class orangeTrans {
   Map<String, dynamic> toJson() =>
       {
         "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "successUrl": successUrl,
+        "failureUrl": failureUrl,
+      };
+}
+
+class yupTrans {
+  final String description;
+  final int amount;
+  final double fees;
+  final String deviseLocale;
+  final String successUrl;
+  final String failureUrl;
+
+
+  yupTrans({this.amount, this.fees, this.description, this.deviseLocale, this.successUrl, this.failureUrl});
+
+  yupTrans.fromJson(Map<String, dynamic> json)
+      :amount = json['amount'],
+        fees = json['fees'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        successUrl = json['deviseLocale'],
+        failureUrl = json['failureUrl'];
+
+  Map<String, dynamic> toJson() =>
+      {
         "amount": amount,
         "fees": fees,
         "description": description,

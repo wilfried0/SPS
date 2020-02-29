@@ -155,15 +155,20 @@ class _Retrait1State extends State<Retrait1> {
       }else if(statusCode == 200){
         var responseJson = json.decode(response.body);
         fees = responseJson['fees'];
-        newSolde = double.parse(montant)+fees;
-        print(newSolde.toString());
-        print(double.parse(local));
-        this._save();
-        setState(() {
-          isLoading = false;
-        });
-        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Retrait2(_code)));
-        //navigatorKey.currentState.pushNamed("/encaisser");
+        newSolde = double.parse(montant.replaceAll(".", ""))+fees;
+        if(newSolde>double.parse(local)){
+          setState(() {
+            isLoading = false;
+          });
+          showInSnackBar("Solde insuffisant pour effectuer cette opération!");
+        }else{
+          this._save();
+          setState(() {
+            isLoading = false;
+          });
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Retrait2(_code)));
+          //navigatorKey.currentState.pushNamed("/encaisser");
+        }
       }else {
         setState(() {
           isLoading = false;
@@ -502,6 +507,9 @@ class _Retrait1State extends State<Retrait1> {
                                 padding: EdgeInsets.only(left: 10),
                                 child: CountryCodePicker(
                                   showFlag: true,
+                                  textStyle: TextStyle(
+                                    color: couleur_libelle_champ
+                                  ),
                                   onChanged: (CountryCode code){
                                     _mySelection = code.dialCode.toString();
                                   },
@@ -667,32 +675,36 @@ class _Retrait1State extends State<Retrait1> {
                             case 1: code = "WALLET_TO_OM";break;
                           }
                           if(_formKey.currentState.validate()) {
-                            if(_code == "1"){
-                              if(_to.startsWith('23769') || _to.startsWith('237655') || _to.startsWith('237656') || _to.startsWith('237657') || _to.startsWith('237658') || _to.startsWith('237659')){
-                                var getcommission = getCommission(
-                                    typeOperation:code,
-                                    country: "$country",
-                                    amount: int.parse(this.montant.replaceAll(".", "")),
-                                    deviseLocale: deviseLocale
-                                );
-                                print(json.encode(getcommission));
-                                checkConnection(json.encode(getcommission), indik);
+                            if(int.parse(this.montant.replaceAll(".", ""))>=500){
+                              if(_code == "1"){
+                                if(_to.startsWith('23769') || _to.startsWith('237655') || _to.startsWith('237656') || _to.startsWith('237657') || _to.startsWith('237658') || _to.startsWith('237659')){
+                                  var getcommission = getCommission(
+                                      typeOperation:code,
+                                      country: "$country",
+                                      amount: int.parse(this.montant.replaceAll(".", "")),
+                                      deviseLocale: deviseLocale
+                                  );
+                                  print(json.encode(getcommission));
+                                  checkConnection(json.encode(getcommission), indik);
+                                }else{
+                                  showInSnackBar("Le numéro du bénéficiaire n'est pas un compte MTN MoMo valide!");
+                                }
                               }else{
-                                showInSnackBar("Le numéro du bénéficiaire n'est pas un compte MTN MoMo valide!");
+                                if(_to.startsWith('23767') || _to.startsWith('23768') || _to.startsWith('237654') || _to.startsWith('237653') || _to.startsWith('237652') || _to.startsWith('237651') || _to.startsWith('237650')){
+                                  var getcommission = getCommission(
+                                      typeOperation:code,
+                                      country: "$country",
+                                      amount: int.parse(this.montant.replaceAll(".", "")),
+                                      deviseLocale: deviseLocale
+                                  );
+                                  print(json.encode(getcommission));
+                                  checkConnection(json.encode(getcommission), indik);
+                                }else{
+                                  showInSnackBar("Le numéro du bénéficiaire n'est pas un compte MTN MoMo valide!");
+                                }
                               }
                             }else{
-                              if(_to.startsWith('23767') || _to.startsWith('23768') || _to.startsWith('237654') || _to.startsWith('237653') || _to.startsWith('237652') || _to.startsWith('237651') || _to.startsWith('237650')){
-                                var getcommission = getCommission(
-                                    typeOperation:code,
-                                    country: "$country",
-                                    amount: int.parse(this.montant.replaceAll(".", "")),
-                                    deviseLocale: deviseLocale
-                                );
-                                print(json.encode(getcommission));
-                                checkConnection(json.encode(getcommission), indik);
-                              }else{
-                                showInSnackBar("Le numéro du bénéficiaire n'est pas un compte MTN MoMo valide!");
-                              }
+                              showInSnackBar("Le montant doit être supérieur ou égale à 500");
                             }
                           }
                         });

@@ -46,7 +46,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
   @override
   void initState(){
     this.getHistorique();
-    _url = "http://74.208.183.205:8086/corebanking/rest/transaction/getTransactions";
+    _url = "$base_url/transaction/getTransactions";
     super.initState();
   }
 
@@ -69,8 +69,10 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     prefs.setString("fees", "$_fees");
     prefs.setString("status", "$_status");
     prefs.setString("nature", "$_nature");
+    prefs.setString("nomd", "$_name");
     prefs.setString("transactionid", "$_transactionid");
     prefs.setString("date", "$_date");
+    print("************************** nomd: $_name");
   }
 
   Future<void> getHistorique() async {
@@ -450,6 +452,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
           body:data == null?Center(child: CupertinoActivityIndicator(radius: 30,)):ListView.builder(
               itemCount: data == null?0:data.length,
               itemBuilder: (BuildContext context, int i){
+               var _toFirstName = data[i]['tofirstname'];
                var _amount = data[i]['amount'];
                var _date = data[i]['date'].split(" ")[0];
                var _fees = data[i]['fees'];
@@ -459,21 +462,13 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                var _fromCountry = data[i]['fromcountry'];
                var _serviceName = data[i]['serviceName'];
                var _transactionid = data[i]['transactionid'];
-               var _name;
 
                 return Padding(
                   padding: EdgeInsets.only(left: 20, right: 20, top: 20),
                   child: GestureDetector(
                     onTap: (){
-                      if(data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null")
-                        _name = "${data[i]['tolastname']}";
-                      else if(data[i]['tolastname'] == null || data[i]['tolastname'] == "null"){
-                        _name = "${data[i]['tofirstname']}";
-                      }else if((data[i]['tofirstname'] == null || data[i]['tofirstname'] == "null") && (data[i]['tolastname'] == null || data[i]['tolastname'] == "null")){
-                        _name="";
-                      }else
-                        _name = "${data[i]['tofirstname']} ${data[i]['tolastname']}";
-                      _save(_fromCountry, _toCountry, _serviceName ,_name,_amount.toString().split('.')[0], _fees.toString(), _status, _nature ,_transactionid, _date);
+
+                      _save(_fromCountry, _toCountry, _serviceName ,_toFirstName,_amount.toString().split('.')[0], _fees.toString(), _status, _nature ,_transactionid, _date);
                       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                     },
                     child: Card(
@@ -593,12 +588,14 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
 
   String getNature(String nature){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "TRANSFERT"){
       _nature = "Transfert d'argent";
     }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
       _nature = "Recharge d'argent";
     }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE"){
       _nature = "Retrait d'argent";
+    }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST"){
+      _nature = "Paiement market...";
     }
     return _nature;
   }

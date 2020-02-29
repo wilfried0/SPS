@@ -41,7 +41,7 @@ class _Encaisser2State extends State<Encaisser2> {
   List data, list;
   bool isLoading = false;
   String url, _id, _to, payment_url, _ip;
-  int temps = 500;
+  int temps = 600;
   var _userTextController = new TextEditingController();
   // ignore: non_constant_identifier_names
   String kittyImage,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
@@ -54,9 +54,9 @@ class _Encaisser2State extends State<Encaisser2> {
       case 0:url = '$base_url/transfert/refillByMomo';break;
       case 1:url = '$base_url/transfert/refillByOrange';break;
       case 2:url = '$base_url/transfert/refillByCard'; break;
+      case 4:url = '$base_url/transfert/refillByYup'; break;
     }
     super.initState();
-    print("mone adresse: $_ip");
     initPlatformState();
     indik = int.parse(_code)+1;
   }
@@ -74,7 +74,6 @@ class _Encaisser2State extends State<Encaisser2> {
     if (!mounted) return;
     setState(() {
       _ip = ipAddress;
-      print("Adresse IP: $_ip");
     });
   }
 
@@ -233,7 +232,8 @@ class _Encaisser2State extends State<Encaisser2> {
           setState(() {
             isLoading = false;
           });
-          navigatorKey.currentState.pushNamed("/echec");
+          showInSnackBar("Votre transaction est en cours...", _scaffoldKey);
+          //navigatorKey.currentState.pushNamed("/echec");
         }else if(temps > 0){
           temps--;
           getStatus(id);
@@ -563,7 +563,7 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
 
-                  indik==3||deviseLocale!="XAF"?Container():Padding(
+                  indik==3||indik==5||deviseLocale!="XAF"?Container():Padding(
                     padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?530: 510, left: gauch, right: droit),
                     child: Text(indik==1?"Téléphone MoMo à débiter":indik==2?"Téléphone OM à débiter":"Téléphone bénéficiaire",
                       style: TextStyle(
@@ -574,7 +574,7 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
 
-                  indik==3||deviseLocale!="XAF"?Container():Padding(
+                  indik==3||indik==5||deviseLocale!="XAF"?Container():Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top:MediaQuery.of(context).size.width<=320?560 :540),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -637,7 +637,7 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top:(MediaQuery.of(context).size.width<=320 && indik==3||deviseLocale!="XAF")?520:(MediaQuery.of(context).size.width<=320 && indik!=3)?640:indik==3||deviseLocale!="XAF"?510:620,left: gauch, right: droit, bottom: 20),
+                    padding: EdgeInsets.only(top:(MediaQuery.of(context).size.width<=320 && indik==3||indik==5||deviseLocale!="XAF")?520:(MediaQuery.of(context).size.width<=320 && indik!=3)?640:indik==3||deviseLocale!="XAF"?510:620,left: gauch, right: droit, bottom: 20),
                     child: GestureDetector(
                       onTap: () async {
                         setState(() {
@@ -659,12 +659,25 @@ class _Encaisser2State extends State<Encaisser2> {
                                   showInSnackBar("Le numéro à débiter n'est pas un compte MTN MoMo valide!", _scaffoldKey);
                                 }
                               }else if(_code == "2"){
+                                print("******************* je suis la carte");
                                 var walletTr = new cardTrans(
                                     to:this._to,
                                     amount: int.parse(this.montant),
                                     fees: fees,
                                     description: this.description,
                                     ipAddress: this._ip,
+                                    deviseLocale: this.deviseLocale,
+                                    successUrl: "http://www.sprintpay.com",
+                                    failureUrl: "http://www.sprintpay.com"
+                                );
+                                print(json.encode(walletTr));
+                                checkConnection(json.encode(walletTr));
+                              }else if(_code == "4"){
+                                print("******************* je suis YUP");
+                                var walletTr = new yupTrans(
+                                    amount: int.parse(this.montant),
+                                    fees: fees,
+                                    description: this.description,
                                     deviseLocale: this.deviseLocale,
                                     successUrl: "http://www.sprintpay.com",
                                     failureUrl: "http://www.sprintpay.com"
@@ -737,13 +750,15 @@ class _Encaisser2State extends State<Encaisser2> {
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MTN MOBILE MONEY";img = 'mtn.jpg';
+      case 1: text = "MTN MOBILE MONEY";img = 'images/mtn.jpg';
       break;
-      case 2: text = "ORANGE MONEY";img = 'orange.png';
+      case 2: text = "ORANGE MONEY";img = 'images/orange.png';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
+      case 3: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
       break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
+      case 4: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
+      break;
+      case 5: text = "YUP";img = 'marketimages/yup.jpg';
       break;
     }
     return Container(
@@ -782,7 +797,7 @@ class _Encaisser2State extends State<Encaisser2> {
                       bottomLeft: Radius.circular(10.0),
                     ),
                     image: DecorationImage(
-                      image: AssetImage('images/$img'),
+                      image: AssetImage('$img'),
                       fit: BoxFit.cover,
                     )
                 ),),

@@ -14,13 +14,14 @@ description: A SprintPay services application
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.5.2 <3.0.0"
 
 dependencies:
   http: 0.12.0+2
   get_ip: ^0.4.0
   #http-0.12.0+2
-  image_picker: 0.4.12+1
+  image_picker:
+  #0.4.12+1
   flutter_inappbrowser:
   #0.4.12+1
   #easy_localization: ^1.3.1
@@ -36,7 +37,7 @@ dependencies:
   align_positioned: ^1.2.3
   carousel_pro: ^1.0.0
   share: ^0.6.3+5
-  #sms_retriever: ^0.0.2
+  progress_dialog: ^1.2.0
 
   flutter:
     sdk: flutter

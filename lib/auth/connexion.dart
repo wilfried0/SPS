@@ -140,11 +140,11 @@ class _ConnexionState extends State<Connexion> {
         title: Text("Fermer l'application ?"),
         actions: <Widget>[
           FlatButton(
-            child: Text("No"),
+            child: Text("Non"),
               onPressed: () => Navigator.pop(context, false),
           ),
           FlatButton(
-            child: Text("Yes"),
+            child: Text("Oui"),
             onPressed: () => exit(0),
           )
         ],
@@ -199,7 +199,7 @@ class _ConnexionState extends State<Connexion> {
                           padding: EdgeInsets.only(left: 20.0),
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: new Text("Bienvenue sur\nSprint-Pay",
+                            child: new Text("Bienvenue",
                             style: TextStyle(
                               color: couleur_titre,
                               fontSize: taille_titre,
@@ -211,7 +211,7 @@ class _ConnexionState extends State<Connexion> {
                           padding: EdgeInsets.only(left:20.0, top:20.0, right: 20.0),
                           child: Align(
                             alignment: Alignment.center,
-                            child: new Text("Première plateforme d'intéropérabilité des services financiers.",
+                            child: new Text("sur la première plateforme d'interopérabilité des services financiers.",
                               style: TextStyle(
                                   color: couleur_titre,
                                   fontSize: taille_description_page,
@@ -317,7 +317,7 @@ class _ConnexionState extends State<Connexion> {
                                 ),
                                 borderRadius: new BorderRadius.circular(10.0),
                               ),
-                              child: new Center(child: isLoding==false?new Text("Commencer", style: new TextStyle(fontSize: taille_text_bouton+ad, color: couleur_text_bouton),):
+                              child: new Center(child: isLoding==false?new Text("Suivant", style: new TextStyle(fontSize: taille_text_bouton+ad, color: couleur_text_bouton),):
                               CupertinoActivityIndicator(),),
                             ),
                           ),

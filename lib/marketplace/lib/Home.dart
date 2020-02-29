@@ -268,34 +268,53 @@ class _HomeState extends State<Home> {
         data: Theme.of(context).copyWith(
             canvasColor: Colors.white,
             primaryColor: Colors.white,
-            textTheme: Theme
-                .of(context)
+            textTheme: Theme.of(context)
                 .textTheme
-                .copyWith(caption: new TextStyle(color: Colors.white))
-        ),
+                .copyWith(caption: new TextStyle(color: Colors.white))),
         child: BottomNavigationBar(
           elevation: 4,
           items: [
             BottomNavigationBarItem(
               icon: GestureDetector(
-                  onTap: (){
-                    Navigator.push(context,
-                        PageTransition(type: PageTransitionType.fade, child: Recu()));
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        PageTransition(
+                            type: PageTransitionType.fade, child: Recu()));
                   },
-                  child: Icon(Icons.receipt, color: orange_F,)),
+                  child: Icon(
+                    Icons.receipt,
+                    color: orange_F,
+                  )),
               title: GestureDetector(
-                  onTap: (){
-                    Navigator.push(context,
-                        PageTransition(type: PageTransitionType.fade, child: Recu()));
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        PageTransition(
+                            type: PageTransitionType.fade, child: Recu()));
                   },
-                  child: Text('Mes Reçus', style: TextStyle(
-                    color: orange_F
-                  ),)),
+                  child: Text(
+                    'Mes Reçus',
+                    style: TextStyle(color: orange_F),
+                  )),
             ),
-
             BottomNavigationBarItem(
-              icon: Icon(Icons.receipt, color: Colors.white,),
-              title: Text(''),
+              icon: Icon(
+                Icons.receipt,
+                color: orange_F,
+              ),
+              title: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        PageTransition(
+                            type: PageTransitionType.fade,
+                            child: Validation()));
+                  },
+                  child: Text(
+                    'Mes Reçus',
+                    style: TextStyle(color: orange_F),
+                  )),
             ),
           ],
         ),
@@ -391,7 +410,10 @@ class MyDialogContent extends StatefulWidget {
 
 class _MyDialogContentState extends State<MyDialogContent> {
   var _formKey = GlobalKey<FormState>();
-  String _current = null, _current1 = null, _current2 = null, _url;
+  String _current = null,
+      _current1 = null,
+      _current2 = null,
+      _url;
   int _id, pharmacyId;
   CommonServiceItem selectedServiceItem;
 
@@ -409,7 +431,6 @@ class _MyDialogContentState extends State<MyDialogContent> {
       if (widget.pharmacies[i]['address'] == "$ville")
         widget.selectedDistricts.add(widget.pharmacies[i]['neighborhood']);
     }
-    return LinkedHashSet<String>.from(widget.selectedDistricts).toList();
   }
 
   getPharmacies(String ville, String quartier) {
@@ -425,7 +446,31 @@ class _MyDialogContentState extends State<MyDialogContent> {
         print(selectedServiceItem.name);
       }
     }
-    return LinkedHashSet<String>.from(widget.selectedPharmacies).toList();
+  }
+
+  List<String> listSort(List<String> list) {
+    print("Entry list $list");
+    if (list.length > 1)
+      for (int i = 0; i < list.length - 1; i++) {
+        int next = i + 1;
+        if (sort(list[i], list[next]) > 0) {
+          String temp = list[i];
+          list[i] = list[next];
+          list[next] = temp;
+        }
+      }
+    print("Exit list $list");
+    return list;
+  }
+
+  int sort(String a, String b) {
+    int length = a.length > b.length ? b.length : a.length;
+
+    for (int i = 0; i < length; i++) {
+      print("${a[i]} => ${b[i]} = ${a[i].compareTo(b[i])}");
+      if (a[i].compareTo(b[i]) != 0) return a[i].compareTo(b[i]);
+    }
+    return a.length.compareTo(b.length);
   }
 
   int getId() {
@@ -454,7 +499,10 @@ class _MyDialogContentState extends State<MyDialogContent> {
           Container(
             color: Colors.green,
             height: 2,
-            width: MediaQuery.of(context).size.width,
+            width: MediaQuery
+                .of(context)
+                .size
+                .width,
           ),
         ],
       ),
@@ -505,7 +553,8 @@ class _MyDialogContentState extends State<MyDialogContent> {
                             ),
                           ),
                         ),
-                        items: widget.cities.map((String name) {
+                        items: listSort(widget.cities.toList()).map((
+                            String name) {
                           return DropdownMenuItem<String>(
                             value: name,
                             child: Padding(
@@ -558,7 +607,8 @@ class _MyDialogContentState extends State<MyDialogContent> {
                             ),
                           ),
                         ),
-                        items: widget.selectedDistricts.map((String name) {
+                        items: listSort(widget.selectedDistricts.toList())
+                            .map((String name) {
                           return DropdownMenuItem<String>(
                             value: name,
                             child: Padding(
@@ -613,7 +663,8 @@ class _MyDialogContentState extends State<MyDialogContent> {
                             ),
                           ),
                         ),
-                        items: widget.selectedPharmacies.map((String name) {
+                        items: listSort(widget.selectedPharmacies.toList())
+                            .map((String name) {
                           return DropdownMenuItem<String>(
                             value: name,
                             child: Padding(
@@ -644,7 +695,10 @@ class _MyDialogContentState extends State<MyDialogContent> {
                             },
                             child: new Container(
                               height: hauteur_champ,
-                              width: MediaQuery.of(context).size.width - 80,
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width - 80,
                               decoration: new BoxDecoration(
                                 color: couleur_libelle_champ,
                                 border: new Border.all(
@@ -717,7 +771,10 @@ class _MyDialogContentState extends State<MyDialogContent> {
                             },
                             child: new Container(
                               height: hauteur_champ,
-                              width: MediaQuery.of(context).size.width - 80,
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width - 80,
                               decoration: new BoxDecoration(
                                 color: Colors.green,
                                 border: new Border.all(

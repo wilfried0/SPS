@@ -1,11 +1,12 @@
 import 'dart:convert';
-import 'package:http_parser/http_parser.dart';
 import 'package:async/async.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:page_transition/page_transition.dart';
+import 'package:services/auth/connexion.dart';
 import 'package:services/composants/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
@@ -30,12 +31,13 @@ class _MonprofileState extends State<Monprofile> {
   var _formKey = GlobalKey<FormState>();
   // ignore: non_constant_identifier_names
   int recenteLenght, archiveLenght, populaireLenght, flex1, flex2, id_kitty, montant;
-  bool isLoding = false, _isHidden = true, isLoadPiece = false, _isSelfie = false, _isRecto = false, _isVerso = false, _isAvatar = false;
+  bool isLoding = false, _isHidden = true,hadSentpieces, _isHidden1 = true, isLoadPiece = false, _isSelfie = false, _isRecto = false, _isVerso = false, _isAvatar = false;
   int flex4, flex6, taille, enlev, rest, enlev1, choix;
   double _tail, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
-  String _image, _selfie, _recto, _verso, _username, _password, _password1;
+  String _image,nameStatus, _selfie, _recto, _verso, _username, _password, _password1, _password2, _passwordold, _url;
   var _nomController, _paysController, _villeController, _quartierController, _emailController, _contactController, _parrainController;
   var _categorie = ['Carte Nationale d\'identité', 'Passeport', 'Carte de séjour'];
+  var _cat = ['Facture d\'eau', 'Facture d\'electricite', 'Bulletin de paye', 'Facture de telephone', 'Autre justificatif de revenu'];
   // ignore: non_constant_identifier_names
   String kittyImage,pieceName, monstatus, momo_url, data, _email, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, endDate, startDate, title, suggested_amount, amount, description, number, nom, email, tel, mot, _nom, _ville, _quartier, _pays;
 
@@ -43,6 +45,7 @@ class _MonprofileState extends State<Monprofile> {
   @override
   void initState() {
     super.initState();
+    _url = "$base_url/user/getInfoKyc";
     _nomController = TextEditingController();
     _paysController = TextEditingController();
     _villeController = TextEditingController();
@@ -50,6 +53,7 @@ class _MonprofileState extends State<Monprofile> {
     _emailController = TextEditingController();
     _contactController = TextEditingController();
     _parrainController = TextEditingController();
+    this.checkStatus();
     this.lire();
   }
 
@@ -84,10 +88,8 @@ class _MonprofileState extends State<Monprofile> {
     }
   }
 
+
   Future<String> changePass(String newPass) async {
-    final prefs = await SharedPreferences.getInstance();
-    _username = prefs.getString("username");
-    _password = prefs.getString("password");
     print('Username: $_username');
     print('Password: $_password');
     var bytes = utf8.encode('$_username:$_password');
@@ -107,23 +109,23 @@ class _MonprofileState extends State<Monprofile> {
         setState(() {
           isLoding = false;
         });
-        showInSnackBar("Mot de passe modifié avec succès!", _scaffoldKey);
+        Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
       }else if(code == 100){
         setState(() {
           isLoding = false;
         });
-        showInSnackBar("Service indisponible!", _scaffoldKey);
+        showInSnackBar("Service indisponible!", _scaffoldKey, 5);
       }else if(code == 101){
         setState(() {
           isLoding = false;
         });
-        showInSnackBar("Utilisateur inexistant!", _scaffoldKey);
+        showInSnackBar("Utilisateur inexistant!", _scaffoldKey, 5);
       }
     }else{
       setState(() {
         isLoding = false;
       });
-      showInSnackBar("Service indisponible!", _scaffoldKey);
+      showInSnackBar("Service indisponible!", _scaffoldKey, 5);
     }
     //var responseJson = json.decode(response.body);
     return null;
@@ -146,7 +148,6 @@ class _MonprofileState extends State<Monprofile> {
       "content-type" : "application/json",
       "Authorization": "Basic $credentials"
     };
-    print('Mon url $base_url/sendPiece');
     return await http.post("$base_url/sendPiece", body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
       final int statusCode = response.statusCode;
       print('voici le statusCode $statusCode');
@@ -156,17 +157,17 @@ class _MonprofileState extends State<Monprofile> {
           isLoadPiece =false;
         });
       }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
-        print(responseJson);
+        //var responseJson = json.decode(response.body);
+        //print(responseJson);
         setState(() {
           isLoadPiece =false;
         });
-        showInSnackBar("Pièces envoyées avec succès!", _scaffoldKey);
+        showInSnackBar("Pièces envoyées avec succès!\nVous pourrez effectuer vos opérations d'ici 60 minutes au plus.", _scaffoldKey, 10);
       }else {
         setState(() {
           isLoadPiece =false;
         });
-        showInSnackBar("Service indisponible!", _scaffoldKey);
+        showInSnackBar("Service indisponible!", _scaffoldKey, 5);
       }
       return response.body;
     });
@@ -192,6 +193,12 @@ class _MonprofileState extends State<Monprofile> {
                 }else if(q == 1){//Galerie pour selfie
                   Navigator.of(context).pop();
                   getImage(1);
+                }else if(q == 2){//Galerie pour recto
+                  Navigator.of(context).pop();
+                  getImage(2);
+                }else if(q == 3){//Galerie pour recto
+                  Navigator.of(context).pop();
+                  getImage(3);
                 }
               },
             ),
@@ -204,6 +211,12 @@ class _MonprofileState extends State<Monprofile> {
                 }else if(q == 1){//Caméra pour le selfie
                   Navigator.of(context).pop();
                   getImage(5);
+                }else if(q == 2){//Caméra pour le recto
+                  Navigator.of(context).pop();
+                  getImage(6);
+                }else if(q == 3){//Caméra pour le verso
+                  Navigator.of(context).pop();
+                  getImage(7);
                 }
               },
             ),
@@ -221,6 +234,8 @@ class _MonprofileState extends State<Monprofile> {
   lire() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+      _username = prefs.getString("username");
+      _password = prefs.getString("password");
       _contactController.text = prefs.getString("username");
       _pays = prefs.getString("pays");
       _paysController.text = _pays;
@@ -240,6 +255,33 @@ class _MonprofileState extends State<Monprofile> {
     setState((){
       _isHidden = !_isHidden;
     });
+  }
+
+  void _toggleVisibility1(){
+    setState((){
+      _isHidden1 = !_isHidden1;
+    });
+  }
+
+  Future<void> checkStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    var headers = {
+      "Accept": "application/json",
+      "Authorization": "Basic $credentials"
+    };
+    var response = await http.get(Uri.encodeFull("$_url"), headers: headers,);
+    if(response.statusCode == 200){
+      print(response.body);
+      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        hadSentpieces = responseJson['hadSentpieces'];
+        nameStatus = responseJson['profil']['name'];
+      });
+    }
   }
 
   Future<String> getImage(int q) async {
@@ -275,74 +317,28 @@ class _MonprofileState extends State<Monprofile> {
         setState(() {
           _isSelfie = true;
         });
+      }else if(q == 6){
+        image = await ImagePicker.pickImage(source: ImageSource.camera);
+        setState(() {
+          _isRecto = true;
+        });
+      }else if(q == 7){
+        image = await ImagePicker.pickImage(source: ImageSource.camera);
+        setState(() {
+          _isVerso = true;
+        });
       }
       print(image);
-    Upload(image, q);
+      if(image == null){
+        setState(() {
+          _isAvatar = false;
+          _isSelfie = false;
+          _isRecto = false;
+          _isVerso = false;
+        });
+      }else
+      Upload(image, q);
     return null;
-  }
-
-  uploadFile(File imageFile, int q) async {
-    var postUri = Uri.parse("http://74.208.183.205:8086/spkyc-identitymanager/upload");
-    var request = new http.MultipartRequest("POST", postUri);
-    var path = Uri.parse(imageFile.path);
-    //request.fields['user'] = 'blah';
-    request.files.add(new http.MultipartFile.fromBytes('file', await File.fromUri(path).readAsBytes(), contentType: new MediaType('image', 'jpeg')));
-
-    request.send().then((response) {
-      print(response.statusCode);
-      print(response.stream);
-      if(response.statusCode == 201){
-        if(q == 0 || q == 4){
-          setState(() {
-            //_image = value;
-            _isAvatar = false;
-          });
-          _save();
-        }else if(q == 1 || q == 5){
-          setState(() {
-            //_selfie = value;
-            _isSelfie = false;
-          });
-        }else if(q == 2){
-          setState(() {
-            //_recto = value;
-            _isRecto = false;
-          });
-        }else if(q == 3){
-          setState(() {
-            //_verso = value;
-            print("Mon verso $_verso");
-            _isVerso = false;
-          });
-        }
-      }else{
-        if(q == 0 || q == 4){
-          setState(() {
-            //_image = value;
-            _isAvatar = false;
-          });
-          _save();
-        }else if(q == 1 || q == 5){
-          setState(() {
-            //_selfie = value;
-            _isSelfie = false;
-          });
-        }else if(q == 2){
-          setState(() {
-            //_recto = value;
-            _isRecto = false;
-          });
-        }else if(q == 3){
-          setState(() {
-            //_verso = value;
-            print("Mon verso $_verso");
-            _isVerso = false;
-          });
-        }
-      }
-    }).catchError((error){
-      print(error);
-    });
   }
 
   void Upload(File imageFile, int q) async {
@@ -352,9 +348,8 @@ class _MonprofileState extends State<Monprofile> {
 
     var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
     var length = await imageFile.length();
-    print("taille: $length");
     var multipartFile = new http.MultipartFile('file', stream, length, filename: imageFile.path.split('/').last);
-    var uri = Uri.parse('http://74.208.183.205:8086/spkyc-identitymanager/upload');
+    var uri = Uri.parse('$base');
     var request = new http.MultipartRequest("POST", uri);
     request.headers.addAll(_header);
     request.files.add(multipartFile);
@@ -376,12 +371,12 @@ class _MonprofileState extends State<Monprofile> {
             _selfie = value;
             _isSelfie = false;
           });
-        }else if(q == 2){
+        }else if(q == 2 || q == 6){
           setState(() {
             _recto = value;
             _isRecto = false;
           });
-        }else if(q == 3){
+        }else if(q == 3 || q == 7){
           setState(() {
             _verso = value;
             print("Mon verso $_verso");
@@ -402,16 +397,16 @@ class _MonprofileState extends State<Monprofile> {
         setState(() {
           _isSelfie = false;
         });
-      }else if(q == 2){
+      }else if(q == 2 || q == 6){
         setState(() {
           _isRecto = false;
         });
-      }else if(q == 3){
+      }else if(q == 3 || q == 7){
         setState(() {
           _isVerso = false;
         });
       }
-      showInSnackBar("Veuillez sélectionner une image de petite taille", _scaffoldKey);
+      showInSnackBar("Veuillez sélectionner une image de petite taille", _scaffoldKey, 5);
     }
   }
 
@@ -585,18 +580,35 @@ class _MonprofileState extends State<Monprofile> {
                       child: Column(
                         //crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Container(
-                            height: 150,
-                            width: 150,
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                    image: _image==null || _image=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_image),
-                                    fit: BoxFit.cover
+                          InkWell(
+                            onTap: (){
+                              _ackAlert(context, 0);
+                            },
+                            child: Container(
+                              height: 150,
+                              width: 150,
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                      image: _image==null || _image=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_image),
+                                      fit: BoxFit.cover
+                                  ),
+                                border: new Border.all(
+                                  color: Colors.white,
+                                  width: 5.0,
                                 ),
-                              border: new Border.all(
-                                color: Colors.white,
-                                width: 5.0,
+                              ),
+                              child:_image==null || _image=="null"?Container(): Image.network(_image, fit: BoxFit.contain,
+                                  loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                                    if (loadingProgress == null) return Container();
+                                    return Center(
+                                      child: CircularProgressIndicator(backgroundColor: bleu_F,
+                                        value: loadingProgress.expectedTotalBytes != null ?
+                                        loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                            : null,
+                                      ),
+                                    );
+                                  }
                               ),
                             ),
                           ),
@@ -635,27 +647,22 @@ class _MonprofileState extends State<Monprofile> {
                     ),
                   ),
                 ),
-                InkWell(
-                  onTap: () async {
-                    _ackAlert(context, 0);
-                  },
-                  child: new Container(
-                    child: new Row(
-                      //mainAxisAlignment: MainAxisAlignment.spaceEvenly
-                      children: <Widget>[
-                        Padding(
-                          padding: new EdgeInsets.only(
-                              top: 150,
-                              right:0.0,
-                              left: MediaQuery.of(context).size.width-70),
-                          child: SizedBox(
-                            child: Container(
-                              child:_isAvatar == false? Icon(Icons.camera_alt,size: 50, color: Colors.white,):CupertinoActivityIndicator(radius: 30,),
-                            ),
-                          ),
-                        ),
-                      ],
+                Padding(
+                  padding: new EdgeInsets.only(
+                      top: 150,
+                      right:0.0,
+                      left: MediaQuery.of(context).size.width-70),
+                  child: _isAvatar == false? InkWell(
+                      onTap: (){
+                        _ackAlert(context, 0);
+                      },
+                      child: Icon(Icons.camera_alt,size: 50, color: Colors.white,)):
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10)
                     ),
+                      child: CupertinoActivityIndicator(radius: 20,)
                   ),
                 ),
 
@@ -1003,6 +1010,10 @@ class _MonprofileState extends State<Monprofile> {
                       child: Container(
                         margin: EdgeInsets.only(top: 0.0),
                         decoration: new BoxDecoration(
+                          borderRadius: new BorderRadius.only(
+                            bottomLeft: Radius.circular(10.0),
+                            bottomRight: Radius.circular(10.0),
+                          ),
                           color: Colors.transparent,
                           border: Border.all(
                             width: .5,
@@ -1052,7 +1063,7 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    Padding(
+                    /*Padding(
                       padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                       child: Container(
                         margin: EdgeInsets.only(top: 0.0),
@@ -1108,13 +1119,13 @@ class _MonprofileState extends State<Monprofile> {
                           ],
                         ),
                       ),
-                    ),
+                    ),*/
                     Padding(
                       padding: const EdgeInsets.only(top:20,bottom: 20, right: 20, left: 20),
                       child: InkWell(
                         onTap: (){
                           setState(() {
-                            showInSnackBar("Service pas encore disponible.", _scaffoldKey);
+                            showInSnackBar("Service pas encore disponible.", _scaffoldKey, 5);
                             //isLoding = true;
                           });
                         },
@@ -1141,7 +1152,7 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    Padding(
+                    nameStatus !="OCCASIONNEL"?Container(): Padding(
                       padding: EdgeInsets.only(top: 0),
                       child:_selfie==null?GestureDetector(
                         onTap: () async {
@@ -1168,9 +1179,21 @@ class _MonprofileState extends State<Monprofile> {
                             decoration: BoxDecoration(
                                 shape: BoxShape.rectangle,
                                 image: DecorationImage(
-                                    image: _selfie==null? AssetImage("images/ellipse1.png"):NetworkImage(_selfie),
-                                    fit: BoxFit.cover
+                                    image: NetworkImage(_selfie),
+                                    fit: BoxFit.cover,
                                 )
+                            ),
+                            child: Image.network(_selfie, fit: BoxFit.contain,
+                              loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                                if (loadingProgress == null) return Container();
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null ?
+                                    loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                        : null,
+                                  ),
+                                );
+                              }
                             ),
                           ),
                           GestureDetector(
@@ -1189,7 +1212,7 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    Padding(
+                    nameStatus != "OCCASIONNEL"?Container():Padding(
                       padding: const EdgeInsets.only(left: 0.0, right: 0.0),
                       child: Container(
                         decoration: new BoxDecoration(
@@ -1249,12 +1272,73 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
+                    nameStatus != "PERMANENT"?Container():Padding(
+                      padding: const EdgeInsets.only(left: 0.0, right: 0.0),
+                      child: Container(
+                        decoration: new BoxDecoration(
+                          borderRadius: new BorderRadius.only(
+                            topLeft: Radius.circular(10.0),
+                            topRight: Radius.circular(10.0),
+                            bottomRight: Radius.circular(10.0),
+                            bottomLeft: Radius.circular(10.0),
+                          ),
+                          color: Colors.transparent,
+                          border: Border.all(
+                              color: couleur_bordure,
+                              width: bordure
+                          ),
+                        ),
+                        height: hauteur_champ,
+                        child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              icon: Padding(
+                                padding: EdgeInsets.only(right: 10),
+                                child: new Icon(Icons.arrow_drop_down_circle,
+                                  color: couleur_fond_bouton,),
+                              ),
+                              isDense: true,
+                              elevation: 1,
+                              isExpanded: true,
+                              onChanged: (String selected){
+                                setState(() {
+                                  pieceName = "$selected";
+                                });
+                              },
+                              value: pieceName,
+                              hint: Padding(
+                                padding: EdgeInsets.only(left: 20),
+                                child: Text('Choisissez la nature de votre pièce justificative',
+                                  style: TextStyle(
+                                    color: couleur_libelle_champ,
+                                    fontSize:taille_champ+3,
+                                  ),),
+                              ),
+                              items: _cat.map((String name){
+                                return DropdownMenuItem<String>(
+                                  value: name,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 20),
+                                    child: Text(name,
+                                      style: TextStyle(
+                                          color: couleur_libelle_champ,
+                                          fontSize:taille_champ+3,
+                                          fontWeight: FontWeight.normal
+                                      ),),
+                                  ),
+                                );
+                              }).toList(),
+                            )
+                        ),
+                      ),
+                    ),
 
-                    Padding(
+
+                    nameStatus =="BUSINESS"?Container():Padding(
                       padding: EdgeInsets.only(top: 20, bottom: 20),
                       child: GestureDetector(
                         onTap: () async {
-                          getImage(2);
+                          _ackAlert(context, 2);
+                          //getImage(2);
                         },
                         child: Container(
                           height: 40,
@@ -1262,7 +1346,7 @@ class _MonprofileState extends State<Monprofile> {
                           child: Center(child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              Text("Recto de votre pièce d'identité", style: TextStyle(
+                              Text(nameStatus =="PERMANENT"?"Pièce justificative":"Recto de votre pièce d'identité", style: TextStyle(
                                   color: Colors.white,
                                   fontSize: taille_champ+3
                               ),),
@@ -1272,7 +1356,7 @@ class _MonprofileState extends State<Monprofile> {
                         ),
                       ),
                     ),
-
+//nameStatus =="PERMANENT"||nameStatus =="BUSINESS"?Container():
                     _recto==null?Container():
                     Padding(
                       padding: EdgeInsets.only(top: 0),
@@ -1282,18 +1366,31 @@ class _MonprofileState extends State<Monprofile> {
                         decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
                             image: DecorationImage(
-                                image: _recto==null? AssetImage("images/ellipse1.png"):NetworkImage(_recto),
+                                image: NetworkImage(_recto),
                                 fit: BoxFit.cover
                             )
+                        ),
+                        child: Image.network(_recto, fit: BoxFit.contain,
+                            loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                              if (loadingProgress == null) return Container();
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null ?
+                                  loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                      : null,
+                                ),
+                              );
+                            }
                         ),
                       ),
                     ),
 
-                    Padding(
+                    nameStatus !="OCCASIONNEL"?Container():Padding(
                       padding: EdgeInsets.only(top: 20, bottom: 20),
                       child: GestureDetector(
                         onTap: () async {
-                          getImage(3);
+                          _ackAlert(context, 3);
+                          //getImage(3);
                         },
                         child: Container(
                           height: 40,
@@ -1320,45 +1417,83 @@ class _MonprofileState extends State<Monprofile> {
                         decoration: BoxDecoration(
                             shape: BoxShape.rectangle,
                             image: DecorationImage(
-                                image: _verso==null? AssetImage("images/ellipse1.png"):NetworkImage(_verso),
+                                image: NetworkImage(_verso),
                                 fit: BoxFit.cover
                             )
+                        ),
+                        child: Image.network(_verso, fit: BoxFit.contain,
+                            loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                              if (loadingProgress == null) return Container();
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null ?
+                                  loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                      : null,
+                                ),
+                              );
+                            }
                         ),
                       ),
                     ),
 
-                    Padding(
+                    nameStatus=="BUSINESS"?Container():Padding(
                       padding: EdgeInsets.only(bottom: 20, left: 20, right: 20),
                       child: GestureDetector(
                         onTap: () {
-                          if(pieceName == null){
-                            showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey);
-                          }else{
-                            if(_selfie == null || _recto == null || _verso == null){
-                              showInSnackBar("Veuillez entrer toutes les 3 pièces joinntes (photo, recto et le verso de la pièce d'identité)", _scaffoldKey);
+                            if(nameStatus == "OCCASIONNEL"){
+                              if(pieceName == null){
+                                showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey, 5);
+                              }else{
+                                if(_selfie == null || _recto == null || _verso == null){
+                                  showInSnackBar("Veuillez entrer toutes les 3 pièces jointes (photo, recto et le verso de la pièce d'identité)", _scaffoldKey, 5);
+                                }else{
+                                  Composantes composante1, composante2, composante3;
+                                  composante1 = new Composantes(
+                                      fileUrl: "$_selfie",
+                                      name: "selfie"
+                                  );
+                                  composante2 = new Composantes(
+                                      fileUrl: "$_recto",
+                                      name: "recto"
+                                  );
+                                  composante3 = new Composantes(
+                                      fileUrl: "$_verso",
+                                      name: "verso"
+                                  );
+                                  List<Composantes> composantes = [composante1,composante2,composante3];
+                                  var piece = new Piece(
+                                      composantes: composantes,
+                                      pieceName: pieceName!="Carte Nationale d'identité"?pieceName:"CNI"
+                                  );
+                                  print(json.encode(piece));
+                                  checkConnection(json.encode(piece));
+                                }
+                              }
                             }else{
-                              Composantes composante1, composante2, composante3;
-                              composante1 = new Composantes(
-                                  fileUrl: "$_selfie",
-                                  name: "selfie"
-                              );
-                              composante2 = new Composantes(
-                                  fileUrl: "$_recto",
-                                  name: "recto"
-                              );
-                              composante3 = new Composantes(
-                                  fileUrl: "$_verso",
-                                  name: "verso"
-                              );
-                              List<Composantes> composantes = [composante1,composante2,composante3];
-                              var piece = new Piece(
-                                  composantes: composantes,
-                                  pieceName: pieceName!="Carte Nationale d'identité"?pieceName:"CNI"
-                              );
-                              print(json.encode(piece));
-                              checkConnection(json.encode(piece));
+                              setState(() {
+                                if(pieceName != null){
+                                  if(_recto == null){
+                                    showInSnackBar("Veuillez filmer/charger la pièce justificative", _scaffoldKey, 5);
+                                  }else{
+                                    Composantes composante1;
+                                    composante1 = new Composantes(
+                                        fileUrl: "$_recto",
+                                        name: "piece"
+                                    );
+
+                                    List<Composantes> composantes = [composante1];
+                                    var piece = new Piece(
+                                        composantes: composantes,
+                                        pieceName: pieceName
+                                    );
+                                    print(json.encode(piece));
+                                    checkConnection(json.encode(piece));
+                                  }
+                                }else{
+                                  showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey, 5);
+                                }
+                              });
                             }
-                          }
                         },
                         child: Container(
                           decoration: new BoxDecoration(
@@ -1372,7 +1507,7 @@ class _MonprofileState extends State<Monprofile> {
                           ),
                           height: 50,
                           child: Center(
-                              child:isLoadPiece==false? Text("Valider mes pièces", style: TextStyle(color: Colors.white, fontSize: taille_champ+3),):
+                              child:isLoadPiece==false? Text(nameStatus=="PERMANENT"?"Valider ma pièce":"Valider mes pièces", style: TextStyle(color: Colors.white, fontSize: taille_champ+3),):
                               CupertinoActivityIndicator()
                           ),
                         ),
@@ -1523,7 +1658,71 @@ class _MonprofileState extends State<Monprofile> {
                                     if(value.isEmpty){
                                       return 'Champ mot de passe vide !';
                                     }else{
-                                      _password = value;
+                                      _passwordold = value;
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Ancien mot de passe',
+                                    hintStyle: TextStyle(color: couleur_libelle_champ,
+                                        fontSize: taille_champ+3),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                  ),
+                                  obscureText: _isHidden1,
+                                  /*textAlign: TextAlign.end,*/
+                                ),
+                                //),
+                              ),
+                              Expanded(
+                                flex:2,
+                                child: new IconButton(
+                                  onPressed: _toggleVisibility1,
+                                  icon: _isHidden1? new Icon(Icons.visibility_off,):new Icon(Icons.visibility,),
+                                  color: couleur_bordure,
+                                  iconSize: 20.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      Padding(
+                        padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                        child: Container(
+                          margin: EdgeInsets.only(top: 0.0),
+                          decoration: new BoxDecoration(
+                            color: Colors.transparent,
+                            border: Border.all(
+                              width: .5,
+                              color: couleur_fond_bouton,
+                            ),
+                          ),
+                          height: 50,
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                flex:2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: new Icon(Icons.vpn_key, color: couleur_description_champ,),
+                                ),
+                              ),
+                              new Expanded(
+                                flex:10,
+                                //child: Padding(
+
+                                child: new TextFormField(
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                      fontSize: taille_champ+3,
+                                      color: couleur_libelle_champ
+                                  ),
+                                  validator: (String value){
+                                    if(value.isEmpty){
+                                      return 'Champ mot de passe vide !';
+                                    }else{
+                                      _password1 = value;
                                       return null;
                                     }
                                   },
@@ -1590,7 +1789,7 @@ class _MonprofileState extends State<Monprofile> {
                                     if(value.isEmpty){
                                       return 'Champ vérification mot de passe vide !';
                                     }else{
-                                      _password1 = value;
+                                      _password2 = value;
                                       return null;
                                     }
                                   },
@@ -1624,11 +1823,15 @@ class _MonprofileState extends State<Monprofile> {
                           onTap: (){
                             setState(() {
                               if(_formKey.currentState.validate()){
-                                if(_password1 == _password){
-                                  isLoding = true;
-                                  this.changePass(_password);
+                                if(_password != _passwordold){
+                                  showInSnackBar("L'ancien mot de passe n'est pas correct!", _scaffoldKey, 5);
                                 }else{
-                                  showInSnackBar("Les mots de passe ne sont pas identiques!", _scaffoldKey);
+                                  if(_password1 == _password2){
+                                    isLoding = true;
+                                    this.changePass(_password1);
+                                  }else{
+                                    showInSnackBar("Les mots de passe ne sont pas identiques!", _scaffoldKey, 5);
+                                  }
                                 }
                               }
                             });

@@ -58,6 +58,18 @@ class _Transfert22State extends State<Transfert22> {
     }
   }
 
+  bool checkUser(str){
+    bool isExist = false;
+    for(var i=0; i<unfilterData.length; i++){
+      String username = unfilterData[i]['username'].toUpperCase();
+      if(username == str){
+        isExist = true;
+        break;
+      }
+    }
+    return isExist;
+  }
+
   searchData2(str){
     var strExist = str.length>0?true:false;
     if(strExist){
@@ -65,7 +77,7 @@ class _Transfert22State extends State<Transfert22> {
       for(var i=0; i<unfilterData2.length; i++){
         String name = unfilterData2[i]['name'].toUpperCase();
         String username = unfilterData2[i]['username'].toUpperCase();
-        String country = unfilterData2[i]['country'].toUpperCase();
+        String country = unfilterData2[i]['country'];
         if((username.contains(str.toUpperCase()) || name.contains(str.toUpperCase())) && country == _country){
           filterData.add(unfilterData2[i]);
         }
@@ -130,18 +142,18 @@ class _Transfert22State extends State<Transfert22> {
           setState(() {
             this.getListUser();
           });
-          showInSnackBar("Utilisateur ajouté avec succès", _scaffoldKey);
+          showInSnackBar("Utilisateur ajouté avec succès", _scaffoldKey, 5);
         }else{
           setState(() {
             this.getListUser();
           });
-          showInSnackBar("Erreur lors de l'ajout de l'utilisateur", _scaffoldKey);
+          showInSnackBar("Erreur lors de l'ajout de l'utilisateur", _scaffoldKey, 5);
         }
       }else {
         setState(() {
           isLoading = false;
         });
-        showInSnackBar("Echec de l'opération!", _scaffoldKey);
+        showInSnackBar("Echec de l'opération!", _scaffoldKey, 5);
       }
       return response.body;
     });
@@ -169,6 +181,7 @@ class _Transfert22State extends State<Transfert22> {
       this.data = responseJson;
       setState(() {
         this.unfilterData2 = this.data;
+        print("******************** ${unfilterData2.toString()}");
         searchData2(str);
       });
     }
@@ -189,7 +202,7 @@ class _Transfert22State extends State<Transfert22> {
       "Authorization": "Basic $credentials",
       "content-type":"application/json"
     };
-    print("mon url $_url");
+    print("*************************mon url $_url");
     var response = await http.get(Uri.encodeFull(_url), headers: headers,);
     if(response.statusCode == 200){
       print(response.body);
@@ -225,9 +238,9 @@ class _Transfert22State extends State<Transfert22> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(''),
-          content:user == null?Text("Le bénéficiaire du transfert sera $_user") :Text('Ajouter $_user à votre liste de contact?'),
+          content:user == null||checkUser(_sername)?Text("Le bénéficiaire du transfert sera $_user") :Text('Ajouter $_user à votre liste de contact?'),
           actions: <Widget>[
-            user==null?Container():FlatButton(
+            user==null||checkUser(_sername)?Container():FlatButton(
               child: Text('ENREGISTRER', style: TextStyle(
                   fontSize: taille_champ+3
               ),),
@@ -378,7 +391,7 @@ class _Transfert22State extends State<Transfert22> {
                       child: GestureDetector(
                         onTap: (){
                           if(user.isEmpty){
-                            showInSnackBar("Veuillez entrer un mot clef!", _scaffoldKey);
+                            showInSnackBar("Veuillez entrer un mot clef!", _scaffoldKey, 5);
                           }else
                           this.findUser(user);
                         },
@@ -462,6 +475,8 @@ class _Transfert22State extends State<Transfert22> {
                             setState(() {
                               _sername = username.toString();
                               _name = name.toString();
+                              print("***********1"+unfilterData.toString());
+                              print("***********2"+unfilterData2.toString());
                               this.ackAlert(context, username);
                             });
                           },
@@ -500,17 +515,6 @@ class _Transfert22State extends State<Transfert22> {
     return null;
   }
 
-}
-void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
-  _scaffoldKey.currentState.showSnackBar(
-      new SnackBar(content: new Text(value,style:
-      TextStyle(
-          color: Colors.white,
-          fontSize: taille_description_champ+3
-      ),
-        textAlign: TextAlign.center,),
-        backgroundColor: couleur_fond_bouton,
-        duration: Duration(seconds: 5),));
 }
 
 

@@ -55,6 +55,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     prefs.setString('notif', null);
   }
 
+  void save() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('BALANCE', local);
+    print("saved: $local");
+  }
+
   Future<void> _ackAlert(BuildContext context) {
     return showDialog<void>(
       context: context,
@@ -424,7 +430,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
           ],
           iconTheme: new IconThemeData(color: Colors.white),
         ),
-        drawer: _drawer(context),
+        drawer: _drawer(context, _scaffoldKey),
         body: Container(
           child: Stack(
             children: <Widget>[
@@ -440,6 +446,18 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                             image: _pathImage==null || _pathImage=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_pathImage), //AssetImage("images/ellipse1.png"),
                             fit: BoxFit.cover
                         )
+                    ),
+                    child:_pathImage==null || _pathImage=="null"?Container(): Image.network(_pathImage, fit: BoxFit.contain,
+                        loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                          if (loadingProgress == null) return Container();
+                          return Center(
+                            child: CircularProgressIndicator(backgroundColor: orange_F,
+                              value: loadingProgress.expectedTotalBytes != null ?
+                              loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                  : null,
+                            ),
+                          );
+                        }
                     ),
                   ),
                 ),
@@ -552,41 +570,47 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex: 6,
                     child: Padding(
                       padding: new EdgeInsets.only(top: top1, right: 20.0, left: 20.0),
-                      child: Container(
-                        height: topo2,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0),
-                          ),
-                          border: Border.all(
-                              color: bleu_F
-                          ),
-                          color: Colors.white,
+                      child: Card(
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: haut),
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1('$_code')));
-                              });
-                            },
-                            child: Column(
-                              children: <Widget>[
-                                Container(
-                                    height: 50,
-                                    width: 50,
-                                    child: new Image.asset('images/growth.png')),
-                                Text('Recharger mon compte',
-                                  style: TextStyle(
-                                      color: couleur_libelle_etape,
-                                      fontSize: _taill,
-                                      fontWeight: FontWeight.bold
-                                  ),)
-                              ],
+                        child: Container(
+                          height: topo2,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              bottomLeft: Radius.circular(10.0),
+                            ),
+                            border: Border.all(
+                                color: bleu_F
+                            ),
+                            color: Colors.white,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: haut),
+                            child: GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1('$_code')));
+                                });
+                              },
+                              child: Column(
+                                children: <Widget>[
+                                  Container(
+                                      height: 50,
+                                      width: 50,
+                                      child: new Image.asset('images/growth.png')),
+                                  Text('Recharger mon compte',
+                                    style: TextStyle(
+                                        color: couleur_libelle_etape,
+                                        fontSize: _taill,
+                                        fontWeight: FontWeight.bold
+                                    ),)
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -598,42 +622,48 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex: 6,
                     child: Padding(
                       padding: new EdgeInsets.only(top:top1, right: 20.0, left: 20.0),
-                      child: Container(
-                        height: topo2,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0),
-                          ),
-                          border: Border.all(
-                              color: bleu_F
-                          ),
-                          color: Colors.white,
+                      child: Card(
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: haut),
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                deviseLocale != "XAF"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
-                              });
-                            },
-                            child: Column(
-                              children: <Widget>[
-                                Container(
-                                    height: 50,
-                                    width: 50,
-                                    child: new Image.asset('images/hand.png')),
-                                Text('Faire un retrait',
-                                  style: TextStyle(
-                                      color: couleur_libelle_etape,
-                                      fontSize: _taill,
-                                      fontWeight: FontWeight.bold
-                                  ),)
-                              ],
+                        child: Container(
+                          height: topo2,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              bottomLeft: Radius.circular(10.0),
+                            ),
+                            border: Border.all(
+                                color: bleu_F
+                            ),
+                            color: Colors.white,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: haut),
+                            child: GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  deviseLocale != "XAF"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
+                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
+                                });
+                              },
+                              child: Column(
+                                children: <Widget>[
+                                  Container(
+                                      height: 50,
+                                      width: 50,
+                                      child: new Image.asset('images/hand.png')),
+                                  Text('Faire un retrait',
+                                    style: TextStyle(
+                                        color: couleur_libelle_etape,
+                                        fontSize: _taill,
+                                        fontWeight: FontWeight.bold
+                                    ),)
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -657,41 +687,47 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex: 6,
                     child: Padding(
                       padding: new EdgeInsets.only(top:top2, right: 20.0, left: 20.0),
-                      child: Container(
-                        height: topo2,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0),
-                          ),
-                          border: Border.all(
-                              color: bleu_F
-                          ),
-                          color: Colors.white,
+                      child: Card(
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: haut),
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique(_code)));
-                              });
-                            },
-                            child: Column(
-                              children: <Widget>[
-                                Container(
-                                    height: 50,
-                                    width: 50,
-                                    child: new Image.asset('images/exchange.png')),
-                                Text('Mes transactions',
-                                  style: TextStyle(
-                                      color: couleur_libelle_etape,
-                                      fontSize: _taill,
-                                      fontWeight: FontWeight.bold
-                                  ),)
-                              ],
+                        child: Container(
+                          height: topo2,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              bottomLeft: Radius.circular(10.0),
+                            ),
+                            border: Border.all(
+                                color: bleu_F
+                            ),
+                            color: Colors.white,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: haut),
+                            child: GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique(_code)));
+                                });
+                              },
+                              child: Column(
+                                children: <Widget>[
+                                  Container(
+                                      height: 50,
+                                      width: 50,
+                                      child: new Image.asset('images/exchange.png')),
+                                  Text('Mes transactions',
+                                    style: TextStyle(
+                                        color: couleur_libelle_etape,
+                                        fontSize: _taill,
+                                        fontWeight: FontWeight.bold
+                                    ),)
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -703,42 +739,48 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex: 6,
                     child: Padding(
                       padding: new EdgeInsets.only(top:top2, right: 20.0, left: 20.0),
-                      child: Container(
-                        height: topo2,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0),
-                          ),
-                          border: Border.all(
-                              color: bleu_F
-                          ),
-                          color: Colors.white,
+                      child: Card(
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: haut),
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
-                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Profile('')));
-                              });
-                            },
-                            child: Column(
-                              children: <Widget>[
-                                Container(
-                                    height: 50,
-                                    width: 50,
-                                    child: new Image.asset('images/payment-method.png')),
-                                Text('Transfert d\'argent',
-                                  style: TextStyle(
-                                      color: couleur_libelle_etape,
-                                      fontSize: _taill,
-                                      fontWeight: FontWeight.bold
-                                  ),)
-                              ],
+                        child: Container(
+                          height: topo2,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              bottomLeft: Radius.circular(10.0),
+                            ),
+                            border: Border.all(
+                                color: bleu_F
+                            ),
+                            color: Colors.white,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: haut),
+                            child: GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+                                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Profile('')));
+                                });
+                              },
+                              child: Column(
+                                children: <Widget>[
+                                  Container(
+                                      height: 50,
+                                      width: 50,
+                                      child: new Image.asset('images/payment-method.png')),
+                                  Text('Transfert d\'argent',
+                                    style: TextStyle(
+                                        color: couleur_libelle_etape,
+                                        fontSize: _taill,
+                                        fontWeight: FontWeight.bold
+                                    ),)
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -762,39 +804,45 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex: 6,
                     child: Padding(
                       padding: new EdgeInsets.only(top: top4, right: 20.0, left: 20.0),
-                      child: Container(
-                        height: topo2,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0),
-                          ),
-                          border: Border.all(
-                              color: bleu_F
-                          ),
-                          color: Colors.white,
+                      child: Card(
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: haut),
-                          child: GestureDetector(
-                            onTap: (){
-                              showInSnackBar("Pas encore disponible.");
-                            },
-                            child: Column(
-                              children: <Widget>[
-                                Container(
-                                    height: 50,
-                                    width: 100,
-                                    child: new Image.asset('images/logo_sprint.png')),
-                                Text("Community",
-                                  style: TextStyle(
-                                      color: couleur_libelle_etape,
-                                      fontSize: _taill,
-                                      fontWeight: FontWeight.bold
-                                  ),)
-                              ],
+                        child: Container(
+                          height: topo2,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              bottomLeft: Radius.circular(10.0),
+                            ),
+                            border: Border.all(
+                                color: bleu_F
+                            ),
+                            color: Colors.white,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: haut),
+                            child: GestureDetector(
+                              onTap: (){
+                                showInSnackBar("Pas encore disponible.");
+                              },
+                              child: Column(
+                                children: <Widget>[
+                                  Container(
+                                      height: 50,
+                                      width: 100,
+                                      child: new Image.asset('images/logo_sprint.png')),
+                                  Text("Community",
+                                    style: TextStyle(
+                                        color: couleur_libelle_etape,
+                                        fontSize: _taill,
+                                        fontWeight: FontWeight.bold
+                                    ),)
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -806,40 +854,46 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     flex: 6,
                     child: Padding(
                       padding: new EdgeInsets.only(top:top4, right: 20.0, left: 20.0),
-                      child: Container(
-                        height: topo2,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            topRight: Radius.circular(10.0),
-                            bottomRight: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0),
-                          ),
-                          border: Border.all(
-                              color: bleu_F
-                          ),
-                          color: Colors.white,
+                      child: Card(
+                        elevation: 10,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: haut),
-                          child: GestureDetector(
-                            onTap: () {
-                              //showInSnackBar("Pas encore disponible.");
-                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Home()));
-                            },
-                            child: Column(
-                              children: <Widget>[
-                                Container(
-                                    height: 50,
-                                    width: 100,
-                                    child: new Icon(Icons.add_shopping_cart, color: couleur_fond_bouton,size: 50,)),//Image.asset('images/ellipse1.png')),
-                                Text('MarketPlace',
-                                  style: TextStyle(
-                                      color: couleur_libelle_etape,
-                                      fontSize: _taill,
-                                      fontWeight: FontWeight.bold
-                                  ),)
-                              ],
+                        child: Container(
+                          height: topo2,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              topRight: Radius.circular(10.0),
+                              bottomRight: Radius.circular(10.0),
+                              bottomLeft: Radius.circular(10.0),
+                            ),
+                            border: Border.all(
+                                color: bleu_F
+                            ),
+                            color: Colors.white,
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: haut),
+                            child: GestureDetector(
+                              onTap: () {
+                                this.save();
+                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Home()));
+                              },
+                              child: Column(
+                                children: <Widget>[
+                                  Container(
+                                      height: 50,
+                                      width: 100,
+                                      child: new Icon(Icons.add_shopping_cart, color: couleur_fond_bouton,size: 50,)),//Image.asset('images/ellipse1.png')),
+                                  Text('MarketPlace',
+                                    style: TextStyle(
+                                        color: couleur_libelle_etape,
+                                        fontSize: _taill,
+                                        fontWeight: FontWeight.bold
+                                    ),)
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -967,7 +1021,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     );
   }
 
-  _drawer(BuildContext context){
+  _drawer(BuildContext context, GlobalKey<ScaffoldState> scaffoldKey){
     return new Drawer(
       child: new ListView(
         padding: EdgeInsets.zero,
@@ -1224,8 +1278,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
-              showInSnackBar("Service pas encore disponible");
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+              this.save();
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Home()));
             },
           ),
 
@@ -1260,6 +1314,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
+              scaffoldKey.currentState.openEndDrawer();
               showInSnackBar("Service pas encore disponible");
               //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
             },
@@ -1296,6 +1351,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
+              scaffoldKey.currentState.openEndDrawer();
               showInSnackBar("Service pas encore disponible");
             },
           ),
@@ -1359,7 +1415,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                 children: <Widget>[
                   Expanded(
                     flex:1,
-                    child: Icon(Icons.lock_open, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
+                    child: Icon(Icons.lock, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
                   ),
                   Expanded(
                     flex:11,

@@ -43,7 +43,7 @@ class _OperatorState extends State<Operator> {
   final Merchant _merchant;
   var _formKey = GlobalKey<FormState>();
   var _formKey2 = GlobalKey<FormState>();
-  bool isLoading = false, coched;
+  bool isLoading = false, coched = false;
   List<String> _category = List();
   List<CommonServiceItem> serviceItems = [];
   CommonServiceItem selectedServiceItem;
@@ -79,10 +79,6 @@ class _OperatorState extends State<Operator> {
     setState(() {
       _transaction.sellableItemId = sellableItemId;
       _transaction.serviceNumber = serviceNumber;
-    });
-
-    _billInputController.addListener(() {
-      _isContratNumberValid = false;
     });
   }
 
@@ -151,10 +147,16 @@ class _OperatorState extends State<Operator> {
                 _userTextController.text = '$montant';
                 _isContratNumberValid = true;
               });
+              serviceItems.clear();
               data.forEach((service) =>
                   serviceItems.add(CommonServiceItem.fromJson(service)));
               if (serviceItems.length == 1)
                 selectedServiceItem = serviceItems[0];
+              List<String> list = new List();
+              for (int i = 0; i < donnees.length; i++) {
+                list.add(donnees[i]['description']);
+              }
+              _category = list;
               print("montant: $montant");
             }
           } else if (_merchant.category == Services.TV_CATEGORY) {
@@ -176,6 +178,7 @@ class _OperatorState extends State<Operator> {
               setState(() {
                 _ischeck = 2;
                 _isContratNumberValid = true;
+                print('Sokoto');
               });
             }
           } else if (_merchant.category == Services.TELCO_CATEGORY) {
@@ -238,17 +241,17 @@ class _OperatorState extends State<Operator> {
                                 Expanded(
                                     flex: 5,
                                     child: Padding(
-                                      padding: EdgeInsets.only(left: 20),
-                                      child: CountryCodePicker(
-                                        showFlag: true,
-                                        textStyle: TextStyle(
-                                          color: couleur_libelle_champ
-                                        ),
-                                        onChanged: (code){
-                                          _code = code.dialCode;
-                                        },
-                                      )
-                                    )),
+                                        padding:
+                                        EdgeInsets.only(left: 20),
+                                        child: CountryCodePicker(
+                                          showFlag: true,
+                                          textStyle: TextStyle(
+                                              color:
+                                              couleur_libelle_champ),
+                                          onChanged: (code) {
+                                            _code = code.dialCode;
+                                          },
+                                        ))),
                                 new Expanded(
                                   flex: 10,
                                   child: new TextFormField(
@@ -261,8 +264,12 @@ class _OperatorState extends State<Operator> {
                                       if (value.isEmpty) {
                                         return 'Champs requis';
                                       } else {
-                                        _transaction.beneficiaryPhoneNumber = _code.replaceAll("+", "")+value;
-                                        _transaction.serviceNumber = value;
+                                        _transaction
+                                            .beneficiaryPhoneNumber =
+                                            _code.replaceAll("+", "") +
+                                                value;
+                                        _transaction.serviceNumber =
+                                            value;
                                         return null;
                                       }
                                     },
@@ -399,9 +406,9 @@ class _OperatorState extends State<Operator> {
                                         child: CountryCodePicker(
                                           showFlag: true,
                                           textStyle: TextStyle(
-                                              color: couleur_libelle_champ
-                                          ),
-                                          onChanged: (code){
+                                              color:
+                                              couleur_libelle_champ),
+                                          onChanged: (code) {
                                             _code = code.dialCode;
                                           },
                                         )),
@@ -422,7 +429,11 @@ class _OperatorState extends State<Operator> {
                                             return 'Champ bénéficiaire vide !';
                                           } else {
                                             setState(() {
-                                              _transaction.beneficiaryPhoneNumber = _code.replaceAll("+", "")+value;
+                                              _transaction
+                                                  .beneficiaryPhoneNumber =
+                                                  _code.replaceAll(
+                                                      "+", "") +
+                                                      value;
                                             });
                                             return null;
                                           }
@@ -658,22 +669,15 @@ class _OperatorState extends State<Operator> {
                             ),
                           ),
                         ),
-                        _merchant.category != Services.UTILITY_CATEGORY
-                            ? Form(
+                        Form(
                           key: _formKey,
                           child: Column(
                             children: <Widget>[
-                              _merchant.category ==
-                                  Services.UTILITY_CATEGORY
-                                  ? Container()
-                                  : Container(
+                              Container(
                                 decoration: new BoxDecoration(
-                                  borderRadius:
-                                  new BorderRadius.only(
-                                    topLeft:
-                                    Radius.circular(10.0),
-                                    topRight:
-                                    Radius.circular(10.0),
+                                  borderRadius: new BorderRadius.only(
+                                    topLeft: Radius.circular(10.0),
+                                    topRight: Radius.circular(10.0),
                                   ),
                                   color: Colors.transparent,
                                   border: Border.all(
@@ -681,100 +685,76 @@ class _OperatorState extends State<Operator> {
                                       width: bordure),
                                 ),
                                 height: hauteur_champ,
-                                child:
-                                DropdownButtonHideUnderline(
-                                    child: DropdownButton<
-                                        String>(
+                                child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
                                       icon: Padding(
-                                        padding: EdgeInsets.only(
-                                            right: 10),
+                                        padding: EdgeInsets.only(right: 10),
                                         child: new Icon(
-                                          Icons
-                                              .arrow_drop_down_circle,
+                                          Icons.arrow_drop_down_circle,
                                           color: Colors.green,
                                         ),
                                       ),
                                       isDense: true,
                                       elevation: 1,
                                       isExpanded: true,
-                                      onChanged:
-                                          (String selected) {
+                                      onChanged: (String selected) {
                                         int index = -1;
                                         setState(() {
                                           _current = selected;
-                                          if (_merchant
-                                              .category ==
-                                              Services
-                                                  .TV_CATEGORY) {
+                                          if (_merchant.category ==
+                                              Services.TV_CATEGORY) {
                                             index =
-                                                _category.indexOf(
-                                                    _current);
+                                                _category.indexOf(_current);
                                             selectedServiceItem =
-                                            serviceItems[
-                                            index];
+                                            serviceItems[index];
                                             print(
                                                 "Selected Item ${selectedServiceItem.toJson()}");
 
-                                            montant = data[index]
-                                            ['priceAmount'];
-                                            currency = data[index]
-                                            ['currency'];
-                                            commission = data[
-                                            index][
-                                            'spCommissionAmount'];
+                                            montant =
+                                            data[index]['priceAmount'];
+                                            currency =
+                                            data[index]['currency'];
+                                            commission = data[index]
+                                            ['spCommissionAmount'];
 
-                                            if (_merchant
-                                                .logoFileId
-                                                .contains(
-                                                "tv.png") &&
-                                                selected.contains(
-                                                    "autre")) {
-                                              _showOtherInput =
-                                              true;
+                                            if (_merchant.logoFileId
+                                                .contains("tv.png") &&
+                                                selected.contains("autre")) {
+                                              _showOtherInput = true;
                                             } else {
-                                              _showOtherInput =
-                                              false;
+                                              _showOtherInput = false;
                                             }
                                           }
                                         });
-                                        _userTextController.text =
-                                        "$montant";
+                                        _userTextController.text = "$montant";
                                       },
                                       value: _current,
                                       hint: Padding(
-                                        padding: EdgeInsets.only(
-                                            left: 20),
+                                        padding: EdgeInsets.only(left: 20),
                                         child: Text(
                                           getText(),
                                           style: TextStyle(
-                                            color:
-                                            couleur_libelle_champ,
+                                            color: couleur_libelle_champ,
                                             fontSize:
-                                            taille_libelle_champ +
-                                                3,
+                                            taille_libelle_champ + 3,
                                           ),
                                         ),
                                       ),
-                                      items: _category
-                                          .map((String name) {
-                                        return DropdownMenuItem<
-                                            String>(
+                                      items: _category.map((String name) {
+                                        return DropdownMenuItem<String>(
                                           value: name,
                                           child: Padding(
                                             padding:
-                                            EdgeInsets.only(
-                                                left: 20),
+                                            EdgeInsets.only(left: 20),
                                             child: Text(
                                               name,
                                               style: TextStyle(
-                                                  color:
-                                                  couleur_fond_bouton,
+                                                  color: couleur_fond_bouton,
                                                   fontSize:
                                                   taille_libelle_champ +
                                                       3,
                                                   fontWeight:
-                                                  FontWeight
-                                                      .bold),
+                                                  FontWeight.bold),
                                             ),
                                           ),
                                         );
@@ -791,8 +771,8 @@ class _OperatorState extends State<Operator> {
                                 height: hauteur_champ,
                                 child: Center(
                                   child: Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 20),
+                                    padding:
+                                    EdgeInsets.only(left: 20),
                                     child: new TextFormField(
                                       keyboardType:
                                       TextInputType.text,
@@ -803,8 +783,7 @@ class _OperatorState extends State<Operator> {
                                         color:
                                         couleur_libelle_champ,
                                       ),
-                                      validator:
-                                          (String value) {
+                                      validator: (String value) {
                                         if (value.isEmpty) {
                                           return 'Champ autre vide !';
                                         } else {
@@ -815,8 +794,7 @@ class _OperatorState extends State<Operator> {
                                         }
                                       },
                                       decoration:
-                                      InputDecoration
-                                          .collapsed(
+                                      InputDecoration.collapsed(
                                         hintText:
                                         'Préciser le service',
                                         hintStyle: TextStyle(
@@ -845,8 +823,8 @@ class _OperatorState extends State<Operator> {
                                 height: hauteur_champ,
                                 child: Center(
                                   child: Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 20),
+                                    padding:
+                                    EdgeInsets.only(left: 20),
                                     child: Row(
                                       children: <Widget>[
                                         Expanded(
@@ -855,19 +833,18 @@ class _OperatorState extends State<Operator> {
                                             CountryCodePicker(
                                               showFlag: true,
                                               textStyle: TextStyle(
-                                                  color: couleur_libelle_champ
-                                              ),
-                                              onChanged: (code){
-                                                _code = code.dialCode;
+                                                  color:
+                                                  couleur_libelle_champ),
+                                              onChanged: (code) {
+                                                _code =
+                                                    code.dialCode;
                                               },
                                             )),
                                         Expanded(
                                           flex: 10,
-                                          child:
-                                          new TextFormField(
+                                          child: new TextFormField(
                                             keyboardType:
-                                            TextInputType
-                                                .text,
+                                            TextInputType.text,
                                             style: TextStyle(
                                               fontSize:
                                               taille_libelle_champ +
@@ -875,10 +852,9 @@ class _OperatorState extends State<Operator> {
                                               color:
                                               couleur_libelle_champ,
                                             ),
-                                            validator: (String
-                                            value) {
-                                              if (value
-                                                  .isEmpty) {
+                                            validator:
+                                                (String value) {
+                                              if (value.isEmpty) {
                                                 return 'Champ bénéficiaire vide !';
                                               } else {
                                                 recepteur =
@@ -888,7 +864,12 @@ class _OperatorState extends State<Operator> {
                                                 "$recepteur";
 
                                                 setState(() {
-                                                  _transaction.beneficiaryPhoneNumber = _code.replaceAll("+", "")+value;
+                                                  _transaction
+                                                      .beneficiaryPhoneNumber =
+                                                      _code.replaceAll(
+                                                          "+",
+                                                          "") +
+                                                          value;
                                                 });
 
                                                 return null;
@@ -899,8 +880,7 @@ class _OperatorState extends State<Operator> {
                                                 .collapsed(
                                               hintText:
                                               'Numéro du bénéficiaire',
-                                              hintStyle:
-                                              TextStyle(
+                                              hintStyle: TextStyle(
                                                 fontSize:
                                                 taille_libelle_champ +
                                                     3,
@@ -927,8 +907,8 @@ class _OperatorState extends State<Operator> {
                                 height: hauteur_champ,
                                 child: Center(
                                   child: Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 20),
+                                    padding:
+                                    EdgeInsets.only(left: 20),
                                     child: new TextFormField(
                                       keyboardType:
                                       TextInputType.text,
@@ -939,17 +919,14 @@ class _OperatorState extends State<Operator> {
                                         color:
                                         couleur_libelle_champ,
                                       ),
-                                      validator:
-                                          (String value) {
+                                      validator: (String value) {
                                         if (value.isEmpty) {
                                           return 'Champ bénéficiaire vide !';
                                         } else {
                                           nom = "$value";
                                           _userTextController2
-                                              .text =
-                                          "$value";
-                                          print(
-                                              "Name $value");
+                                              .text = "$value";
+                                          print("Name $value");
                                           setState(() {
                                             _transaction
                                                 .beneficiaryEmail =
@@ -959,8 +936,7 @@ class _OperatorState extends State<Operator> {
                                         }
                                       },
                                       decoration:
-                                      InputDecoration
-                                          .collapsed(
+                                      InputDecoration.collapsed(
                                         hintText:
                                         'Email du bénéficiaire',
                                         hintStyle: TextStyle(
@@ -977,8 +953,7 @@ class _OperatorState extends State<Operator> {
                                 ),
                               ),
                               (_merchant.category ==
-                                  Services
-                                      .UTILITY_CATEGORY) &&
+                                  Services.UTILITY_CATEGORY) &&
                                   montant == -1
                                   ? Container()
                                   : Container(
@@ -1010,24 +985,20 @@ class _OperatorState extends State<Operator> {
                                 height: hauteur_champ,
                                 child: Center(
                                   child: Padding(
-                                    padding: EdgeInsets.only(
-                                        left: 20),
+                                    padding:
+                                    EdgeInsets.only(left: 20),
                                     child: new TextFormField(
-                                      enabled: _merchant
-                                          .logoFileId
-                                          .contains(
-                                          "tv.png")
+                                      enabled: _merchant.logoFileId
+                                          .contains("tv.png")
                                           ? true
                                           : false,
                                       controller: _merchant
                                           .logoFileId
-                                          .contains(
-                                          "tv.png")
+                                          .contains("tv.png")
                                           ? null
                                           : _userTextController,
                                       keyboardType:
-                                      TextInputType
-                                          .number,
+                                      TextInputType.number,
                                       style: TextStyle(
                                         fontSize:
                                         taille_libelle_champ +
@@ -1035,26 +1006,21 @@ class _OperatorState extends State<Operator> {
                                         color:
                                         couleur_libelle_champ,
                                       ),
-                                      validator:
-                                          (String value) {
+                                      validator: (String value) {
                                         if (value.isEmpty) {
                                           return 'Champ montant vide !';
                                         } else {
                                           montant =
-                                              double.parse(
-                                                  value);
-                                          _transaction
-                                              .amount =
+                                              double.parse(value);
+                                          _transaction.amount =
                                           "$montant";
-                                          _userTextController
-                                              .text =
+                                          _userTextController.text =
                                           "$montant";
                                           return null;
                                         }
                                       },
                                       decoration:
-                                      InputDecoration
-                                          .collapsed(
+                                      InputDecoration.collapsed(
                                         hintText: _merchant
                                             .category ==
                                             Services
@@ -1080,8 +1046,7 @@ class _OperatorState extends State<Operator> {
                               )
                             ],
                           ),
-                        )
-                            : Container(),
+                        ),
                       ],
                     ),
                   )
@@ -1099,8 +1064,7 @@ class _OperatorState extends State<Operator> {
                               coched = val;
                             });
                             if (!coched) {
-                              recepteur = null;
-                              nom = null;
+                              _transaction.beneficiaryPhoneNumber = null;
                             }
                           }),
                       Text(
@@ -1129,7 +1093,9 @@ class _OperatorState extends State<Operator> {
                           if (_merchant.category == Services.TV_CATEGORY ||
                               _merchant.category == Services.UTILITY_CATEGORY) {
                             serviceNumberValide = _isContratNumberValid;
+                            print("bleuk");
                           }
+                          print("Valid $serviceNumberValide");
                           if (isForm1Valid &&
                               isForm2Valid &&
                               serviceNumberValide) {
@@ -1139,12 +1105,16 @@ class _OperatorState extends State<Operator> {
                               _transaction.beneficiaryEmail = null;
                             }
                             this._reg();
-                            Navigator.push(
-                                context,
-                                PageTransition(
-                                    type: PageTransitionType.fade,
-                                    child: Confirm(_merchant,
-                                        selectedServiceItem, _transaction)));
+                            if (selectedServiceItem != null)
+                              Navigator.push(
+                                  context,
+                                  PageTransition(
+                                      type: PageTransitionType.fade,
+                                      child: Confirm(_merchant,
+                                          selectedServiceItem, _transaction)));
+                            else
+                              showInSnackBar(
+                                  "Service temporairement indisponible réessayer dans quelques secondes !!!");
                           }
                         });
                       },

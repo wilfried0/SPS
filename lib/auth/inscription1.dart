@@ -42,11 +42,6 @@ class _Inscription1State extends State<Inscription1> {
   }
 
 
-  bool myInterceptor(bool stopDefaultButtonEvent) {
-    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
-    return true;
-  }
-
   Future<File> getPdfFromUrl(String url) async {
     try{
       var data = await http.get(url);
@@ -570,9 +565,6 @@ class _Inscription1State extends State<Inscription1> {
                     if (_formKey.currentState.validate()) {
                       if(_check1 == true){
                         this._reg();
-                        print(iso3);
-                        print(_username);
-                        print(_password);
                         print(_url);
                         var MemberTemp = new createMemberTemp(
                           country: this.iso3,

@@ -24,7 +24,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
   _Connexion1State();
   String _username, _password, _nom, _url, _urlc, _ville, _quartier, _email, _avatar, _account_Type;
 
-  var _formKey = GlobalKey<FormState>();
+  var _formKey = GlobalKey<FormState>(), passController;
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   bool _isHidden = true, isLoding =false, isLoading = false;
   //var _userTextController = new TextEditingController();
@@ -33,6 +33,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
 
   @override
   void initState(){
+    passController = TextEditingController();
     this._lect();
     _url = '$base_url/member/login';
     _urlc = '$base_url/user/getCode/';
@@ -83,6 +84,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    passController.dispose();
     super.dispose();
   }
 
@@ -143,13 +145,17 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
           isLoding = false;
         });
         if(responseJson['name'] == "BLOCKED_CREDENTIALS"){
+          passController.clear();
           showInSnackBar("Compte bloqué. disponible dans 10 minutes");
         }else if(responseJson['name'] == "INVALID_CREDENTIALS"){
+          passController.clear();
           showInSnackBar("Mot de passe incorrect!");
         }else if(responseJson['name'] == "CONNECTION_REFUSED"){
           showInSnackBar("Connexion non autorisée");
-        }else
-        showInSnackBar("Mot de passe incorrect!");
+        }else{
+          passController.clear();
+          showInSnackBar("Mot de passe incorrect!");
+        }
       }else{
         List data = responseJson['customValues'];
         _nom = responseJson['name'];
@@ -170,6 +176,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
         setState(() {
           isLoding = false;
         });
+        passController.clear();
         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile('')));
         //navigatorKey.currentState.pushNamed("/profile");
       }
@@ -282,8 +289,8 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                               new Expanded(
                                 flex:10,
                                 //child: Padding(
-
                                   child: new TextFormField(
+                                    controller: passController,
                                     keyboardType: TextInputType.text,
                                     style: TextStyle(
                                         fontSize: taille_libelle_champ+ad,
