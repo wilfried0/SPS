@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/paiement/transfer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'transfert1.dart';
 import 'transfert3.dart';
 

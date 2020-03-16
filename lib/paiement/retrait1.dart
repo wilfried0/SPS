@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
@@ -138,22 +139,24 @@ class _Retrait1State extends State<Retrait1> {
     String fee = "$base_url/transaction/getFeesTransaction";
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
-    return await http.post("$fee", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse("$fee"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
         throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         fees = responseJson['fees'];
         newSolde = double.parse(montant.replaceAll(".", ""))+fees;
         if(newSolde>double.parse(local)){
@@ -167,16 +170,14 @@ class _Retrait1State extends State<Retrait1> {
             isLoading = false;
           });
           Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Retrait2(_code)));
-          //navigatorKey.currentState.pushNamed("/encaisser");
         }
       }else {
         setState(() {
           isLoading = false;
         });
-        showInSnackBar("$statusCode ${response.body}");
+        showInSnackBar("Service indisponible!");
       }
-      return response.body;
-    });
+      return null;
   }
 
   Future<void> _ackAlert(BuildContext context) {

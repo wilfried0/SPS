@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +13,6 @@ import 'dart:convert';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'transfert22.dart';
 
 
@@ -27,7 +28,7 @@ class _Transfert3State extends State<Transfert3> {
   _Transfert3State(this._code);
   String _code;
   bool isLoading = false;
-  String _name, _to, _username, _password, montant, amount, devisebenef, description, deviseLocale, fees, _lieu, _adresse, _fromCountryISO, _fromCardType, _fromCardNumber, _fromCardIssuingDate, _fromCardExpirationDate, _fromPays, _pays;
+  String _name, _to, _username, fromLastname, _password, montant, amount, devisebenef, description, deviseLocale, fees, _lieu, _adresse, _fromCountryISO, _fromCardType, _fromCardNumber, _fromCardIssuingDate, _fromCardExpirationDate, _fromPays, _pays;
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   String url, _id, _payst, _urlc, nomPays, codeIso2;
@@ -80,15 +81,15 @@ class _Transfert3State extends State<Transfert3> {
   }
 
   Future<void> getCode() async {
-    var headers = {
-      "Accept": "application/json"
-    };
-
-    http.Response response = await http.get(_urlc, headers: headers);
-    final int statusCode = response.statusCode;
-    print("voilà**************************************************** $_urlc ${response.body}");
-    if(statusCode == 200){
-      var responseJson = json.decode(response.body);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_urlc));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("voilà**************************************************** $_urlc $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
       setState(() {
         amount = "${responseJson['balance'].toString()}" ;
         devisebenef = "${responseJson['formattedBalance'].toString()}";
@@ -103,6 +104,8 @@ class _Transfert3State extends State<Transfert3> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _lieu = prefs.getString("lieu");
+      _username = prefs.getString("username");
+      fromLastname = prefs.getString("nom");
       print("lieu $_lieu");
       montant = prefs.getString("montant");
       _montantController.text = montant;
@@ -178,12 +181,6 @@ class _Transfert3State extends State<Transfert3> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
-
     if(_lieu == "0"){
       url = '$base_url/transfert/user/wallettowallet';
     }else if(_lieu == "2"){
@@ -193,17 +190,24 @@ class _Transfert3State extends State<Transfert3> {
     }else
       url = '$base_url/transfert/eu/sendMoney';
     print(url);
-    return await http.post("$url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
         throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         _id = responseJson['id'];
         if(_id == "INTERNAL_SERVER_ERROR"){
           setState(() {
@@ -250,8 +254,7 @@ class _Transfert3State extends State<Transfert3> {
         });
         showInSnackBar("Echec de l'opération!", _scaffoldKey, 5);
       }
-      return response.body;
-    });
+      return null;
   }
 
   Future<String> getStatus(String id) async {
@@ -261,19 +264,20 @@ class _Transfert3State extends State<Transfert3> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
     var url = "$base_url/transaction/checkStatus/$id";
     print(url);
-    http.Response response = await http.get(url, headers: headers);
-    final int statusCode = response.statusCode;
-    print('getStatus voici le statusCode $statusCode');
-    print('getStatus voici le body ${response.body}');
-    if(statusCode == 200){
-      var responseJson = json.decode(response.body);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
       if(responseJson['status'] == "CREATED"){
         if(temps == 0){
           setState(() {
@@ -1075,9 +1079,9 @@ class _Transfert3State extends State<Transfert3> {
                         if(isLoading == true){
 
                         }else{
-                          if(_lieu == "3"){
+                          if(_lieu == "3") {
                             var _wariTrans = new wariTrans(
-                                to:this._to,
+                                to: this._to,
                                 amount: int.parse(this.montant),
                                 fees: double.parse(fees),
                                 description: this.description,
@@ -1094,6 +1098,21 @@ class _Transfert3State extends State<Transfert3> {
                             );
                             print(json.encode(_wariTrans));
                             checkConnection(json.encode(_wariTrans));
+                          }else if(_lieu == "1"){//sendMoney
+                            var walletTr = new eucTrans(
+                              to:this._to,
+                              amount: int.parse(this.montant),
+                              fees: double.parse(fees),
+                              description: this.description,
+                              deviseLocale: this.deviseLocale,
+                              toFirstname: this._name,
+                              toCountryCode: this._payst,
+                              from: _username,
+                              fromFirstname: null,
+                              fromLastname: fromLastname
+                            );
+                            print(json.encode(walletTr));
+                            checkConnection(json.encode(walletTr));
                           }else{
                             var walletTr = new walletTrans(
                               to:this._to,

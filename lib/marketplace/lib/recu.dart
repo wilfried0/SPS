@@ -12,7 +12,7 @@ class Recu extends StatefulWidget {
 }
 
 class _RecuState extends State<Recu> {
-  List<Receipt> receipts = new List();
+  List<Receipt> receipts;
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   String buyerPhone;
   bool isEmpty = false;
@@ -47,7 +47,7 @@ class _RecuState extends State<Recu> {
     );
   }
 
-  ListView _buildList(context) {
+  Widget _buildList(context) {
     //SysSnackBar().show(_scaffoldKey, "Téléchargement des reçus encours ....");
     if (!isEmpty && !hasError)
       new BillController().list(buyerPhone, (List<dynamic> json) {
@@ -72,21 +72,38 @@ class _RecuState extends State<Recu> {
     return getItem();
   }
 
-  StatelessWidget getItem() {
-    return receipts.isEmpty
-        ? (isEmpty || hasError
-        ? ListView.builder(
+  Widget getItem() {
+    return receipts == null?
+    Center(
+        child: CupertinoActivityIndicator(
+          radius: 30,
+        )):(isEmpty || hasError)?
+    Center(
+      child: Text(hasError
+          ? "Une erreur est survenue"
+          : "Votre liste de reçus est vide pour l'instant", style: TextStyle(
+          fontSize: taille_champ
+      ),),
+    ):ListView.builder(
       // Must have an item count equal to the number of items!
-      itemCount: 1,
+      itemCount: receipts.length,
       // A callback that will return a widget.
       itemBuilder: (context, int) {
         // In our case, .
-        return Center(
-            child: Text(hasError
-                ? "Une erreur est survenue"
-                : "Vous n'avez fait aucun payement !!"));
+        return ReceiptCard(receipts[int]);
       },
-    )
+    );
+     /*
+
+      receipts.isEmpty
+        ? (isEmpty || hasError
+        ? Center(
+          child: Text(hasError
+          ? "Une erreur est survenue"
+          : "Votre liste de reçus est vide pour l'instant", style: TextStyle(
+            fontSize: taille_champ
+          ),),
+        )
         : ListView.builder(
       // Must have an item count equal to the number of items!
       itemCount: 1,
@@ -107,7 +124,7 @@ class _RecuState extends State<Recu> {
         // In our case, .
         return ReceiptCard(receipts[int]);
       },
-    );
+    );*/
   }
 }
 
@@ -201,10 +218,30 @@ class ReceiptCard extends StatelessWidget {
                 ),
               )
                   : Container(),
+
+              _receipt.fee != null
+                  ? Padding(
+                padding: EdgeInsets.only(left: 10, bottom: 10),
+                child: Text(
+                  "Frais: ${_receipt.fee + " "+_receipt.currency}",
+                  style: TextStyle(color: couleur_libelle_champ),
+                ),
+              )
+                  : Container(),
+
               Padding(
                 padding: EdgeInsets.only(left: 10, bottom: 10),
                 child: Text(
                   "Montant : ${_receipt.amount} ${_receipt.currency}",
+                  style: TextStyle(
+                      color: couleur_libelle_champ),
+                ),
+              ),
+
+              Padding(
+                padding: EdgeInsets.only(left: 10, bottom: 10),
+                child: Text(
+                  "Montant Total: ${_receipt.totalAmount} ${_receipt.currency}",
                   style: TextStyle(
                       color: couleur_fond_bouton, fontWeight: FontWeight.bold),
                 ),
@@ -255,6 +292,8 @@ class Receipt {
   int sellableItemId;
   String currency;
   String amount;
+  String totalAmount;
+  String fee;
   bool requiresMerchantVerification;
   bool buyerIsBeneficiary;
   String transactionId;
@@ -282,6 +321,8 @@ class Receipt {
         this.sellableItemId,
         this.currency,
         this.amount,
+        this.totalAmount,
+        this.fee,
         this.requiresMerchantVerification,
         this.buyerIsBeneficiary,
         this.transactionId,
@@ -309,6 +350,8 @@ class Receipt {
     sellableItemId = json['sellableItemId'];
     currency = json['currency'];
     amount = json['amount'];
+    totalAmount = json['totalAmount'];
+    fee = json['fee'];
     requiresMerchantVerification = json['requiresMerchantVerification'];
     buyerIsBeneficiary = json['buyerIsBeneficiary'];
     transactionId = json['transactionId'];
@@ -338,6 +381,8 @@ class Receipt {
     data['sellableItemId'] = this.sellableItemId;
     data['currency'] = this.currency;
     data['amount'] = this.amount;
+    data['totalAmount'] = this.totalAmount;
+    data['fee'] = this.fee;
     data['requiresMerchantVerification'] = this.requiresMerchantVerification;
     data['buyerIsBeneficiary'] = this.buyerIsBeneficiary;
     data['transactionId'] = this.transactionId;

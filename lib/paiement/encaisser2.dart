@@ -54,7 +54,7 @@ class _Encaisser2State extends State<Encaisser2> {
       case 0:url = '$base_url/transfert/refillByMomo';break;
       case 1:url = '$base_url/transfert/refillByOrange';break;
       case 2:url = '$base_url/transfert/refillByCard'; break;
-      case 4:url = '$base_url/transfert/refillByYup'; break;
+      //case 4:url = '$base_url/transfert/refillByYup'; break;
     }
     super.initState();
     initPlatformState();
@@ -135,23 +135,24 @@ class _Encaisser2State extends State<Encaisser2> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
-    print(url);
-    return await http.post("$url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
         throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         _id = responseJson['id'];
         String payment_url = responseJson['payment_url'];
         if(_id == "INTERNAL_SERVER_ERROR"){
@@ -178,6 +179,11 @@ class _Encaisser2State extends State<Encaisser2> {
           setState(() {
             isLoading = false;
           });
+          showInSnackBar("Veuillez compléter vos informations dans mon profil pour continuer à effectuer les opérations", _scaffoldKey);
+        }else if(responseJson['payment_url'] == "CLIENT_CONFIG_NOT_FOUND"){
+          setState(() {
+            isLoading = false;
+          });
           showInSnackBar("Votre compte a été bloqué veuillez contacyer le service client!", _scaffoldKey);
         }else if(responseJson['id'] == "NOT_FOUND"){
           setState(() {
@@ -200,11 +206,9 @@ class _Encaisser2State extends State<Encaisser2> {
         setState(() {
           isLoading = false;
         });
-        print(response.body);
         showInSnackBar("Echec de l'opération!", _scaffoldKey);
       }
-      return response.body;
-    });
+      return null;
   }
 
   Future<String> getStatus(String id) async {
@@ -214,26 +218,25 @@ class _Encaisser2State extends State<Encaisser2> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
     var url = "$base_url/transaction/checkStatus/$id";
-    print(url);
-    http.Response response = await http.get(url, headers: headers);
-    final int statusCode = response.statusCode;
-    print('getStatus voici le statusCode $statusCode');
-    print('getStatus voici le body ${response.body}');
-    if(statusCode == 200){
-      var responseJson = json.decode(response.body);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
       if(responseJson['status'] == "CREATED"){
         if(temps == 0){
           setState(() {
             isLoading = false;
           });
           showInSnackBar("Votre transaction est en cours...", _scaffoldKey);
-          //navigatorKey.currentState.pushNamed("/echec");
         }else if(temps > 0){
           temps--;
           getStatus(id);
@@ -646,7 +649,7 @@ class _Encaisser2State extends State<Encaisser2> {
                             if(_formKey.currentState.validate()){
                               if(_code == "0"){//MTN
                                 if(_to.startsWith('67') || _to.startsWith('68') || _to.startsWith('654') || _to.startsWith('653') || _to.startsWith('652') || _to.startsWith('651') || _to.startsWith('650')){
-                                  var walletTr = new walletTrans(
+                                  var walletTr = new mtnTrans(
                                       to:'$_to',
                                       amount: int.parse(this.montant),
                                       fees: fees,

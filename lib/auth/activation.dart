@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -87,7 +89,7 @@ class _ActivationState extends State<Activation> {
     }
   }
 
-  Future<Login> getUser() async {
+  /*Future<Login> getUser() async {
     var headers = {
       "Accept": "application/json",
       "content-type": "application/json"
@@ -112,9 +114,38 @@ class _ActivationState extends State<Activation> {
       //throw new Exception(response.body);
     }
     return null;
+  }*/
+
+  Future<Login> getUser() async {
+    String _url = "$url/$idUser/$code";
+    print(_url);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      print(responseJson);
+      setState(() {
+        isLoding = false;
+      });
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Inscrip()));
+    }else{
+      setState(() {
+        isLoding = false;
+      });
+      showInSnackBar("veuillez vérifier votre code d'activation!");
+      //throw new Exception(response.body);
+    }
+    return null;
   }
 
-  Future<Login> resendCode() async {
+  /*Future<Login> resendCode() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _username = prefs.getString("username");
@@ -142,6 +173,38 @@ class _ActivationState extends State<Activation> {
       });
       showInSnackBar("veuillez vérifier votre code d'activation!");
       //throw new Exception(response.body);
+    }
+    return null;
+  }*/
+
+  Future<Login> resendCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _username = prefs.getString("username");
+      print(_username);
+    });
+    var _url = "$base_url/member/resendCode/$_username";
+    print(_url);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      print(responseJson);
+      setState(() {
+        isResend = false;
+      });
+    }else{
+      setState(() {
+        isResend = false;
+      });
+      showInSnackBar("veuillez vérifier votre code d'activation!");
     }
     return null;
   }
@@ -391,7 +454,7 @@ class _ActivationState extends State<Activation> {
           duration: Duration(seconds: 5),));
   }
 
-  Future<void> ackAlert(BuildContext context, String text) {
+  /*Future<void> ackAlert(BuildContext context, String text) {
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
@@ -463,19 +526,22 @@ class _ActivationState extends State<Activation> {
                   if(_formKey2.currentState.validate()) {
                     String tel = "${iso.substring(1, iso.length)}$phone";
                     url = "$base_url/member/user/Auth/resendCode/$tel";
-                    var response = await http.get(url);
-                    print(url);
-                    print(response.body);
+                    HttpClient client = new HttpClient();
+                    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+                    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+                    HttpClientResponse response = await request.close();
+                    String reply = await response.transform(utf8.decoder).join();
+                    print("statusCode ${response.statusCode}");
+                    print("body $reply");
                     if(response.statusCode == 200){
                       setState(() {
-                        //idUser = response.body.toString().split(',')[4].split(':')[1].substring(0, response.body.toString().split(',')[4].split(':')[1].length-2);
                         print('idUser $idUser');
                       });
                       Navigator.of(context).pop();
                     }else{
                       Navigator.of(context).pop();
                       setState(() {
-                        showInSnackBar(response.body);
+                        showInSnackBar('Service indisponible!');
                       });
                     }
                   }
@@ -493,5 +559,5 @@ class _ActivationState extends State<Activation> {
         );
       },
     );
-  }
+  }*/
 }

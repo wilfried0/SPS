@@ -119,6 +119,7 @@ class _HomeState extends State<Home> {
             padding: EdgeInsets.only(left: 20),
             child: Center(
               child: TextFormField(
+                enabled: false,
                 keyboardType: TextInputType.text,
                 style: TextStyle(
                   fontSize: taille_libelle_etape,
@@ -132,7 +133,7 @@ class _HomeState extends State<Home> {
                   }
                 },
                 decoration: InputDecoration.collapsed(
-                  hintText: 'Recherher dans la Marketplace',
+                  hintText: 'Rechercher dans la Marketplace',
                   hintStyle: TextStyle(
                     fontSize: taille_libelle_etape - 2,
                     color: couleur_libelle_champ,
@@ -163,7 +164,7 @@ class _HomeState extends State<Home> {
                     ItemSubService(Services().getMerchant(5)),
                     ItemSubService(Services().getMerchant(9)),
                     ItemSubService(Services().getMerchant(6)),
-                    ItemSubService(Services().getMerchant(7)),
+                    //ItemSubService(Services().getMerchant(7)),
                     ItemSubService(Services().getMerchant(8)),
                   ],
                 ),
@@ -246,7 +247,9 @@ class _HomeState extends State<Home> {
               ),
               GestureDetector(
                 onTap: () {
-                  this.getPharmacies();
+                  SysSnackBar().show(
+                      _scaffoldKey, "Service pas encore disponible !");
+                  //this.getPharmacies();
                 },
                 child: Card(
                   elevation: 4,
@@ -299,22 +302,8 @@ class _HomeState extends State<Home> {
                   )),
             ),
             BottomNavigationBarItem(
-              icon: Icon(
-                Icons.receipt,
-                color: orange_F,
-              ),
-              title: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        PageTransition(
-                            type: PageTransitionType.fade,
-                            child: Validation()));
-                  },
-                  child: Text(
-                    'Mes Reçus',
-                    style: TextStyle(color: orange_F),
-                  )),
+              icon: Container(),
+              title: Container()
             ),
           ],
         ),

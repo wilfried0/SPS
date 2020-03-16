@@ -80,12 +80,45 @@ class _ConnexionState extends State<Connexion> {
     );
   }
 
+  getUser() async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = "${this._url}$_username";
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
 
-  Future<Login> getUser() async {
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      print(responseJson);
+      setState(() {
+        isLoding = false;
+      });
+      this._reg();
+      if(responseJson['isExist'] == false){
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Inscription1()));
+        //navigatorKey.currentState.pushNamed("/inscription");
+      }else{
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion1()));
+        //navigatorKey.currentState.pushNamed("/connexion");
+      }
+    }else{
+      print(response.statusCode);
+      setState(() {
+        isLoding = false;
+      });
+      showInSnackBar("Service indisponible!");
+    }
+  }
+
+
+  Future<Login> getUser2() async {
     var headers = {
       "Accept": "application/json"
     };
     var url = "${this._url}$_username";
+    print(url);
     http.Response response = await http.get(url, headers: headers);
     final int statusCode = response.statusCode;
     print("${response.body}");

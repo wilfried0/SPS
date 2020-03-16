@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
 import 'package:connectivity/connectivity.dart';
@@ -82,14 +83,17 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     deviseLocale = prefs.getString("deviseLocale");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials"
-    };
-    var response = await http.get(Uri.encodeFull("$_url/$deviseLocale"), headers: headers,);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse("$_url/$deviseLocale"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
     if(response.statusCode == 200){
-      print(response.body);
-      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      var responseJson = json.decode(reply);
       setState(() {
         data = responseJson;
       });

@@ -135,7 +135,10 @@ class _OperatorState extends State<Operator> {
                 _ischeck = 0;
                 _isContratNumberValid = false;
               });
-              showInSnackBar("Numéro de compteur inexistant!");
+              if(_merchant.id == 3){
+                showInSnackBar("Aucune facture n'est associée à ce numéro de contrat!");
+              }else
+              showInSnackBar("Numéro de facture introuvable!");
               _serviceNumber = null;
             } else {
               setState(() {
@@ -150,11 +153,12 @@ class _OperatorState extends State<Operator> {
               serviceItems.clear();
               data.forEach((service) =>
                   serviceItems.add(CommonServiceItem.fromJson(service)));
-              if (serviceItems.length == 1)
+              //if (serviceItems.length == 1)
                 selectedServiceItem = serviceItems[0];
               List<String> list = new List();
               for (int i = 0; i < donnees.length; i++) {
-                list.add(donnees[i]['description']);
+                int j = i+1;
+                list.add("$j- " + donnees[i]['description']);
               }
               _category = list;
               print("montant: $montant");
@@ -165,7 +169,7 @@ class _OperatorState extends State<Operator> {
                 _ischeck = 0;
                 _isContratNumberValid = false;
               });
-              showInSnackBar("Numéro de d'abonnement inexistant!");
+              showInSnackBar("Numéro d'abonnement inexistant!");
             } else {
               serviceItems.clear();
               data.forEach((service) =>
@@ -588,7 +592,7 @@ class _OperatorState extends State<Operator> {
                                                         .contains("140")
                                                     ? "Numéro d\'abonnement invalide"
                                                     : 'Numéro d\'abonnement vide')
-                                                    : 'Numéro du compteur vide !';
+                                                    :_merchant.id == 3? 'Numéro du contrat vide !':'Numéro de facture vide !';
                                               } else {
                                                 _serviceNumber =
                                                     value;
@@ -606,7 +610,7 @@ class _OperatorState extends State<Operator> {
                                                   Services
                                                       .TV_CATEGORY
                                                   ? 'Numéro d\'abonnement'
-                                                  : 'Numéro du compteur',
+                                                  :_merchant.id == 3? 'Numéro de contrat':'Numéro de facture',
                                               hintStyle: TextStyle(
                                                 fontSize:
                                                 taille_libelle_champ +
@@ -724,6 +728,21 @@ class _OperatorState extends State<Operator> {
                                             } else {
                                               _showOtherInput = false;
                                             }
+                                          }else if(_merchant.category ==
+                                              Services.UTILITY_CATEGORY){
+                                            index =
+                                                _category.indexOf(_current);
+                                            selectedServiceItem =
+                                            serviceItems[index];
+                                            print(
+                                                "Selected Item ${selectedServiceItem.toJson()}");
+
+                                            montant =
+                                            data[index]['priceAmount'];
+                                            currency =
+                                            data[index]['currency'];
+                                            commission = data[index]
+                                            ['spCommissionAmount'];
                                           }
                                         });
                                         _userTextController.text = "$montant";

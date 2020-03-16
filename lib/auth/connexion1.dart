@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +23,7 @@ class Connexion1 extends StatefulWidget {
 class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
 
   _Connexion1State();
-  String _username, _password, _nom, _url, _urlc, _ville, _quartier, _email, _avatar, _account_Type;
+  String _username, _password, _nom, _url, _urlc, _ville, _quartier, _email, _avatar, _account_Type, typeMember;
 
   var _formKey = GlobalKey<FormState>(), passController;
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -88,7 +89,35 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  Future<void> getCode() async {
+  getCode() async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = "${this._urlc}$_username";
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      print(responseJson);
+      setState(() {
+        isLoading = false;
+      });
+      if(responseJson['code'] == 200){
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Verification2()));
+      }else{
+        showInSnackBar("Service indisponible! Réessayez plus tard.");
+      }
+    }else{
+      print(response.statusCode);
+      setState(() {
+        isLoading = false;
+      });
+      showInSnackBar("Service indisponible! Réessayez plus tard.");
+    }
+  }
+
+  /*Future<void> getCode2() async {
     var headers = {
       "Accept": "application/json"
     };
@@ -115,7 +144,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
       showInSnackBar("Service indisponible! Réessayez plus tard.");
     }
     return null;
-  }
+  }*/
 
   void _toggleVisibility(){
     setState((){
@@ -124,6 +153,76 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
   }
 
   Future<Login> makeLogin() async {
+    _username = this._username;
+    _password = this._password;
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = this._url;
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      if(responseJson['id'] == 0){
+        setState(() {
+          isLoding = false;
+        });
+        if(responseJson['name'] == "BLOCKED_CREDENTIALS"){
+          passController.clear();
+          showInSnackBar("Compte bloqué. disponible dans 10 minutes");
+        }else if(responseJson['name'] == "INVALID_CREDENTIALS"){
+          passController.clear();
+          showInSnackBar("Mot de passe incorrect!");
+        }else if(responseJson['name'] == "CONNECTION_REFUSED"){
+          showInSnackBar("Connexion non autorisée");
+        }else{
+          passController.clear();
+          showInSnackBar("Mot de passe incorrect!");
+        }
+      }else{
+        List data = responseJson['customValues'];
+        _nom = responseJson['name'];
+        for(int i=0; i<data.length;i++){
+          if(data[i]['internalName'] == "city"){
+            _ville = data[i]['value'];
+          }else if(data[i]['internalName'] == "address"){
+            _quartier = data[i]['value'];
+          }else if(data[i]['internalName'] == "typeMember"){
+            _account_Type = data[i]['value'];
+          }
+        }
+
+        _avatar = responseJson['userImage'];
+        _id = responseJson['id'];
+        _email = responseJson['email'];
+        this._reg();
+        setState(() {
+          isLoding = false;
+        });
+        passController.clear();
+        if(_account_Type != "MSP"){
+        showInSnackBar("Ce numéro est un compte Marchand. Veuillez-vous connecter sur SP-Marchand");
+        }else
+        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile('')));
+        //navigatorKey.currentState.pushNamed("/profile");
+      }
+    }else{
+      setState(() {
+        isLoding = false;
+      });
+      showInSnackBar("Service indisponible!");
+    }
+    //var responseJson = json.decode(response.body);
+    return null;
+  }
+
+  /*Future<Login> makeLogin2() async {
     _username = this._username;
     _password = this._password;
     print('Username: $_username');
@@ -188,7 +287,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
     }
     //var responseJson = json.decode(response.body);
     return null;
-  }
+  }*/
 
   void showInSnackBar(String value) {
     _scaffoldKey.currentState.showSnackBar(
@@ -199,7 +298,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
         ),
           textAlign: TextAlign.center,),
           backgroundColor: couleur_fond_bouton,
-          duration: Duration(seconds: 5),));
+          duration: Duration(seconds: 7),));
   }
 
 
@@ -299,6 +398,8 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                                     validator: (String value){
                                       if(value.isEmpty){
                                         return 'Champ mot de passe vide !';
+                                      }else if(value.length>12){
+                                        return '12 caractères au maximun!';
                                       }else{
                                         _password = value;
                                         return null;

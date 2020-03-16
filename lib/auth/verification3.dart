@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
@@ -303,7 +304,6 @@ class _Verification3State extends State<Verification3> {
                               var findUser = new FindUser(
                                   keyword: code
                               );
-                              print("hello");
                               print(json.encode(findUser));
                               checkConnection(json.encode(findUser));
                             }
@@ -341,23 +341,24 @@ class _Verification3State extends State<Verification3> {
     _password = news;
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
-
-    return await http.post("$_url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(_url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
         throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         print(responseJson['result']);
         setState(() {
           isLoading = false;
@@ -373,8 +374,7 @@ class _Verification3State extends State<Verification3> {
         });
         showInSnackBar("Echec de l'opération!", _scaffoldKey);
       }
-      return response.body;
-    });
+      return null;
   }
 }
 

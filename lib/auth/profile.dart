@@ -176,6 +176,36 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     String sold = "$base_url/transaction/getSoldeUser";
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(sold));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      setState(() {
+        solde = "${responseJson['amount']}";
+        devise = " ${responseJson['devise']}";
+        local = "${responseJson['amountLocale']}";
+        deviseLocale = "${responseJson['deviseLocale']}";
+        this._reg();
+      });
+    } else{
+      showInSnackBar("Un problème est survenu lors de la récupération du solde!");
+    }
+  }
+
+  /*Future<void> getSolde() async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    String sold = "$base_url/transaction/getSoldeUser";
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
     var headers = {
       "Accept": "application/json",
       "Authorization": "Basic $credentials"
@@ -192,9 +222,9 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
         this._reg();
       });
     } else{
-      showInSnackBar(json. decode(utf8.decode(response.bodyBytes)));
+      showInSnackBar("Un problème est survenu lors de la récupération du solde!");
     }
-  }
+  }*/
 
   void _reg() async {
     final prefs = await SharedPreferences.getInstance();
@@ -462,14 +492,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                   ),
                 ),
               ),
-              deviseLocale == null?Padding(
-                padding: EdgeInsets.only(top: 110, ),
-                child: Center(
-                  child: Theme(
-                      data: Theme.of(context).copyWith(accentColor: orange_F),
-                      child: CupertinoActivityIndicator(radius: 20)),
-                ),
-              ):Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 110, ),//solde du compte
                 child:deviseLocale=='EUR'? Column(
                   children: <Widget>[
@@ -481,12 +504,14 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Text(solde==null?"0,0":"${getMillis('$solde')}", style: TextStyle(//Montant du solde
+                        solde==null?Theme(
+                            data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                            child: CupertinoActivityIndicator(radius: 20,)):Text("${getMillis('$solde')}", style: TextStyle(//Montant du solde
                             color: orange_F,
                             fontSize: taille_titre-5,
                             fontWeight: FontWeight.bold
                         ),),
-                        Text(devise==null?" EUR":" $devise", style: TextStyle(//Montant du solde
+                        devise==null?Container():Text(" $devise", style: TextStyle(//Montant du solde
                             color: orange_F,
                             fontSize: taille_titre-5,
                             fontWeight: FontWeight.bold
@@ -510,12 +535,14 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              Text(solde==null?"0,0":"${getMillis('$solde')}", style: TextStyle(//Montant du solde
+                              solde==null?Theme(
+                                  data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                  child: CupertinoActivityIndicator(radius: 20,)):Text("${getMillis('$solde')}", style: TextStyle(//Montant du solde
                                   color: orange_F,
                                   fontSize: taille_titre-5,
                                   fontWeight: FontWeight.bold
                               ),),
-                              Text(devise==null?" EUR":" $devise", style: TextStyle(//Montant du solde
+                              devise==null?Container():Text(" $devise", style: TextStyle(//Montant du solde
                                   color: orange_F,
                                   fontSize: taille_titre-5,
                                   fontWeight: FontWeight.bold
@@ -538,12 +565,14 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              Text(local==null?"0,0":getMillis('$local'), style: TextStyle(//Montant du solde
+                              local==null?Theme(
+                                  data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                  child: CupertinoActivityIndicator(radius: 20,)):Text(getMillis('$local'), style: TextStyle(//Montant du solde
                                   color: orange_F,
                                   fontSize: taille_titre-5,
                                   fontWeight: FontWeight.bold
                               ),),
-                              Text(deviseLocale==null?" XAF":" $deviseLocale", style: TextStyle(//Montant du solde
+                              deviseLocale==null?Container():Text(" $deviseLocale", style: TextStyle(//Montant du solde
                                   color: orange_F,
                                   fontSize: taille_titre-5,
                                   fontWeight: FontWeight.bold

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +7,6 @@ import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:services/composants/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'transfert1.dart';
 import 'transfert3.dart';
 
@@ -116,24 +116,25 @@ class _Transfert22State extends State<Transfert22> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
     url = '$baseUrl/add';
-    print(url);
-    return await http.post("$url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body: $reply");
+    print("url: $url");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
         throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         print(responseJson['result']);
         setState(() {
           isLoading = false;
@@ -155,8 +156,7 @@ class _Transfert22State extends State<Transfert22> {
         });
         showInSnackBar("Echec de l'opération!", _scaffoldKey, 5);
       }
-      return response.body;
-    });
+      return null;
   }
 
   Future<void> findUser(String str) async {
@@ -168,16 +168,17 @@ class _Transfert22State extends State<Transfert22> {
     String _url = "$baseUrl/all";
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
-    print("mon url $_url");
-    var response = await http.get(Uri.encodeFull(_url), headers: headers,);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_url));
+    request.headers.set('Accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
     if(response.statusCode == 200){
-      print(response.body);
-      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      var responseJson = json.decode(reply);
       this.data = responseJson;
       setState(() {
         this.unfilterData2 = this.data;
@@ -197,16 +198,18 @@ class _Transfert22State extends State<Transfert22> {
     String _url = "$baseUrl";
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
-    print("*************************mon url $_url");
-    var response = await http.get(Uri.encodeFull(_url), headers: headers,);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_url));
+    request.headers.set('Accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
     if(response.statusCode == 200){
-      print(response.body);
-      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      var responseJson = json.decode(reply);
       setState(() => this.data = responseJson);
       this.unfilterData = this.data;
     }
@@ -250,9 +253,12 @@ class _Transfert22State extends State<Transfert22> {
                   var _contact = new contact(
                     username: _user
                   );
-                  Navigator.of(context).pop();
-                  this.addUser(json.encode(_contact));
+                  print(json.encode(_contact));
+                  /*Navigator.of(context).pop();
+                  this.addUser(json.encode(_contact));*/
                 });
+                _save();
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
               },
             ),
             FlatButton(

@@ -84,7 +84,49 @@ class _Inscription1State extends State<Inscription1> {
     }
   }
 
-  Future<String> createMember(var body) async {
+  createMember(var body) async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = this._url;
+    HttpClientRequest request = await client.postUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
+        setState(() {
+          isLoding =false;
+        });
+        //throw new Exception("Error while fetching data");
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
+        idUser = responseJson['id_user'];
+        if(responseJson['username'] == "USERNAME_ALREADY_USED"){
+          setState(() {
+            isLoding =false;
+          });
+          //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation()));
+          showInSnackBar("Utilisateur déjà existant!", _scaffoldKey);
+        }else{
+          this.reg();
+          setState(() {
+            isLoding =false;
+          });
+          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Activation()));
+        }
+      }else {
+        setState(() {
+          isLoding =false;
+        });
+        showInSnackBar("Service indisponible!", _scaffoldKey);
+      }
+      return null;
+  }
+
+  /*Future<String> createMember(var body) async {
     var _header = {
       "accept": "application/json",
       "content-type" : "application/json"
@@ -122,7 +164,7 @@ class _Inscription1State extends State<Inscription1> {
       }
       return response.body;
     });
-  }
+  }*/
 
   Future<void> ckAlert(BuildContext context) {
     return showDialog<void>(
@@ -352,10 +394,11 @@ class _Inscription1State extends State<Inscription1> {
                                 validator: (String value){
                                   if(value.isEmpty){
                                     return 'Champ mot de passe vide !';
-                                  }else/* if(value.length>=7){
-                                    _password = value;
-                                    return null;
-                                  }else*/{
+                                  }else if(value.length>12){
+                                    return '12 caractères au maximum !';;
+                                  }else if(value.length<4){
+                                    return '4 caractères au minimum !';;
+                                  }else{
                                     _password = value;
                                     return null;
                                   }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
@@ -120,14 +121,18 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
     String _password = prefs.getString("password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials"
-    };
-    var response = await http.get(Uri.encodeFull("$_url"), headers: headers,);
-    print("°°°°°°°°°°°°°°°°°°°°°°°°°°°° $_url");
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse("$_url"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
     if(response.statusCode == 200){
-      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      var responseJson = json.decode(reply);
       print(responseJson.toString());
       setState(() {
         _toMember = responseJson['toMember'];
@@ -959,14 +964,18 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   }
 
   Future<void> geUserByPhone(String phone) async {
-    var headers = {
-      "Accept": "application/json",
-      "content-type":"application/json"
-    };
-    var response = await http.get(Uri.encodeFull("$base_url/transaction/getUserByUsername/$phone"), headers: headers,);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse("$base_url/transaction/getUserByUsername/$phone"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+
     if(response.statusCode == 200){
-      print(response.body);
-      var responseJson = json.decode(utf8.decode(response.bodyBytes));
+      var responseJson = json.decode(reply);
       if(responseJson['firstname']==null && responseJson['lastname']==null){
         setState(() {
           expName = "...";

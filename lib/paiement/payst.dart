@@ -74,8 +74,6 @@ class _PaystState extends State<Payst> {
     return true;
   }
 
-  String url = "$base_url/user/Auth/signout";
-
   @override
   Widget build(BuildContext context) {
     final marge = (14*MediaQuery.of(context).size.width)/414;

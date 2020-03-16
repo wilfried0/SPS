@@ -7,8 +7,6 @@ PODS:
     - Flutter
   - flutter_pdfview (0.0.1):
     - Flutter
-  - flutter_plugin_android_lifecycle (0.0.1):
-    - Flutter
   - flutter_webview_plugin (0.0.1):
     - Flutter
   - get_ip (0.0.1):
@@ -34,7 +32,6 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_inappbrowser (from `.symlinks/plugins/flutter_inappbrowser/ios`)
   - flutter_pdfview (from `.symlinks/plugins/flutter_pdfview/ios`)
-  - flutter_plugin_android_lifecycle (from `.symlinks/plugins/flutter_plugin_android_lifecycle/ios`)
   - flutter_webview_plugin (from `.symlinks/plugins/flutter_webview_plugin/ios`)
   - get_ip (from `.symlinks/plugins/get_ip/ios`)
   - image_picker (from `.symlinks/plugins/image_picker/ios`)
@@ -58,8 +55,6 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/flutter_inappbrowser/ios"
   flutter_pdfview:
     :path: ".symlinks/plugins/flutter_pdfview/ios"
-  flutter_plugin_android_lifecycle:
-    :path: ".symlinks/plugins/flutter_plugin_android_lifecycle/ios"
   flutter_webview_plugin:
     :path: ".symlinks/plugins/flutter_webview_plugin/ios"
   get_ip:
@@ -84,10 +79,9 @@ SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
   flutter_inappbrowser: cd1fa70c62958a5674ffba8ecc3f3cfae845466d
   flutter_pdfview: bdf86972519a15c6d8f50ad34e5b0429b255cbb4
-  flutter_plugin_android_lifecycle: 47de533a02850f070f5696a623995e93eddcdb9b
   flutter_webview_plugin: ed9e8a6a96baf0c867e90e1bce2673913eeac694
   get_ip: c063133e0a399ae4089048c90d6a232cb2344846
-  image_picker: e3eacd46b94694dde7cf2705955cece853aa1a8f
+  image_picker: 16e5fec1fbc87fd3b297c53e4048521eaf17cd06
   path_provider: fb74bd0465e96b594bb3b5088ee4a4e7bb1f2a9d
   Reachability: 33e18b67625424e47b6cde6d202dce689ad7af96
   share: bae0a282aab4483288913fc4dc0b935d4b491f2e

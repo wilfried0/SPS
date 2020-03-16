@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -48,20 +51,19 @@ class _Verification2State extends State<Verification2> {
   }
 
   Future<void> getCode() async {
-    var headers = {
-      "Accept": "application/json"
-    };
-    var url = "${this._urlc}$_username";
-    http.Response response = await http.get(url, headers: headers);
-    final int statusCode = response.statusCode;
-    print("${response.body}");
-    if(statusCode == 200){
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = "${this._urlc}$_username";
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    if(response.statusCode == 200){//
       setState(() {
         isResend = false;
       });
       showInSnackBar("Patientez un instant!");
     }else{
-      print(statusCode);
       setState(() {
         isResend = false;
       });

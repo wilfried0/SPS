@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
@@ -38,7 +39,7 @@ class _Retrait2State extends State<Retrait2> {
   var _phoneTextController = new TextEditingController();
   bool isLoading =false;
   String url, _id, _to, payment_url, echec;
-  int temps = 200;
+  int temps = 600;
   // ignore: non_constant_identifier_names
   String kittyImage,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="",  _username, _password, deviseLocale;
 
@@ -107,23 +108,25 @@ class _Retrait2State extends State<Retrait2> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
     print(url);
-    return await http.post("$url", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse("$url"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
         throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         _id = responseJson['id'];
         String payment_url = responseJson['payment_url'];
         if(_id == "INTERNAL_SERVER_ERROR"){
@@ -171,8 +174,7 @@ class _Retrait2State extends State<Retrait2> {
         });
         showInSnackBar("Echec de l'opération!", _scaffoldKey0);
       }
-      return response.body;
-    });
+      return null;
   }
 
   Future<String> getStatus(String id) async {
@@ -182,19 +184,20 @@ class _Retrait2State extends State<Retrait2> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
     var url = "$base_url/transaction/checkStatus/$id";
     print(url);
-    http.Response response = await http.get(url, headers: headers);
-    final int statusCode = response.statusCode;
-    print('getStatus voici le statusCode $statusCode');
-    print('getStatus voici le body ${response.body}');
-    if(statusCode == 200){
-      var responseJson = json.decode(response.body);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
       if(responseJson['status'] == "CREATED"){
         if(temps == 0){
           setState(() {

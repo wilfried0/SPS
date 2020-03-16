@@ -4,6 +4,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/connexion.dart';
@@ -39,8 +40,7 @@ class _MonprofileState extends State<Monprofile> {
   var _categorie = ['Carte Nationale d\'identité', 'Passeport', 'Carte de séjour'];
   var _cat = ['Facture d\'eau', 'Facture d\'electricite', 'Bulletin de paye', 'Facture de telephone', 'Autre justificatif de revenu'];
   // ignore: non_constant_identifier_names
-  String kittyImage,pieceName, monstatus, momo_url, data, _email, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, endDate, startDate, title, suggested_amount, amount, description, number, nom, email, tel, mot, _nom, _ville, _quartier, _pays;
-
+  String kittyImage,pieceName, _platformVersion, monstatus, momo_url, data, _email, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, endDate, startDate, title, suggested_amount, amount, description, number, nom, email, tel, mot, _nom, _ville, _quartier, _pays;
 
   @override
   void initState() {
@@ -56,6 +56,7 @@ class _MonprofileState extends State<Monprofile> {
     this.checkStatus();
     this.lire();
   }
+  
 
   @override
   void dispose() {
@@ -94,16 +95,18 @@ class _MonprofileState extends State<Monprofile> {
     print('Password: $_password');
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials"
-    };
     var url = "$base_url/member/resetPassword/$newPass";
-    http.Response response = await http.get(url, headers: headers);
-    final int statusCode = response.statusCode;
-    print("${response.body}");
-    if(statusCode == 200){
-      var responseJson = json.decode(response.body);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
       int code = responseJson['code'];
       if(code == 200){
         setState(() {
@@ -127,7 +130,6 @@ class _MonprofileState extends State<Monprofile> {
       });
       showInSnackBar("Service indisponible!", _scaffoldKey, 5);
     }
-    //var responseJson = json.decode(response.body);
     return null;
   }
 
@@ -143,34 +145,34 @@ class _MonprofileState extends State<Monprofile> {
     _password = prefs.getString("password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var _header = {
-      "accept": "application/json",
-      "content-type" : "application/json",
-      "Authorization": "Basic $credentials"
-    };
-    return await http.post("$base_url/sendPiece", body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse("$base_url/sendPiece"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoadPiece =false;
         });
-      }else if(statusCode == 200){
-        //var responseJson = json.decode(response.body);
-        //print(responseJson);
+      }else if(response.statusCode == 200){
         setState(() {
           isLoadPiece =false;
         });
-        showInSnackBar("Pièces envoyées avec succès!\nVous pourrez effectuer vos opérations d'ici 60 minutes au plus.", _scaffoldKey, 10);
+        showInSnackBar("Pièces envoyées avec succès!\nVous pourrez effectuer vos opérations dès que vos pièces seront approuvées.", _scaffoldKey, 10);
       }else {
         setState(() {
           isLoadPiece =false;
         });
         showInSnackBar("Service indisponible!", _scaffoldKey, 5);
       }
-      return response.body;
-    });
+      return null;
   }
 
 
@@ -269,6 +271,30 @@ class _MonprofileState extends State<Monprofile> {
     _password = prefs.getString("password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse("$_url"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      setState(() {
+        hadSentpieces = responseJson['hadSentpieces'];
+        nameStatus = responseJson['profil']['name'].toString().toUpperCase();
+      });
+    }
+  }
+
+  /*Future<void> checkStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
     var headers = {
       "Accept": "application/json",
       "Authorization": "Basic $credentials"
@@ -279,10 +305,10 @@ class _MonprofileState extends State<Monprofile> {
       var responseJson = json.decode(utf8.decode(response.bodyBytes));
       setState(() {
         hadSentpieces = responseJson['hadSentpieces'];
-        nameStatus = responseJson['profil']['name'];
+        nameStatus = responseJson['profil']['name'].toString().toUpperCase();
       });
     }
-  }
+  }*/
 
   Future<String> getImage(int q) async {
     var image;
@@ -314,6 +340,7 @@ class _MonprofileState extends State<Monprofile> {
         });
       }else if(q == 5){
         image = await ImagePicker.pickImage(source: ImageSource.camera);
+        print("hello selfie 5");
         setState(() {
           _isSelfie = true;
         });
@@ -328,7 +355,7 @@ class _MonprofileState extends State<Monprofile> {
           _isVerso = true;
         });
       }
-      print(image);
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%% $image");
       if(image == null){
         setState(() {
           _isAvatar = false;
@@ -409,6 +436,22 @@ class _MonprofileState extends State<Monprofile> {
       showInSnackBar("Veuillez sélectionner une image de petite taille", _scaffoldKey, 5);
     }
   }
+
+  /*Future<File> compressNow(File _imageFile, int q) async {
+
+    print("FILE SIZE BEFORE: " + _imageFile.lengthSync().toString());
+    var result = await FlutterImageCompress.compressAndGetFile(
+      _imageFile.absolute.path,
+      '${_imageFile.absolute.path.replaceFirst(".", "_.", _imageFile.absolute.path.lastIndexOf("."))}',
+      minHeight: int.tryParse('${MediaQuery.of(context).size.width.toString()}'),
+      minWidth: int.tryParse('${MediaQuery.of(context).size.width.toString()}'),
+      quality: 80,
+    );
+    print("FILE SIZE BEFORE: " + result.lengthSync().toString());
+    Upload(result, q);
+    return result;
+  }*/
+
 
   @override
   Widget build(BuildContext context) {
@@ -1437,7 +1480,7 @@ class _MonprofileState extends State<Monprofile> {
                     ),
 
                     nameStatus=="BUSINESS"?Container():Padding(
-                      padding: EdgeInsets.only(bottom: 20, left: 20, right: 20),
+                      padding: EdgeInsets.only(top: 20, bottom: 20, left: 20, right: 20),
                       child: GestureDetector(
                         onTap: () {
                             if(nameStatus == "OCCASIONNEL"){
@@ -1608,7 +1651,7 @@ class _MonprofileState extends State<Monprofile> {
                               topLeft: Radius.circular(10.0),
                             ),
                           ),
-                          child: new Center(
+                          child: new Center(//580255
                             child:isLoding==false?new Text('Valider', style: new TextStyle(fontSize: taille_champ+3, color: couleur_text_bouton),):CupertinoActivityIndicator(),
                           ),
                         ),
@@ -1710,8 +1753,6 @@ class _MonprofileState extends State<Monprofile> {
                               ),
                               new Expanded(
                                 flex:10,
-                                //child: Padding(
-
                                 child: new TextFormField(
                                   keyboardType: TextInputType.text,
                                   style: TextStyle(

@@ -22,7 +22,7 @@ class _InscripState extends State<Inscrip> {
   String _birthday="", _current, _url,jr, mo, an, firstname, lastname, town, email, nature, gender, adress, userImage, newPassword, typeMember;
   int _date = new DateTime.now().year, idUser;
   var _categorie = ['Madame', 'Monsieur', 'Mademoiselle'];
-  var _nature = ['Particulier', 'Entreprise', 'Association', 'PME', 'Etablissement'];
+  var _nature = ['Particulier', 'Entreprise', 'PME', 'Etablissement', 'Association'];
   var _formKey = GlobalKey<FormState>();
   var _annee = ['1960'];
   var _mois = ['01'];
@@ -69,11 +69,33 @@ class _InscripState extends State<Inscrip> {
   }
 
   Future<String> getListNature() async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse("$Nature"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      List responseJson = json.decode(reply);
+      _nature = [];
+      setState(() {
+        for(int i=0; i<responseJson.length; i++)
+          _nature.add(responseJson[i]['name']);
+      });
+    }
+    return null;
+  }
+
+  /*Future<String> getListNature() async {
     var headers = {
       "Accept": "application/json",
       "content-type": "application/json"
     };
-    http.Response response = await http.get("http://74.208.183.205:8086/spkycgateway/api/administration/getNatureClientByService/773", headers: headers);
+    print(Nature);
+    http.Response response = await http.get("$Nature", headers: headers);
     final int statusCode = response.statusCode;
     if(statusCode == 200){
       List responseJson = json.decode(response.body);
@@ -84,7 +106,7 @@ class _InscripState extends State<Inscrip> {
       });
     }
     return null;
-  }
+  }*/
 
   bool isEmail(String em) {
     if(em == null){
@@ -96,7 +118,7 @@ class _InscripState extends State<Inscrip> {
     }
   }
 
-  Future<String> checkEmail(var body) async {
+  /*Future<String> checkEmail(var body) async {
     var headers = {
       "Accept": "application/json",
       "content-type": "application/json"
@@ -119,14 +141,35 @@ class _InscripState extends State<Inscrip> {
       showInSnackBar("Erreur lors de la récupération des données");
     }
     return null;
+  }*/
+
+  Future<String> checkEmail(var body) async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse("$_url/checkEmail/$email"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      print(responseJson);
+      if(responseJson['isExist'] == false){
+        createAccount(body);
+      }else{
+        showInSnackBar("$email existe déjà!");
+      }
+    }else{
+      showInSnackBar("Erreur lors de la récupération des données");
+    }
+    return null;
   }
 
   Future<String> getImage() async {
       var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-      print(image);
-      setState(() {
-        _loadImage = false;
-      });
+      this._reg();
       Upload(image);
     return null;
   }
@@ -138,7 +181,8 @@ class _InscripState extends State<Inscrip> {
     var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
     var length = await imageFile.length();
     var multipartFile = new http.MultipartFile('file', stream, length, filename: imageFile.path.split('/').last);
-    var uri = Uri.parse('http://74.208.183.205:8086/spkyc-identitymanager/upload');
+    var uri = Uri.parse('$base');
+    print("base::: $base");
     var request = new http.MultipartRequest("POST", uri);
     request.headers.addAll(_header);
     request.files.add(multipartFile);
@@ -225,17 +269,37 @@ class _InscripState extends State<Inscrip> {
                           child: Column(
                             //crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              SizedBox(
-                                child: Container(
-                                  height: 230,
-                                  width: 230,
-                                  decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      image: DecorationImage(
-                                          image: _image==null? AssetImage("images/ellipse1.png"):NetworkImage(_image),
-                                          fit: BoxFit.cover
-                                      )
-                                  ),
+                              _image == null?Container(
+                                height: 230,
+                                width: 230,
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                        image: AssetImage("images/ellipse1.png"),
+                                        fit: BoxFit.cover
+                                    )
+                                ),
+                              ):Container(
+                                height: 230,
+                                width: 230,
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    image: DecorationImage(
+                                      image: _image==null? AssetImage("images/ellipse1.png"):NetworkImage(_image),
+                                      fit: BoxFit.cover,
+                                    )
+                                ),
+                                child: Image.network(_image, fit: BoxFit.contain,
+                                    loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                                      if (loadingProgress == null) return Container();
+                                      return Center(
+                                        child: CircularProgressIndicator(
+                                          value: loadingProgress.expectedTotalBytes != null ?
+                                          loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                              : null,
+                                        ),
+                                      );
+                                    }
                                 ),
                               ),
                             ],
@@ -988,6 +1052,49 @@ class _InscripState extends State<Inscrip> {
   }
 
   Future<String> createAccount(var body) async {
+    print("$_url/createMember");
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = this._url;
+    HttpClientRequest request = await client.postUrl(Uri.parse("$_url/createMember"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
+        setState(() {
+          isLoding =false;
+        });
+        throw new Exception("Error while fetching data");
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
+        print(responseJson);
+        setState(() {
+          isLoding =false;
+        });
+        if(responseJson['id_user'] == 0){
+          if(responseJson['username'] == "CLIENT_NOT_MATURE")
+            showInSnackBar("Echec de la création. Client immature!");
+          else
+            showInSnackBar("Echec de la création!");
+        }else{
+          this._reg();
+          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Sendpiece()));
+        }
+        //    navigatorKey.currentState.pushNamed("/connexion");
+      }else {
+        setState(() {
+          isLoding =false;
+        });
+        showInSnackBar("Service indisponible!");
+      }
+      return null;
+  }
+
+  /*Future<String> createAccount(var body) async {
     var _header = {
       "accept": "application/json",
       "content-type" : "application/json"
@@ -1008,8 +1115,11 @@ class _InscripState extends State<Inscrip> {
         setState(() {
           isLoding =false;
         });
-        if(responseJson['username'] == "CLIENT_NOT_MATURE"){
-          showInSnackBar("Echec de la création. Client immature!");
+        if(responseJson['id_user'] == 0){
+          if(responseJson['username'] == "CLIENT_NOT_MATURE")
+            showInSnackBar("Echec de la création. Client immature!");
+          else
+            showInSnackBar("Echec de la création!");
         }else{
           this._reg();
           Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Sendpiece()));
@@ -1023,7 +1133,7 @@ class _InscripState extends State<Inscrip> {
       }
       return response.body;
     });
-  }
+  }*/
 
   Future<void> _ackAlert(BuildContext context) {
     return showDialog<void>(
@@ -1061,7 +1171,7 @@ class _InscripState extends State<Inscrip> {
         new SnackBar(content: new Text(value,style:
         TextStyle(
             color: Colors.white,
-            fontSize: taille_description_champ+ad
+            fontSize: taille_champ+ad
         ),
           textAlign: TextAlign.center,),
           backgroundColor: couleur_fond_bouton,

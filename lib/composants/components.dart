@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/service_client.dart';
 import 'package:share/share.dart';
@@ -121,10 +120,12 @@ final marge_libelle_champ = 5.0;
 // ignore: non_constant_identifier_names
 double marge_champ_libelle = 20.0;
 // ignore: non_constant_identifier_names
-final base_url = "http://pcs.sprint-pay.com/corebanking/rest";//"http://74.208.183.205:8086/corebanking/rest";
-//final baseUrl = "http://74.208.183.205:8086/SpAuthentication/contacts";//"http://192.168.45.145:8080/negprod/api";
-final baseUrl = "http://pcs.sprint-pay.com/paymentcore/rest/users/contact";//"http://74.208.183.205:7086/paymentcore/rest/users/contact";
+final base_url = "https://pcs.sprint-pay.com/corebanking/rest";//"http://74.208.183.205:8086/corebanking/rest";
+final baseUrl = "https://pcs.sprint-pay.com/paymentcore/rest/users/contact";//"http://74.208.183.205:7086/paymentcore/rest/users/contact";
 final base = "http://kyc.sprint-pay.com/spkyc-identitymanager/upload";//"http://74.208.183.205:8086/spkyc-identitymanager/upload";
+final Nature = "http://kyc.sprint-pay.com:60000/spkycgateway/api/administration/getNatureClientByService/4";//"http://74.208.183.205:8086/spkycgateway/api/administration/getNatureClientByService/773";
+final lien_android = "https://play.google.com/apps/test/sprintpay.services/7";
+final lien_ios = "";
 
 bool search = false;
 
@@ -145,20 +146,6 @@ String changeAccent(String str){
   return string;
 }
 
-////if(str.contains("é") || str.contains("è") || str.contains("ê")){
-//      str.replaceAll("é", "e");
-//      str.replaceAll("è", "e");
-//      str.replaceAll("ê", "e");
-//      string = str;
-//    }else if(str.contains("à") || str.contains("â") || str.contains("ã")){
-//      str.replaceAll("à", "a");
-//      str.replaceAll("â", "a");
-//      str.replaceAll("ã", "a");
-//      string = str;
-//    }else if(str.contains("ô")){
-//      str.replaceAll("ô", "o");
-//      string = str;
-//    }
 
 String getMillis(String amount){
   String reste=amount.split('.')[1];
@@ -295,10 +282,7 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
           BottomNavigationBarItem(
             icon: GestureDetector(
               onTap:(){
-                if(Platform.isIOS){
-                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du applestore");
-                }else
-                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du playstore");
+                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. $lien_android");
               },
               child: Container(
                   height: 20,
@@ -308,10 +292,7 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
             ),
             title: GestureDetector(
               onTap:(){
-                if(Platform.isIOS){
-                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du applestore");
-                }else
-                  Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. SprintPay-Services.app.lien du playstore");
+                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. $lien_android");
               },
               child: Padding(
                 padding: EdgeInsets.only(left: 20),
@@ -434,6 +415,75 @@ class walletTrans {
         "deviseLocale": deviseLocale,
         "toFirstname": toFirstname,
         "toCountryCode": toCountryCode,
+      };
+}
+
+class mtnTrans {
+  final String to;
+  final String description;
+  final int amount;
+  final double fees;
+  final String deviseLocale;
+
+
+  mtnTrans({this.to, this.amount, this.fees, this.description, this.deviseLocale});
+
+  mtnTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        fees = json['fees'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+      };
+}
+
+class eucTrans {
+  final String to;
+  final String description;
+  final int amount;
+  final double fees;
+  final String deviseLocale;
+  final String toFirstname;
+  final String toCountryCode;
+  final String from;
+  final String fromFirstname;
+  final String fromLastname;
+
+
+  eucTrans({this.to, this.amount, this.fees, this.description, this.deviseLocale, this.toFirstname, this.toCountryCode, this.from, this.fromFirstname, this.fromLastname});
+
+  eucTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        fees = json['fees'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        toFirstname = json['toFirstname'],
+        toCountryCode = json['toCountryCode'],
+        from = json['from'],
+        fromFirstname = json['fromFirstname'],
+        fromLastname = json['fromLastname'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "toFirstname": toFirstname,
+        "toCountryCode": toCountryCode,
+        "from": from,
+        "fromFirstname": fromFirstname,
+        "fromLastname": fromLastname,
       };
 }
 

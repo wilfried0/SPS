@@ -28,6 +28,18 @@ class ProcessStep extends StatelessWidget {
       margin: EdgeInsets.all(8),
       child: Column(
         children: <Widget>[
+          _logo == "marketimages/pharmacie.png" || _logo == "marketimages/tv.png"?Container():
+          Padding(
+            padding: EdgeInsets.only(right: 10),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Text("powered by SmobilPay", style: TextStyle(
+                color: Color(0xFF43899B),
+                fontSize: 8,
+                fontStyle: FontStyle.italic,
+              ),),
+            ),
+          ),
           Padding(
             padding: EdgeInsets.only(top: 10),
             child: Container(

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
@@ -151,7 +152,7 @@ class _PaysState extends State<Pays> {
                 ),
               ),
             ),
-            Expanded(child:
+            Expanded(child:data==null?CupertinoActivityIndicator(radius: 30,):
             ListView.builder(
                   itemCount: data==null?0:data.length,
                   itemBuilder: (BuildContext context, int i){

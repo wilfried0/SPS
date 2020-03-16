@@ -71,6 +71,9 @@ class _SendpieceState extends State<Sendpiece> {
         });
         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
       }else{
+        setState(() {
+          isLoadPiece =false;
+        });
         showInSnackBar("Service indisponible!", _scaffoldKey, 5);
       }
       return response.body;
@@ -78,14 +81,9 @@ class _SendpieceState extends State<Sendpiece> {
   }
 
 
-        Future<String> getImage(int q) async {
+  Future<String> getImage(int q) async {
       var image;
-      if(q == 0){
-        image = await ImagePicker.pickImage(source: ImageSource.gallery);
-        setState(() {
-          //_isAvatar = true;
-        });
-      }else if(q == 1){
+      if(q == 1){
         image = await ImagePicker.pickImage(source: ImageSource.gallery);
         setState(() {
           _isSelfie = true;
@@ -122,7 +120,7 @@ class _SendpieceState extends State<Sendpiece> {
           _isVerso = true;
         });
       }
-      print(image);
+      print("%%%%%%%%%%%%%%%%%%%%%%%%%% $image");
       if(image == null){
         setState(() {
           //_isAvatar = false;
@@ -193,6 +191,13 @@ class _SendpieceState extends State<Sendpiece> {
       );
     }
 
+  /*Future compressNow(File _imageFile, int q) async {
+    print("FILE SIZE BEFORE: " + _imageFile.lengthSync().toString());
+    await CompressImage.compress(imageSrc: _imageFile.path, desiredQuality: 80); //desiredQuality ranges from 0 to 100
+    print("FILE SIZE  AFTER: " + _imageFile.lengthSync().toString());
+    Upload(_imageFile, q);
+  }*/
+
     void Upload(File imageFile, int q) async {
       var _header = {
         "content-type" :  "multipart/form-data",
@@ -202,7 +207,8 @@ class _SendpieceState extends State<Sendpiece> {
       var length = await imageFile.length();
       print("taille: $length");
       var multipartFile = new http.MultipartFile('file', stream, length, filename: imageFile.path.split('/').last);
-      var uri = Uri.parse('http://74.208.183.205:8086/spkyc-identitymanager/upload');
+      var uri = Uri.parse('$base');
+      print("endpoint upload: $base");
       var request = new http.MultipartRequest("POST", uri);
       request.headers.addAll(_header);
       request.files.add(multipartFile);
@@ -232,15 +238,11 @@ class _SendpieceState extends State<Sendpiece> {
             });
           }
         });
-      }else{
+      } else{
         response.stream.transform(utf8.decoder).listen((value) {
           print("la valeur: $value");
         });
-        if(q == 0 || q == 4){
-          setState(() {
-            //_isAvatar = false;
-          });
-        }else if(q == 1 || q == 5){
+        if(q == 1 || q == 5){
           setState(() {
             _isSelfie = false;
           });
@@ -284,7 +286,7 @@ class _SendpieceState extends State<Sendpiece> {
             children: <Widget>[
               Padding(
                 padding: EdgeInsets.only(left: 20, right: 20),
-                child: Text("Pour effectuer vos opérations, vous devez envoyer votre photo (taille 4X4), appelée selfie, le recto et le verso d'une des pièces d'identité citées.\n\nVotre photo selfie ne doit pas contenir de lunettes, encore moins de chapeau ni de filtre.\n\nLes données incrites sur la pièce à envoyer doivent être lisibles.\n\nVos pièces seront validées dans les 60 minutes qui vont suivre l'envoi.", style: TextStyle(
+                child: Text("Pour effectuer vos opérations, vous devez envoyer votre photo (taille 4X4), appelée selfie, le recto et le verso d'une des pièces d'identité citées.\n\nVotre photo selfie ne doit pas contenir de lunettes, encore moins de chapeau ni de filtre.\n\nLes données incrites sur la pièce à envoyer doivent être lisibles.", style: TextStyle(
                     color: couleur_libelle_champ,
                     fontSize: taille_champ+3,
                     fontWeight: FontWeight.bold

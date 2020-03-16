@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
@@ -26,7 +27,7 @@ class _Encaisser1State extends State<Encaisser1> {
   String _code;
   PageController pageController;
   int currentPage = 0;
-  int choice = 0,indik=0;
+  int choice = 2,indik=2;
   var _userTextController;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   //final navigatorKey = GlobalKey<NavigatorState>();
@@ -120,7 +121,7 @@ class _Encaisser1State extends State<Encaisser1> {
           showInSnackBar("Service non disponible!");
         }
       });
-      //this.getUser();
+      //this.getUser();103587
     } else {
       _ackAlert(context);
     }
@@ -134,22 +135,24 @@ class _Encaisser1State extends State<Encaisser1> {
     String fee = "$base_url/transaction/getFeesTransaction";
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
-    return await http.post("$fee", body: body, headers: headers, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse("$fee"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.write(body);
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
         throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         fees = responseJson['fees'];
         newSolde = double.parse(montant)+fees;
         print(newSolde.toString());
@@ -164,10 +167,8 @@ class _Encaisser1State extends State<Encaisser1> {
         setState(() {
           isLoading = false;
         });
-        showInSnackBar("$statusCode ${response.body}");
+        showInSnackBar("Service indisponible!");
       }
-      return response.body;
-    });
   }
 
   Future<void> _ackAlert(BuildContext context) {
@@ -433,7 +434,7 @@ class _Encaisser1State extends State<Encaisser1> {
                             });
                           },
                           height: 136.0,
-                          items: [1,2,3,4,5].map((i) {
+                          items: [1,2,3].map((i) {
                             return Builder(
                               builder: (BuildContext context) {
                                 return getMoyen(i);
@@ -523,8 +524,6 @@ class _Encaisser1State extends State<Encaisser1> {
                                 case 0: code = "MOMO_TO_WALLET";break;
                                 case 1: code = "OM_TO_WALLET";break;
                                 case 2: code = "CARD_TO_WALLET";break;
-                                case 3: code = "EU_TO_WALLET";break;
-                                case 4: code = "CARD_TO_WALLET";break;//YUP_TO_WALLET
                               }
                               if(_formKey.currentState.validate()) {
                                 var getcommission = getCommission(
@@ -593,10 +592,6 @@ class _Encaisser1State extends State<Encaisser1> {
       break;
       case 3: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
       break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
-      break;
-      case 5: text = "YUP";img = 'marketimages/yup.jpg';
-      break;
     }
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -624,7 +619,7 @@ class _Encaisser1State extends State<Encaisser1> {
           child: Column(
             children: <Widget>[
               Container(
-                height: 85,
+                height: 80,
                 width: MediaQuery.of(context).size.width,
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.only(
