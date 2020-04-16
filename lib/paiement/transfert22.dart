@@ -7,6 +7,7 @@ import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
 import 'package:services/composants/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 import 'transfert1.dart';
 import 'transfert3.dart';
 
@@ -117,12 +118,59 @@ class _Transfert22State extends State<Transfert22> {
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
     url = '$baseUrl/add';
+    var _header = {
+      "accept": "application/json",
+      "content-type" : "application/json",
+      "Authorization": "Basic $credentials"
+    };
+    return await http.post(url, body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
+      final int statusCode = response.statusCode;
+      print(statusCode);
+      if (response.statusCode < 200 || json == null) {
+        setState(() {
+          isLoading = false;
+        });
+        throw new Exception("Error while fetching data");
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(response.body);
+        print(responseJson['result']);
+        setState(() {
+          isLoading = false;
+        });
+        if(responseJson['result'] == "Ok"){
+          setState(() {
+            this.getListUser();
+          });
+          showInSnackBar("Utilisateur ajouté avec succès", _scaffoldKey, 5);
+        }else{
+          setState(() {
+            this.getListUser();
+          });
+          showInSnackBar("Erreur lors de l'ajout de l'utilisateur", _scaffoldKey, 5);
+        }
+      }else {
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Echec de l'opération!", _scaffoldKey, 5);
+      }
+    });
+  }
+
+  Future<void> addUser2(var body) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    print("$_username, $_password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    url = '$baseUrl/add';
     HttpClient client = new HttpClient();
     client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
     HttpClientRequest request = await client.postUrl(Uri.parse(url));
-    request.headers.set('Accept', 'application/json');
+    request.headers.set('accept', 'application/json');
     request.headers.set('Authorization', 'Basic $credentials');
-    request.write(body);
+    request.add(utf8.encode(body));
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");
@@ -253,12 +301,12 @@ class _Transfert22State extends State<Transfert22> {
                   var _contact = new contact(
                     username: _user
                   );
-                  print(json.encode(_contact));
-                  /*Navigator.of(context).pop();
-                  this.addUser(json.encode(_contact));*/
+                  Navigator.of(context).pop();
+                  print("******************************* ${json.encode(_contact)}");
+                  this.addUser(json.encode(_contact));
                 });
-                _save();
-                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
+                /*_save();
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));*/
               },
             ),
             FlatButton(
@@ -288,13 +336,7 @@ class _Transfert22State extends State<Transfert22> {
   @override
   Widget build(BuildContext context) {
     marge = (5*MediaQuery.of(context).size.width)/414;
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      routes: <String, WidgetBuilder>{
-        "/transfert": (BuildContext context) =>new Transfert1(_code)
-      },
-      home: new Scaffold(
+    return new Scaffold(
         key: _scaffoldKey,
         appBar: new AppBar(
           elevation: 0.0,
@@ -497,8 +539,7 @@ class _Transfert22State extends State<Transfert22> {
           ],
         ),
         bottomNavigationBar: barreBottom,
-      ),
-    );
+      );
   }
 
   void _save() async {

@@ -11,7 +11,7 @@ description: A SprintPay services application
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 1.0.7+7
+version: 1.0.13+13
 
 environment:
   sdk: ">=2.5.2 <3.0.0"
@@ -61,7 +61,7 @@ dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "images/sps.png"
+  image_path: "images/logoios.png"
 
 dev_dependencies:
   flutter_launcher_icons: "^0.7.2"

@@ -31,6 +31,7 @@ class ItemSubService extends StatelessWidget {
             decoration: BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage(_merchant.logoFileId),
+                  fit:_merchant.id == 1?BoxFit.cover :BoxFit.contain
                 )),
           ),
         ),

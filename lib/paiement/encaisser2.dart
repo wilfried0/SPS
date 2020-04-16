@@ -141,7 +141,7 @@ class _Encaisser2State extends State<Encaisser2> {
     request.headers.set('accept', 'application/json');
     request.headers.set('content-type', 'application/json');
     request.headers.set('Authorization', 'Basic $credentials');
-    request.write(body);
+    request.add(utf8.encode(body));
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");

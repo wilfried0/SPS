@@ -27,7 +27,6 @@ class _Transfert2State extends State<Transfert2> {
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   String _name, _sername;
-  final navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState(){
@@ -58,15 +57,7 @@ class _Transfert2State extends State<Transfert2> {
   Widget build(BuildContext context) {
     marge = (5*MediaQuery.of(context).size.width)/414;
 
-    return new MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      routes: <String, WidgetBuilder>{
-        "/transfert": (BuildContext context) =>new Transfert1(_code),
-        "/transfert3": (BuildContext context) =>new Transfert3(_code),
-      },
-      home: new Scaffold(
+    return new Scaffold(
         key: _scaffoldKey,
         appBar: new AppBar(
           elevation: 0.0,
@@ -76,7 +67,6 @@ class _Transfert2State extends State<Transfert2> {
               onTap: (){
                 setState(() {
                   Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
-                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
                 });
               },
               child: Icon(Icons.arrow_back_ios,)),
@@ -398,7 +388,6 @@ class _Transfert2State extends State<Transfert2> {
           ],
         ),
         bottomNavigationBar: barreBottom,
-      ),
-    );
+      );
   }
 }

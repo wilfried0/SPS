@@ -49,22 +49,23 @@ class _SendpieceState extends State<Sendpiece> {
     _password = prefs.getString("password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var _header = {
-      "accept": "application/json",
-      "content-type" : "application/json",
-      "Authorization": "Basic $credentials"
-    };
-    print('Mon url $base_url/sendPiece');
-    return await http.post("$base_url/sendPiece", body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse("$base_url/sendPiece"));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.add(utf8.encode(body));
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+      if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoadPiece =false;
         });
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
+      }else if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
         print(responseJson);
         setState(() {
           isLoadPiece =false;
@@ -76,8 +77,7 @@ class _SendpieceState extends State<Sendpiece> {
         });
         showInSnackBar("Service indisponible!", _scaffoldKey, 5);
       }
-      return response.body;
-    });
+      return null;
   }
 
 

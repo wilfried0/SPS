@@ -23,18 +23,20 @@ class Connexion extends StatefulWidget {
 class _ConnexionState extends State<Connexion> {
 
   _ConnexionState();
-  String _username, _url, iso3, pays, _mySelection;
+  String _username, _url, iso3, pays, _mySelection,_sername;
   var _formKey = GlobalKey<FormState>(), flagUri;
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
-  bool isLoding =false;
+  bool isLoding =false, coched = false;
   int ad=3;
   FocusNode searchFocus = FocusNode();
+  var _usernameController;
 
   @override
   void initState() {
     this.lire();
     super.initState();
     _url = '$base_url/member/getUser/';
+    _usernameController = TextEditingController();
     Timer(Duration(milliseconds: 100), () {
       FocusScope.of(context).requestFocus(searchFocus);
     });
@@ -88,7 +90,7 @@ class _ConnexionState extends State<Connexion> {
     request.headers.set('Accept', 'application/json');
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
-
+    print(reply);
     if(response.statusCode == 200){
       var responseJson = json.decode(reply);
       print(responseJson);
@@ -183,6 +185,12 @@ class _ConnexionState extends State<Connexion> {
         ],
       )
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _usernameController.dispose();
   }
 
   //final navigatorKey = GlobalKey<NavigatorState>();
@@ -293,6 +301,7 @@ class _ConnexionState extends State<Connexion> {
                                 new Expanded(
                                   flex:10,
                                   child: new TextFormField(
+                                    controller: _usernameController,
                                     keyboardType: TextInputType.phone,
                                     style: TextStyle(
                                         fontSize: taille_libelle_champ+ad,
@@ -304,8 +313,10 @@ class _ConnexionState extends State<Connexion> {
                                       }else{
                                         if(_mySelection == "+33" && value.startsWith("0")){
                                             _username = _mySelection.substring(1)+value.substring(1);
+                                            _sername = value.substring(1);
                                         }else{
                                             _username = _mySelection.substring(1)+value;
+                                            _sername = value;
                                         }
                                         return null;
                                       }
@@ -324,6 +335,32 @@ class _ConnexionState extends State<Connexion> {
                             ),
                           ),
                         ),
+
+                        Row(
+                          children: <Widget>[
+                            Checkbox(
+                                activeColor: couleur_fond_bouton,
+                                value: coched,
+                                onChanged: (bool val) {
+                                  setState(() {
+                                    coched = val;
+                                  });
+                                }),
+                            GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  coched = !coched;
+                                });
+                              },
+                              child: Text("Se souvenir de moi", style: TextStyle(
+                                  color: couleur_fond_bouton,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize:taille_champ+ad
+                              ),),
+                            )
+                          ],
+                        ),
+
                         Padding(
                           padding: EdgeInsets.only(top: 10.0),
                           child: new GestureDetector(
@@ -390,11 +427,21 @@ class _ConnexionState extends State<Connexion> {
     prefs.setString('iso3', "$iso3");
     prefs.setString('pays', "$pays");
     prefs.setString('dial', "$_mySelection");
-
+    if(coched == true)
+      prefs.setString('coched', "$_sername");
+    else{}
   }
 
   lire() async {
     final prefs = await SharedPreferences.getInstance();
+    print("*********************** ${prefs.getString("coched")}");
+    if(prefs.getString("coched") == null || prefs.getString("coched") == "false"){
+      _usernameController = null;
+    }else{
+      setState(() {
+        _usernameController.text = prefs.getString("coched");
+      });
+    }
       if(prefs.getString("pays") == null){
         pays="Cameroun";
       }else{

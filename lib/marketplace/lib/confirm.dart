@@ -26,7 +26,7 @@ class _ConfirmState extends State<Confirm> {
   final Merchant _merchant;
   final CommonServiceItem _selectedServiceItem;
   final Transaction _transaction;
-  String _ville, _quartier, _pharmacy, coched;
+  String _ville, _quartier, _pharmacy, coched, _currency;
 
   _ConfirmState(this._merchant, this._selectedServiceItem, this._transaction);
   @override
@@ -42,7 +42,6 @@ class _ConfirmState extends State<Confirm> {
     } else {
       print("Null selected service");
     }
-    _transaction.currency = "XAF";
     print(_transaction.toJson());
   }
 
@@ -50,6 +49,8 @@ class _ConfirmState extends State<Confirm> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       coched = prefs.getString("coched");
+      _currency = prefs.getString("deviseLocale");
+      _transaction.currency = "$_currency";
       _ville = prefs.getString(Data.CITY.toString());
       _quartier = prefs.getString(Data.DISTRICT.toString());
       _pharmacy = prefs.getString(Data.PHARMACY.toString());

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 import 'package:services/marketplace/lib/api/ServerResponseValidator.dart';
 import 'package:services/marketplace/lib/models/CommonServiceItem.dart';
@@ -110,16 +110,24 @@ class _InitProcessScreenState extends State<InitProcessScreen> {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
-      var response = await http.get(
+
+      HttpClient client = new HttpClient();
+      client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+      HttpClientRequest request = await client.getUrl(Uri.parse(route));
+      request.headers.set('accept', 'application/json');
+      request.headers.set('content-type', 'application/json');
+      HttpClientResponse response = await request.close();
+      String reply = await response.transform(utf8.decoder).join();
+      /*var response = await http.get(
         Uri.encodeFull(route),
         headers: _header,
-      );
+      );*/
       print('statuscode ${response.statusCode} ' +
-          utf8.decode(response.bodyBytes));
+          reply);
       print('url $route');
       if (response.statusCode == 200) {
-        var responseValidator = ServerResponseValidator.fromJson(
-            jsonDecode(utf8.decode(response.bodyBytes)));
+        var responseValidator = ServerResponseValidator.fromJson(json.decode(reply)
+            /*jsonDecode(utf8.decode(response.bodyBytes))*/);
         if (responseValidator.isError()) {
           showInSnackBar("An occured while processing yout request");
         }

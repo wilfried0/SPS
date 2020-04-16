@@ -170,6 +170,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   }
 
   Future<void> getSolde() async {
+    print(MediaQuery.of(context).size.width);
     final prefs = await SharedPreferences.getInstance();
     _username = prefs.getString("username");
     _password = prefs.getString("password");
@@ -257,6 +258,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     lireNotif();
+    this.getSolde();
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
     double ad=100;
@@ -451,7 +453,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     ),
                     Padding(
                       padding: EdgeInsets.only(right: 20,top: 20),
-                      child: Icon(Icons.email,color: orange_F),
+                      child: Icon(nbNotif==0?Icons.notifications:Icons.notifications_active,color: orange_F),
                     ),
                   ],
                 ),

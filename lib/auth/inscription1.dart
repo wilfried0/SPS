@@ -91,7 +91,7 @@ class _Inscription1State extends State<Inscription1> {
     HttpClientRequest request = await client.postUrl(Uri.parse(url));
     request.headers.set('accept', 'application/json');
     request.headers.set('content-type', 'application/json');
-    request.write(body);
+    request.add(utf8.encode(body));
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");

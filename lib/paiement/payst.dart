@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/profile.dart';
 import 'package:services/composants/components.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,12 +19,13 @@ class _PaystState extends State<Payst> {
   List data;
   List unfilterData;
   String _code, route, deviseLocale, nomPays, codeIso3, codeIso2, from, dial;
-  final navigatorKey = GlobalKey<NavigatorState>();
-
+  String url;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   void initState(){
     _code = "";
+    url = "$base_url/transaction/getRateAmountByCurrency";
     super.initState();
     this._read();
   }
@@ -55,6 +59,26 @@ class _PaystState extends State<Payst> {
     }
   }
 
+  Future<void> getRateAmount(var body) async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.add(utf8.encode(body));
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      setState(() {
+        deviseLocale = "${responseJson['deviseLocale']}";
+      });
+    } else{
+      showInSnackBar("Un problème est survenu lors de la récupération du solde!", _scaffoldKey, 5);
+    }
+  }
+
   Future<bool>loadMap() async {
     var jsonText = await rootBundle.loadString('images/map.json');
     setState(() => this.data = json.decode(jsonText));
@@ -77,15 +101,8 @@ class _PaystState extends State<Payst> {
   @override
   Widget build(BuildContext context) {
     final marge = (14*MediaQuery.of(context).size.width)/414;
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      routes: <String, WidgetBuilder>{
-        "/transfert": (BuildContext context) =>new Transfert1(_code),
-        "/profil": (BuildContext context) =>new Profile(_code),
-      },
-      home: Scaffold(
+    return Scaffold(
+      key: _scaffoldKey,
         appBar: new AppBar(
           elevation: 0.0,
           backgroundColor: couleur_appbar,
@@ -94,7 +111,8 @@ class _PaystState extends State<Payst> {
           leading: InkWell(
               onTap: (){
                 setState(() {
-                  navigatorKey.currentState.pushNamed("/profil");
+                  //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile(_code)));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => Profile(_code)));
                 });
               },
               child: Icon(Icons.arrow_back_ios,)),
@@ -223,7 +241,8 @@ class _PaystState extends State<Payst> {
                         from = _code.split('^')[4];
                         print("Zone pays d'envoi $from");
                         _reg();
-                        navigatorKey.currentState.pushNamed("/transfert");
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => Transfert1(_code)));
+                        //navigatorKey.currentState.pushNamed("/transfert");
                       });
                       //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
                     },
@@ -269,9 +288,8 @@ class _PaystState extends State<Payst> {
                         from = _code.split('^')[4];
                         print("Zone pays d'envoi $from");
                         _reg();
-                        navigatorKey.currentState.pushNamed("/transfert");
-                        //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
-                        //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Pays()));
+                        Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
+                        //Navigator.push(context, MaterialPageRoute(builder: (context) => Transfert1(_code)));
                       });
                       //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Connexion(_code)));
                     },
@@ -282,8 +300,7 @@ class _PaystState extends State<Payst> {
           ],
         ),
         bottomNavigationBar: barreBottom,
-      ),
-    );
+      );
   }
 
 

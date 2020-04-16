@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:services/marketplace/lib/api/ServerResponseValidator.dart';
 import 'package:services/marketplace/lib/api/TransactionController.dart';
+import 'package:services/marketplace/lib/utils/SysSnackBar.dart';
 
 import '../../colors.dart';
 import '../BrowserScreen.dart';
@@ -12,7 +13,7 @@ class SpConfirmDialog {
   bool _loading = false;
   BuildContext _context;
 
-  show(BuildContext context, SpVerify spVerify) {
+  show(GlobalKey<ScaffoldState> scaffoldKey, BuildContext context, SpVerify spVerify) {
     _context = context;
     showDialog(
         context: context,
@@ -28,66 +29,63 @@ class SpConfirmDialog {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Expanded(
-                      flex: 1,
-                      child: Text(
-                          "Veuillez saisir le code de validation reçu par sms ci-dessous",
-                          style: new TextStyle(
-                              color: const Color(0xFF000000),
-                              fontWeight: FontWeight.w200,
-                              fontFamily: "Roboto")),
-                    ),
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                        decoration: new BoxDecoration(
-                          borderRadius: new BorderRadius.circular(10.0),
-                          border: Border.all(
-                              color: couleur_bordure, width: bordure),
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              TextFormField(
-                                  keyboardType: TextInputType.number,
-                                  controller: codeController,
-                                  decoration: InputDecoration.collapsed(
-                                      hintText: "Code"),
-                                  validator: (value) {
-                                    if (value.isEmpty)
-                                      return "Saisir un code";
-                                    else if (value.length != 6)
-                                      return "Code incorrect";
-                                    return null;
-                                  },
-                                  style: new TextStyle(
-                                      color: const Color(0xFF000000),
-                                      fontWeight: FontWeight.w200,
-                                      fontFamily: "Roboto"))
-                            ],
-                          ),
-                        ),
+                    Text(
+                        "Veuillez saisir le code de validation que vous recevrez par sms!",
+                        style: new TextStyle(
+                            color: const Color(0xFF000000),
+                            fontWeight: FontWeight.w200,
+                            fontFamily: "Roboto")),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                      decoration: new BoxDecoration(
+                        borderRadius: new BorderRadius.circular(10.0),
+                        border: Border.all(
+                            color: couleur_bordure, width: bordure),
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: TextFormField(
+                            keyboardType: TextInputType.number,
+                            controller: codeController,
+                            decoration: InputDecoration.collapsed(
+                            hintText: "Code",
+                                hintStyle: TextStyle(
+                                color: couleur_libelle_champ,
+                                fontSize:
+                                taille_libelle_champ),),
+                            validator: (value) {
+                              if (value.isEmpty)
+                                return "Saisir un code";
+                              else if (value.length != 6)
+                                return "Code incorrect";
+                              return null;
+                            },
+                            style: new TextStyle(
+                                color: const Color(0xFF000000),
+                                fontWeight: FontWeight.w200,
+                                fontFamily: "Roboto")),
                       ),
                     ),
-                    Visibility(
+                    /*Visibility(
                       visible: _loading,
                       child: LinearProgressIndicator(),
-                    ),
+                    ),*/
                     SizedBox(
                       width: 320.0,
                       child: RaisedButton(
                           onPressed: () {
                             if (_formKey.currentState.validate()) {
-                              spVerify.secretKey = codeController.text;
-                              _loading = true;
-                              new TransactionController()
-                                  .spConfirm(spVerify, onSuccess, onFailure,
-                                      onRequestComplete)
-                                  .catchError((e) {});
+                              if(_loading == true){
+                                SysSnackBar().show(scaffoldKey, "Requête déjà en cours");
+                              }else{
+                                spVerify.secretKey = codeController.text;
+                                _loading = true;
+                                new TransactionController()
+                                    .spConfirm(spVerify, onSuccess, onFailure,
+                                    onRequestComplete)
+                                    .catchError((e) {});
+                              }
                             }
                           },
                           color: const Color(0xFF0099ed),

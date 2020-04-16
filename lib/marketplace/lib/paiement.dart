@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
@@ -19,7 +21,6 @@ import 'models/Transaction.dart';
 import 'screen/BrowserScreen.dart';
 import 'screen/dialog/SpConfirmDialog.dart';
 import 'screen/item/ProcessStep.dart';
-import 'system/AppState.dart';
 import 'utils/Amount.dart';
 
 class Paiement extends StatefulWidget {
@@ -58,7 +59,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
   var _formKey = GlobalKey<FormState>();
   var _formKey_2 = GlobalKey<FormState>();
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  String _montant, _nom, _recepteur, _description;
+  String _montant, _nom, _recepteur, _description, amountCible, deviseLocale, country, devisebenef;
   String beneficiaryPhoneNumber, beneficiaryPhone;
   var _commission;
   String coched;
@@ -82,6 +83,27 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
     print("ma commission: $beneficiaryPhoneNumber");
   }
 
+  Future<void> getMontantCible() async {
+    String _url = "$base_url/user/soldeBeneficiaire/$deviseLocale/${double.parse(_transaction.amount)}/$country";
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_url));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("voilà**************************************************** $_url $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      setState(() {
+        amountCible = "${responseJson['balance'].toString()}" ;
+        devisebenef = "${responseJson['formattedBalance'].toString()}";
+      });
+    }else{
+      showInSnackBar("Erreur est survenu lors de la récupération du montant du destinataire!");
+    }
+    return null;
+  }
+
   getTotal(double amount, double commission) {
     return amount + commission;
   }
@@ -103,6 +125,8 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       coched = prefs.get("coched");
+      country = prefs.get("countryCible");
+      deviseLocale = prefs.get("deviseLocale");
       print("cochage: $coched");
       _montant = prefs.getString("montant") == null
           ? null
@@ -121,6 +145,8 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
       _transaction.buyerId = prefs.getString(BUYER_ID);
       _transaction.accountType = prefs.getString(ACCOUNT_TYPE);
       emailController.text = _transaction.buyerEmail;
+      _transaction.clientIpAddress = "127.0.0.0";
+      this.getMontantCible();
     });
   }
 
@@ -134,6 +160,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
   onSuccess(Map<String, dynamic> json) async {
     print(json.toString());
     var url = json["paymenturl"];
+    print("Mon url: $url");
     if (url != null)
       Navigator.push(
           context,
@@ -143,7 +170,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
       SpVerify spVerify = new SpVerify(
           spauthToken: _transaction.spauthToken,
           transactionId: json['transactionid']);
-      SpConfirmDialog().show(context, spVerify);
+      SpConfirmDialog().show(_scaffoldKey, context, spVerify);
     } else {
       Navigator.pop(context);
       Navigator.pop(context);
@@ -317,6 +344,33 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                             ],
                           ),
                         ),
+
+                        _merchant.category != Services.TELCO_CATEGORY || amountCible == null?Container():Padding(
+                          padding: EdgeInsets.only(top: 5, bottom: 5),
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  "Le bénéficiaire recevra",
+                                  style:
+                                  TextStyle(color: couleur_libelle_champ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                    "${getMillis(double.parse(amountCible).toString())} $devisebenef",
+                                    style: TextStyle(
+                                        color: couleur_fond_bouton,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: taille_libelle_champ + 3),
+                                    textAlign: TextAlign.end),
+                              ),
+                            ],
+                          ),
+                        ),
+
                         Padding(
                           padding: EdgeInsets.only(top: 5, bottom: 5),
                           child: Row(
@@ -903,15 +957,15 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                         isLoading = true;
                       });
                       new TransactionController()
-                          .pay(_transaction, onSuccess, onFailure,
-                          onRequestComplete)
+                          .pay(_transaction, onSuccess, onFailure, onRequestComplete)
                           .catchError((e) {
-                        showInSnackBar(
-                            "Impossible de traiter votre requete, veuillez verifiez votre connexion internet");
+                            print("voilà l'erreur :$e");
+                            showInSnackBar("Service indisponible!");
                       });
                     } on NoInternetException catch (e) {
                       // If the form is valid.
-                      showInSnackBar(e.message);
+                      showInSnackBar(
+                          "Impossible de traiter votre requete, veuillez verifiez votre connexion internet");
                     }
                   }
                 },

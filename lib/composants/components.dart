@@ -360,6 +360,28 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
   );
 }
 
+class getRateAmount {
+  final String countryCible;
+  final int amount;
+  final String deviseLocale;
+
+
+  getRateAmount({this.countryCible, this.amount, this.deviseLocale});
+
+  getRateAmount.fromJson(Map<String, dynamic> json)
+      :
+        countryCible = json['countryCible'],
+        amount = json['amount'],
+        deviseLocale = json['deviseLocale'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "countryCible": countryCible,
+        "amount": amount,
+        "deviseLocale": deviseLocale,
+      };
+}
+
 class getCommission {
   final String typeOperation;
   final String country;
@@ -771,12 +793,14 @@ Widget getMoyen(int index, BuildContext context, int indik) {
 double getHeight(int index) {
   switch (index) {
     case 1:
-      return 500;
+      return 555;
     case 2:
-      return 400;
+      return 455;
     case 3:
-      return 450;
+      return 500;
     case 4:
-      return 450;
+      return 500;
+    case 5:
+      return 500;
   }
 }

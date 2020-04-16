@@ -18,8 +18,10 @@ class TransactionController extends BaseController {
         }
       }
     } on NoInternetException catch (e) {
-      print(e.message);
-      onFailure(_responseValidator);
+      print("message d'erreur: $e");
+      _responseValidator = await post(Route.pay, transaction.toJson());
+      //print(e.message);
+      //onFailure(_responseValidator);
     } on InvalidResponseFormatException catch (e) {
       print("Wrong format : ${e.message}");
     } finally {

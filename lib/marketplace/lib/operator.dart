@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api/ServerResponseValidator.dart';
@@ -47,7 +47,7 @@ class _OperatorState extends State<Operator> {
   List<String> _category = List();
   List<CommonServiceItem> serviceItems = [];
   CommonServiceItem selectedServiceItem;
-  String _current, _url, _serviceNumber, currency, nom, recepteur;
+  String _current, _url, _serviceNumber, currency, nom, recepteur, countryCible="CMR";
   int _ischeck = 0, index = -1;
   double commission, montant = -1;
   List donnees;
@@ -103,24 +103,29 @@ class _OperatorState extends State<Operator> {
   }
 
   Future<String> getData(String route) async {
-    var _header = {
-      "accept": "application/json",
-      "content-type": "application/json",
-    };
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
-      var response = await http.get(
+
+      HttpClient client = new HttpClient();
+      client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+      HttpClientRequest request = await client.getUrl(Uri.parse(route));
+      request.headers.set('accept', 'application/json');
+      request.headers.set('content-type', 'application/json');
+      HttpClientResponse response = await request.close();
+      String reply = await response.transform(utf8.decoder).join();
+
+      /*var response = await http.get(
         Uri.encodeFull(route),
         headers: _header,
-      );
-      print('statuscode ${response.statusCode} ' +
-          utf8.decode(response.bodyBytes));
+      );*/
+      print('statuscode ${response.statusCode} ' +reply
+          /*utf8.decode(response.bodyBytes)*/);
       print('url $route');
       if (response.statusCode == 200) {
         try {
-          var responseValidator = ServerResponseValidator.fromJson(
-              jsonDecode(utf8.decode(response.bodyBytes)));
+          var responseValidator = ServerResponseValidator.fromJson(json.decode(reply)
+              /*jsonDecode(utf8.decode(response.bodyBytes))*/);
 
           if (responseValidator.isError()) {
             showInSnackBar(
@@ -254,6 +259,8 @@ class _OperatorState extends State<Operator> {
                                               couleur_libelle_champ),
                                           onChanged: (code) {
                                             _code = code.dialCode;
+                                            countryCible = code.codeIso;
+                                            print("helllllll $countryCible");
                                           },
                                         ))),
                                 new Expanded(
@@ -682,6 +689,8 @@ class _OperatorState extends State<Operator> {
                                   borderRadius: new BorderRadius.only(
                                     topLeft: Radius.circular(10.0),
                                     topRight: Radius.circular(10.0),
+                                    bottomLeft: Radius.circular(_ischeck != 2 && _merchant.id!=2?10.0:0.0),
+                                    bottomRight: Radius.circular(_ischeck != 2 && _merchant.id!=2?10.0:0.0),
                                   ),
                                   color: Colors.transparent,
                                   border: Border.all(
@@ -786,6 +795,12 @@ class _OperatorState extends State<Operator> {
                                   border: Border.all(
                                       color: couleur_bordure,
                                       width: bordure),
+                                  borderRadius: BorderRadius.only(
+                                    bottomRight: Radius.circular(10.0),
+                                    bottomLeft: Radius.circular(10.0),
+                                    topLeft: Radius.circular(0.0),
+                                    topRight: Radius.circular(0.0),
+                                  )
                                 ),
                                 height: hauteur_champ,
                                 child: Center(
@@ -1124,14 +1139,15 @@ class _OperatorState extends State<Operator> {
                               _transaction.beneficiaryEmail = null;
                             }
                             this._reg();
-                            if (selectedServiceItem != null)
+                            if (selectedServiceItem != null){
+                              this.save();
                               Navigator.push(
                                   context,
                                   PageTransition(
                                       type: PageTransitionType.fade,
                                       child: Confirm(_merchant,
                                           selectedServiceItem, _transaction)));
-                            else
+                            }else
                               showInSnackBar(
                                   "Service temporairement indisponible réessayer dans quelques secondes !!!");
                           }
@@ -1215,5 +1231,11 @@ class _OperatorState extends State<Operator> {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString('coched', "$coched");
     print("************************ $coched");
+  }
+
+  void save() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('countryCible', "$countryCible");
+    print("saved $countryCible");
   }
 }

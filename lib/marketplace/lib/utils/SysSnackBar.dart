@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
 class SysSnackBar {
-  void show(GlobalKey<ScaffoldState> scaffoldKey, String message) {
+  show(GlobalKey<ScaffoldState> scaffoldKey, String message) {
     scaffoldKey.currentState.showSnackBar(SnackBar(content: Text(message, textAlign: TextAlign.center,)));
   }
 

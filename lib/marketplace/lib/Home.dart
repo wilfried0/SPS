@@ -1,10 +1,10 @@
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:page_transition/page_transition.dart';
 import 'package:services/marketplace/lib/services.dart';
 import 'api/PharmacyController.dart';
@@ -45,35 +45,42 @@ class _HomeState extends State<Home> {
   }
 
   Future<String> getData(String my_url) async {
-    var _header = {
-      "accept": "application/json",
-      "content-type": "application/json",
-    };
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile ||
         connectivityResult == ConnectivityResult.wifi) {
-      var response = await http.get(
+
+      HttpClient client = new HttpClient();
+      client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+      HttpClientRequest request = await client.getUrl(Uri.parse(my_url));
+      request.headers.set('accept', 'application/json');
+      request.headers.set('content-type', 'application/json');
+      HttpClientResponse response = await request.close();
+      String reply = await response.transform(utf8.decoder).join();
+
+      /*var response = await http.get(
         Uri.encodeFull(my_url),
         headers: _header,
-      );
+      );*/
       print('statuscode ${response.statusCode}');
       print('url $my_url');
       if (response.statusCode == 200) {
         if (my_url == "$_url") {
           setState(() {
-            donnees = json.decode(utf8.decode(response.bodyBytes));
+            //donnees = json.decode(utf8.decode(response.bodyBytes));
+            donnees = json.decode(reply);
           });
 
           print("liste: ${donnees.toString()}");
           this.ckAlert(context);
         } else {
           setState(() {
-            _data = json.decode(utf8.decode(response.bodyBytes));
+            //_data = json.decode(utf8.decode(response.bodyBytes));
+            _data = json.decode(reply);
           });
           print("liste: ${_data.toString()}");
         }
       } else
-        print(response.body);
+        print(reply);
     } else {
       ackAlert(context);
     }

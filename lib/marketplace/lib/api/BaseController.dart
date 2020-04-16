@@ -1,22 +1,22 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:connectivity/connectivity.dart';
-import 'package:http/http.dart' as http;
 
 import 'Route.dart';
 import 'ServerResponseValidator.dart';
 
 class BaseController {
-  var _header = {
+  /*var _header = {
     "accept": "application/json",
     "content-type": "application/json",
-  };
+  };*/
 
   var _statusCode = 0;
 
   get statusCode => _statusCode;
 
   ///Make a post request
-  Future<ServerResponseValidator> post(
+  /*Future<ServerResponseValidator> post(
       String route, Map<String, dynamic> json) async {
     if (await deviceHasInternet())
       throw new NoInternetException("Please connect to internet");
@@ -27,10 +27,27 @@ class BaseController {
     var jsonResponse = utf8.decode(httpClient.bodyBytes);
     print(jsonResponse);
     return ServerResponseValidator.fromJson(jsonDecode(jsonResponse));
+  }*/
+
+  Future<ServerResponseValidator> post(
+      String route, Map<String, dynamic> json) async {
+    if (await deviceHasInternet())
+      throw new NoInternetException("Please connect to internet");
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(Route.build(route)));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.add(utf8.encode(jsonEncode(json)));
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("Sending data post $reply");
+    _statusCode = response.statusCode;
+    return ServerResponseValidator.fromJson(jsonDecode(reply));
   }
 
   ///Make a post request
-  Future<ServerResponseValidator> get(String route,
+  /*Future<ServerResponseValidator> get(String route,
       {String baseUrl = Route.baseUrl}) async {
     if (await deviceHasInternet())
       throw new NoInternetException("Please connect to internet");
@@ -42,6 +59,23 @@ class BaseController {
     var jsonResponse = utf8.decode(httpClient.bodyBytes);
     print(jsonResponse);
     return ServerResponseValidator.fromJson(jsonDecode(jsonResponse));
+  }*/
+
+  Future<ServerResponseValidator> get(String route,
+      {String baseUrl = Route.baseUrl}) async {
+    if (await deviceHasInternet())
+      throw new NoInternetException("Please connect to internet");
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_buildRoute(baseUrl, route)));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("Sending data get $reply");
+    print("Ma route $baseUrl/$route");
+    _statusCode = response.statusCode;
+    return ServerResponseValidator.fromJson(jsonDecode(reply));
   }
 
   ///Check if the device has internet access
@@ -59,7 +93,7 @@ class BaseController {
     return custom != null ? custom : Route.baseUrl;
   }
 
-  get header => _header;
+  //get header => _header;
 }
 
 class NoInternetException extends ControllerException {

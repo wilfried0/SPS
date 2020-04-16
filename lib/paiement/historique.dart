@@ -26,8 +26,6 @@ class Historique extends StatefulWidget {
 class _HistoriqueState extends State<Historique> with SingleTickerProviderStateMixin {
   _HistoriqueState(this._code);
   String _code, _url;
-  Future<Login> post;
-  //TabController _tabController;
   PageController pageController;
   int currentPage = 1, nb1, nb2, nb3, nb;
   String _username,deviseLocale, _password;
@@ -73,7 +71,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     prefs.setString("nomd", "$_name");
     prefs.setString("transactionid", "$_transactionid");
     prefs.setString("date", "$_date");
-    print("************************** nomd: $_name");
+    print("************************** nomd: $_fees");
+    print("************************** nomd: $_fromCountry");
   }
 
   Future<void> getHistorique() async {
@@ -301,7 +300,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       r = 1;l=1;
     }else if(_large> 411 && _large<412){
       filtre = taille_libelle_etape;
-      fromHeight = 200;
+      fromHeight = 210;
       topcagnotte = 40;
       bottomcagnotte = 70;
       hauteurcouverture = 300;
@@ -331,6 +330,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       enlvb = 60;
       enlevt = 20;
       r = 1;l=1;
+      grand = 0;
     }
     else if(_large>360){
       filtre = taille_libelle_etape;
@@ -471,7 +471,6 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                   padding: EdgeInsets.only(left: 20, right: 20, top: 20),
                   child: GestureDetector(
                     onTap: (){
-
                       _save(_fromCountry, _toCountry, _serviceName ,_toFirstName,_amount.toString().split('.')[0], _fees.toString(), _status, _nature ,_transactionid, _date);
                       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                     },
@@ -592,11 +591,11 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
 
   String getNature(String nature){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "TRANSFERT"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU"){
       _nature = "Transfert d'argent";
     }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
       _nature = "Recharge d'argent";
-    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE"){
+    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE" || nature == "TRANSFERT"){
       _nature = "Retrait d'argent";
     }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST"){
       _nature = "Paiement market...";

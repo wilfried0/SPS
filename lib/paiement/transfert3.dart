@@ -196,7 +196,7 @@ class _Transfert3State extends State<Transfert3> {
     request.headers.set('accept', 'application/json');
     request.headers.set('content-type', 'application/json');
     request.headers.set('Authorization', 'Basic $credentials');
-    request.write(body);
+    request.add(utf8.encode(body));
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");

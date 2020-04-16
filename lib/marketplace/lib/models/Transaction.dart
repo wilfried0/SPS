@@ -15,6 +15,7 @@ class Transaction {
   String serviceNumber;
   String spauthToken;
   String accountType;
+  String clientIpAddress;
 
   Transaction(
       {this.amount,
@@ -31,6 +32,7 @@ class Transaction {
         this.paymentType,
         this.sellableItemId,
         this.serviceNumber,
+        this.clientIpAddress,
         this.spauthToken});
 
   Transaction.fromJson(Map<String, dynamic> json) {
@@ -48,6 +50,7 @@ class Transaction {
     paymentType = json['paymentType'];
     sellableItemId = json['sellableItemId'];
     serviceNumber = json['serviceNumber'];
+    clientIpAddress = json['clientIpAddress'];
     spauthToken = json['spauthToken'];
   }
 
@@ -68,6 +71,7 @@ class Transaction {
     data['sellableItemId'] = this.sellableItemId;
     data['serviceNumber'] = this.serviceNumber;
     data['spauthToken'] = this.spauthToken;
+    data['clientIpAddress'] = this.clientIpAddress;
     data['account_type'] = this.accountType;
     return data;
   }

@@ -17,7 +17,7 @@ class ItemMerchand{
 }
 
 String baseUrl = /*"http://74.208.183.205:8086/marketplace";*/
-    "http://pcs.sprint-pay.com/marketplace";
+    "https://pcs.sprint-pay.com/marketplace";
 
 Future<void> ackAlert(BuildContext context) {
   return showDialog<void>(

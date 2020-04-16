@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:connectivity/connectivity.dart';
-import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:page_transition/page_transition.dart';
@@ -9,7 +8,6 @@ import 'package:services/auth/inscrip.dart';
 import 'package:services/composants/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:services/composants/components.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 // ignore: must_be_immutable

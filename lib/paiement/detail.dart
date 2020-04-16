@@ -30,7 +30,6 @@ class Detail extends StatefulWidget {
 class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   _DetailState(this._code);
   String _code;
-  Future<Login> post;
   int currentPage = 0, choix;
   String solde, idUser, _lieu, fromMember,exp,expName,_toMember, codeIso2, nomPays, iso, namePays, _url, toMember, userImage, deviseLocale, _serviceName, _name, _nomd, _amount, _fees, _status, _transactionid, _date, _payst, _paysf, _username;
   bool isLoding = false, replay = false;
@@ -38,7 +37,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb;
   int flex4, flex6, taille, enlev, rest, enlev1, enl;
   double haut, topi, bottomsolde,sold,topo22,top33, top34, top1, top, top2, top3,top4, topo1, topo2, hauteurcouverture, nomright, nomtop, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext;
-  final navigatorKey = GlobalKey<NavigatorState>();
+  //final navigatorKey = GlobalKey<NavigatorState>();
   List data;
 
   @override
@@ -123,6 +122,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
     var credentials = base64.encode(bytes);
     HttpClient client = new HttpClient();
     client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    print("xxxxxxxxxx $_url");
     HttpClientRequest request = await client.getUrl(Uri.parse("$_url"));
     request.headers.set('accept', 'application/json');
     request.headers.set('content-type', 'application/json');
@@ -133,7 +133,6 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
     print("body $reply");
     if(response.statusCode == 200){
       var responseJson = json.decode(reply);
-      print(responseJson.toString());
       setState(() {
         _toMember = responseJson['toMember'];
         prefs.setString("to", responseJson['toMember']);
@@ -156,6 +155,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
         iso = responseJson['fromCountryISO'].toString();
         fromMember = responseJson['fromMemeber'];
         exp = responseJson['username'];
+        print("exp exp exp $exp");
       });
       this.geUserByPhone(exp);
       prefs.setString("to", _toMember);
@@ -193,11 +193,11 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
 
   String getNature(String nature){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "TRANSFERT"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU"){
       _nature = "Transfert d'argent";
     }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET" || nature == "WALLET_TO_YUP"){
       _nature = "Recharge d'argent";
-    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE"){
+    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE" || nature == "TRANSFERT"){
       _nature = "Retrait d'argent";
     }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST" || nature == "SPRINTPAY_TO_WALLET" || nature == "SPAPI_TO_WALLET"){
       _nature = "Paiement marketplace";
@@ -240,15 +240,15 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       _natures = "MTN Mobile Money -> Wallet";
       _code = "0";
       _lieu = "-1";
-    }else if(nature == "TRANSFERT"){
+    }/*else if(nature == "TRANSFERT"){
       _natures = "YUP -> Wallet";
       _code = "4";
       _lieu = "-1";
-    }else if(nature == "WALLET_TO_MTN"){
+    }*/else if(nature == "WALLET_TO_MTN"){
       _natures = "Wallet -> MTN Mobile Money";
       _code = "0";
       _lieu = "-2";
-    }else if(nature == "WALLET_TO_OM"){
+    }else if(nature == "WALLET_TO_OM" || nature == "TRANSFERT"){
       _natures = "Wallet -> ORANGE Money";
       _code = "1";
       _lieu = "-2";
@@ -408,16 +408,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       enl = 2;
     }
 
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      routes: <String, WidgetBuilder>{
-        "/transfert": (BuildContext context) =>new Transfert3("+33^FR^France^FRA^0"),
-        "/retrait": (BuildContext context) =>new Retrait1(_code),
-        "/encaisser": (BuildContext context) =>new Encaisser1(_code)
-      },
-      debugShowCheckedModeBanner: false,
-      home: new Scaffold(
+    return new Scaffold(
         key: _scaffoldKey,
         resizeToAvoidBottomPadding: false,
         backgroundColor: bleu_F,
@@ -656,7 +647,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: top1+100, left: 30, right: 30),
+                padding: EdgeInsets.only(top: top1+105, left: 30, right: 30),
                 child: Container(
                   height: 1,
                   width: MediaQuery.of(context).size.width-40,
@@ -697,7 +688,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: top1+160, left: 30, right: 30),
+                padding: EdgeInsets.only(top: top1+170, left: 30, right: 30),
                 child: Container(
                   height: 1,
                   width: MediaQuery.of(context).size.width-40,
@@ -708,7 +699,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
               ),
 
               Padding(
-                padding: EdgeInsets.only(top: top1+180, left: 50, right: 20),
+                padding: EdgeInsets.only(top: top1+190, left: 50, right: 20),
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -759,7 +750,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: top1+220, left: 30, right: 30),
+                padding: EdgeInsets.only(top: top1+230, left: 30, right: 30),
                 child: Container(
                   height: 1,
                   width: MediaQuery.of(context).size.width-40,
@@ -770,7 +761,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
               ),
 
               Padding(
-                padding: EdgeInsets.only(top: top1+240, left: 50, right: 20),
+                padding: EdgeInsets.only(top: top1+250, left: 50, right: 20),
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -800,7 +791,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: top1+280, left: 30, right: 30),
+                padding: EdgeInsets.only(top: top1+290, left: 30, right: 30),
                 child: Container(
                   height: 1,
                   width: MediaQuery.of(context).size.width-40,
@@ -811,7 +802,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
               ),
 
               Padding(
-                padding: EdgeInsets.only(top: top1+300, left: 50, right: 20),
+                padding: EdgeInsets.only(top: top1+310, left: 50, right: 20),
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -842,7 +833,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
               ),
 
               Padding(
-                padding: EdgeInsets.only(top: top1+340, left: 30, right: 30),
+                padding: EdgeInsets.only(top: top1+350, left: 30, right: 30),
                 child: Container(
                   height: 1,
                   width: MediaQuery.of(context).size.width-40,
@@ -853,7 +844,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
               ),
 
               Padding(
-                padding: EdgeInsets.only(top: top1+360, left: 50, right: 20),
+                padding: EdgeInsets.only(top: top1+370, left: 50, right: 20),
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -884,7 +875,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
               ),
 
               Padding(
-                padding: EdgeInsets.only(top: top1+400, left: 30, right: 30),
+                padding: EdgeInsets.only(top: top1+415, left: 30, right: 30),
                 child: Container(
                   height: 1,
                   width: MediaQuery.of(context).size.width-40,
@@ -895,7 +886,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
               ),
 
               Padding(
-                padding: EdgeInsets.only(top: top1+420, left: 50, right: 20),
+                padding: EdgeInsets.only(top: top1+435, left: 50, right: 20),
                 child: Row(
                   children: <Widget>[
                     Expanded(
@@ -925,7 +916,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: top1+460, left: 30, right: 30),
+                padding: EdgeInsets.only(top: top1+475, left: 30, right: 30),
                 child: Container(
                   height: 1,
                   width: MediaQuery.of(context).size.width-40,
@@ -937,8 +928,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   String getDestinataireWari(){
@@ -964,6 +954,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   }
 
   Future<void> geUserByPhone(String phone) async {
+    print("url: $base_url/transaction/getUserByUsername/$phone");
     HttpClient client = new HttpClient();
     client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
     HttpClientRequest request = await client.getUrl(Uri.parse("$base_url/transaction/getUserByUsername/$phone"));

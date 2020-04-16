@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_inappbrowser/flutter_inappbrowser.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
@@ -7,7 +8,7 @@ import 'package:services/composants/components.dart';
 import 'package:services/composants/transition.dart';
 import 'package:services/paiement/encaisser2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
+
 import 'confirma.dart';
 import 'echec.dart';
 
@@ -65,19 +66,19 @@ class _WebviewState extends State<IosWebview> {
     print("$_username, $_password");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
-    var headers = {
-      "Accept": "application/json",
-      "Authorization": "Basic $credentials",
-      "content-type":"application/json"
-    };
     var url = "$base_url/transaction/checkStatus/$id";
-    http.Response response = await http.get(url, headers: headers);
-    final int statusCode = response.statusCode;
-    print('getStatus voici le statusCode $statusCode');
-    print('getStatus voici le body ${response.body}');
-    print("le status: $_status");
-    if(statusCode == 200){
-      var responseJson = json.decode(response.body);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
       _status = responseJson['status'];
       if(_status == "CREATED"){
         if(temps <= 0){

@@ -30,21 +30,22 @@ class _Transfert1State extends State<Transfert1> {
   // ignore: non_constant_identifier_names
   int recenteLenght, archiveLenght, populaireLenght, id_kitty;
   var _formKey = GlobalKey<FormState>();
-  var _categorie = ['Soutien familial', 'Frais medicaux', 'Achat marchandise', 'Financement projet', 'Investissement', 'Autre'];
+  var _categorie = ['Soutien familial', 'Frais médicaux', 'Achat marchandise', 'Financement projet', 'Investissement', 'Autre'];
   int flex4, flex6, taille, enlev, rest, enlev1, indik=0, lieu, selectedRadio;
-  double ad,_taill,gauch,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
+  double ad,_taill,amountCible, gauch,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   final navigatorKey = GlobalKey<NavigatorState>();
   List data, list;
   Color color;
   bool isLoadClient = false, isLoadDirect = false;
   // ignore: non_constant_identifier_names
-  String kittyImage,_motif,nomPays,codeIso2, from, firstnameBenef,solde,kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
+  String kittyImage,_url,_motif,nomPays,codeIso2, from, firstnameBenef,solde,kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
 
   @override
   void initState() {
     //from = _code.split('^')[4];
     super.initState();
     _code = "$_code^$indik";
+    _url = "$base_url/transaction/getRateAmountByCurrency";
     this.read();
     //_userTextController = new MoneyMaskedTextController(decimalSeparator: '', thousandSeparator: '.', precision: 0);
   }
@@ -113,7 +114,7 @@ class _Transfert1State extends State<Transfert1> {
     request.headers.set('accept', 'application/json');
     request.headers.set('content-type', 'application/json');
     request.headers.set('Authorization', 'Basic $credentials');
-    request.write(body);
+    request.add(utf8.encode(body));
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");
@@ -169,6 +170,50 @@ class _Transfert1State extends State<Transfert1> {
       return null;
   }
 
+  Future<String> getRateAmountByCurrency(var body, int l) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(_url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.add(utf8.encode(body));
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    print("url $_url");
+    if (response.statusCode < 200 || json == null) {
+      throw new Exception("Error while fetching data");
+    }else if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      amountCible = responseJson['amountCible'];
+      if(amountCible<500){
+        setState(() {
+          isLoadDirect = false;
+        });
+        showInSnackBar("Le montant doit être supérieur ou égal à 500 XAF");
+      }else{
+        var getcommission = getCommission(
+            typeOperation: l==1?"WALLET_TO_EUC":"WALLET_TO_EUM",
+            country: "$country",
+            amount: int.parse(this.montant),
+            deviseLocale: deviseLocale
+        );
+        print(json.encode(getcommission));
+        checkConnection(json.encode(getcommission), l);
+      }
+    }else {
+      showInSnackBar("Service indisponible!");
+    }
+    return null;
+  }
+
   Future<void> _ackAlert(BuildContext context) {
     return showDialog<void>(
       context: context,
@@ -203,20 +248,30 @@ class _Transfert1State extends State<Transfert1> {
                     onTap: (){
                       if(q == 0){
                         Navigator.pop(context);
-                        if(int.parse(this.montant)<500){
-                          setState(() {
-                            isLoadDirect = false;
-                          });
-                          showInSnackBar("Le montant doit être supérieur ou égal à 500");
+                        if(deviseLocale == 'XAF'){
+                          if(int.parse(montant)<500){
+                            setState(() {
+                              isLoadDirect = false;
+                            });
+                            showInSnackBar("Le montant doit être supérieur ou égal à 500 XAF");
+                          }else{
+                            var getcommission = getCommission(
+                                typeOperation: "WALLET_TO_EUC",
+                                country: "$country",
+                                amount: int.parse(this.montant),
+                                deviseLocale: deviseLocale
+                            );
+                            print(json.encode(getcommission));
+                            checkConnection(json.encode(getcommission), 1);
+                          }
                         }else{
-                          var getcommission = getCommission(
-                              typeOperation: "WALLET_TO_EUC",
-                              country: "$country",
+                          var getrateAmount = getRateAmount(
+                              countryCible: "$country",
                               amount: int.parse(this.montant),
                               deviseLocale: deviseLocale
                           );
-                          print(json.encode(getcommission));
-                          checkConnection(json.encode(getcommission), 1);
+                          print(json.encode(getrateAmount));
+                          this.getRateAmountByCurrency(json.encode(getrateAmount), 1);
                         }
                       }else{
                         Navigator.pop(context);//Vers un compte mobile WARI
@@ -256,20 +311,30 @@ class _Transfert1State extends State<Transfert1> {
                       onTap: (){
                         if(q == 0){
                           Navigator.pop(context);
-                          if(int.parse(this.montant)<500){
-                            setState(() {
-                              isLoadDirect = false;
-                            });
-                            showInSnackBar("Le montant doit être supérieur ou égal à 500");
+                          if(deviseLocale == 'XAF'){
+                            if(int.parse(montant)<500){
+                              setState(() {
+                                isLoadDirect = false;
+                              });
+                              showInSnackBar("Le montant doit être supérieur ou égal à 500 XAF");
+                            }else{
+                              var getcommission = getCommission(
+                                  typeOperation: "WALLET_TO_EUM",
+                                  country: "$country",
+                                  amount: int.parse(this.montant),
+                                  deviseLocale: deviseLocale
+                              );
+                              print(json.encode(getcommission));
+                              checkConnection(json.encode(getcommission), 1);
+                            }
                           }else{
-                            var getcommission = getCommission(
-                                typeOperation: "WALLET_TO_EUM",
-                                country: "$country",
+                            var getrateAmount = getRateAmount(
+                                countryCible: "$country",
                                 amount: int.parse(this.montant),
                                 deviseLocale: deviseLocale
                             );
-                            print(json.encode(getcommission));
-                            checkConnection(json.encode(getcommission), 2);
+                            print(json.encode(getrateAmount));
+                            this.getRateAmountByCurrency(json.encode(getrateAmount), 2);
                           }
                         }else{
                           Navigator.pop(context);//Vers un compte bancaire WARI
@@ -310,27 +375,6 @@ class _Transfert1State extends State<Transfert1> {
         );
       },
     );
-  }
-
-  Future<bool>_onBackPressed(){
-    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
-    return null;
-      /*showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Exit ?"),
-        actions: <Widget>[
-          FlatButton(
-            child: Text("No"),
-              onPressed: () => Navigator.pop(context, false),
-          ),
-          FlatButton(
-            child: Text("Yes"),
-            onPressed: () => Navigator.pop(context, true),
-          )
-        ],
-      )
-    );*/
   }
 
   @override

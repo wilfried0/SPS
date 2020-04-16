@@ -1,5 +1,5 @@
 class Route {
-  static const String baseUrl = /*"http://74.208.183.205:8086/marketplace";*/"http://pcs.sprint-pay.com/marketplace";
+  static const String baseUrl = /*"http://74.208.183.205:8086/marketplace";*/"https://pcs.sprint-pay.com/marketplace";
 
   static String pay = "payment";
   static String merchantServices = "items";
