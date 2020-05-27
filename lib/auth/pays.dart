@@ -73,14 +73,13 @@ class _PaysState extends State<Pays> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                  navigatorKey.currentState.pushNamed("/profil");
-                });
+          leading: IconButton(
+              onPressed: (){
+                navigatorKey.currentState.pushNamed("/profil");
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: bleu_F),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
+          //iconTheme: new IconThemeData(color: couleur_fond_bouton),
         ),
         body: Column(
           children: <Widget>[

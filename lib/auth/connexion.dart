@@ -290,11 +290,13 @@ class _ConnexionState extends State<Connexion> {
                                       ),
                                       initialSelection:_mySelection,
                                       onChanged: (CountryCode code) {
-                                        _mySelection = code.dialCode.toString();
-                                        flagUri = "${code.flagUri}";
-                                        iso3 = "${code.codeIso}";
-                                        //print(iso3);
-                                        pays = "${code.name}";
+                                       setState(() {
+                                         _mySelection = code.dialCode.toString();
+                                         flagUri = "${code.flagUri}";
+                                         iso3 = "${code.codeIso}";
+                                         //print(iso3);
+                                         pays = "${code.name}";
+                                       });
                                       },
                                     )
                                 ),
@@ -367,8 +369,9 @@ class _ConnexionState extends State<Connexion> {
                             onTap: () {
                               setState(() {
                                 if(_formKey.currentState.validate()){
+                                  _username = _username.replaceAll(" ", "");
                                   print(_username);
-                                  if(tryParse('$_username')==false){
+                                  if(tryParse('${_username.replaceAll(" ", "")}')==false){
                                     showInSnackBar("Numéro de téléphone invalide!");
                                   }else {
                                     checkConnection();
@@ -427,9 +430,10 @@ class _ConnexionState extends State<Connexion> {
     prefs.setString('iso3', "$iso3");
     prefs.setString('pays', "$pays");
     prefs.setString('dial', "$_mySelection");
-    if(coched == true)
+    if(coched == true) {
       prefs.setString('coched', "$_sername");
-    else{}
+    }else{
+    }
   }
 
   lire() async {
@@ -439,6 +443,7 @@ class _ConnexionState extends State<Connexion> {
       _usernameController = null;
     }else{
       setState(() {
+        coched = true;
         _usernameController.text = prefs.getString("coched");
       });
     }

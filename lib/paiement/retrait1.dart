@@ -288,15 +288,11 @@ class _Retrait1State extends State<Retrait1> {
                     padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
                     child: Row(
                       children: <Widget>[
-                        GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                Navigator.pop(context);
-                                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
-                              });
+                        IconButton(
+                            onPressed: (){
+                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
                             },
-                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                            icon: Icon(Icons.arrow_back_ios,color: Colors.white,)
                         ),
                         GestureDetector(
                           onTap: (){
@@ -530,7 +526,7 @@ class _Retrait1State extends State<Retrait1> {
                                 if(value.isEmpty){
                                   return 'Champ téléphone vide !';
                                 }else{
-                                  _to = "$value";
+                                  _to = "${_mySelection.substring(1)}$value";
                                   return null;
                                 }
                               },

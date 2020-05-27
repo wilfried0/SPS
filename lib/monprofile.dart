@@ -26,21 +26,16 @@ class Monprofile extends StatefulWidget {
 class _MonprofileState extends State<Monprofile> {
   _MonprofileState();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  int currentPage = 0;
   bool masque;
-  int choice = 0, indik=1;
+  int choice = 0;
   var _formKey = GlobalKey<FormState>();
-  // ignore: non_constant_identifier_names
-  int recenteLenght, archiveLenght, populaireLenght, flex1, flex2, id_kitty, montant;
   bool isLoding = false, _isHidden = true,hadSentpieces, _isHidden1 = true, isLoadPiece = false, _isSelfie = false, _isRecto = false, _isVerso = false, _isAvatar = false;
-  int flex4, flex6, taille, enlev, rest, enlev1, choix;
-  double _tail, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   String _image,nameStatus, _selfie, _recto, _verso, _username, _password, _password1, _password2, _passwordold, _url;
   var _nomController, _paysController, _villeController, _quartierController, _emailController, _contactController, _parrainController;
   var _categorie = ['Carte Nationale d\'identité', 'Passeport', 'Carte de séjour'];
   var _cat = ['Facture d\'eau', 'Facture d\'electricite', 'Bulletin de paye', 'Facture de telephone', 'Autre justificatif de revenu'];
   // ignore: non_constant_identifier_names
-  String kittyImage,pieceName, _platformVersion, monstatus, momo_url, data, _email, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, endDate, startDate, title, suggested_amount, amount, description, number, nom, email, tel, mot, _nom, _ville, _quartier, _pays;
+  String kittyImage,pieceName, monstatus, momo_url, data, _email, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, endDate, startDate, title, suggested_amount, amount, description, number, nom, email, tel, mot, _nom, _ville, _quartier, _pays;
 
   @override
   void initState() {
@@ -56,7 +51,7 @@ class _MonprofileState extends State<Monprofile> {
     this.checkStatus();
     this.lire();
   }
-  
+
 
   @override
   void dispose() {
@@ -157,22 +152,22 @@ class _MonprofileState extends State<Monprofile> {
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");
     print("body $reply");
-      if (response.statusCode < 200 || json == null) {
-        setState(() {
-          isLoadPiece =false;
-        });
-      }else if(response.statusCode == 200){
-        setState(() {
-          isLoadPiece =false;
-        });
-        showInSnackBar("Pièces envoyées avec succès!\nVous pourrez effectuer vos opérations dès que vos pièces seront approuvées.", _scaffoldKey, 10);
-      }else {
-        setState(() {
-          isLoadPiece =false;
-        });
-        showInSnackBar("Service indisponible!", _scaffoldKey, 5);
-      }
-      return null;
+    if (response.statusCode < 200 || json == null) {
+      setState(() {
+        isLoadPiece =false;
+      });
+    }else if(response.statusCode == 200){
+      setState(() {
+        isLoadPiece =false;
+      });
+      showInSnackBar("Pièces envoyées avec succès!\nVous pourrez effectuer vos opérations dès que vos pièces seront approuvées.", _scaffoldKey, 10);
+    }else {
+      setState(() {
+        isLoadPiece =false;
+      });
+      showInSnackBar("Service indisponible!", _scaffoldKey, 5);
+    }
+    return null;
   }
 
 
@@ -278,15 +273,17 @@ class _MonprofileState extends State<Monprofile> {
     request.headers.set('Authorization', 'Basic $credentials');
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
-    print("statusCode ${response.statusCode}");
-    print("body $reply");
+    print("Mon url $_url");
+    print("Code ${response.statusCode}");
+    print("coprss $reply");
     if(response.statusCode == 200){
       var responseJson = json.decode(reply);
       setState(() {
-        hadSentpieces = responseJson['hadSentpieces'];
-        nameStatus = responseJson['profil']['name'].toString().toUpperCase();
+        //hadSentpieces = responseJson['hadSentpieces'];
+        nameStatus = responseJson['profil']['name'].toString();
       });
     }
+    print("**************** la traversée ********************");
   }
 
   /*Future<void> checkStatus() async {
@@ -312,58 +309,58 @@ class _MonprofileState extends State<Monprofile> {
 
   Future<String> getImage(int q) async {
     var image;
-      if(q == 0){
-        image = await ImagePicker.pickImage(source: ImageSource.gallery);
-        setState(() {
-          _isAvatar = true;
-        });
-      }else if(q == 1){
-        image = await ImagePicker.pickImage(source: ImageSource.gallery);
-        setState(() {
-          _isSelfie = true;
-        });
-      }else if(q == 2){
-        image = await ImagePicker.pickImage(source: ImageSource.gallery);
-        setState(() {
-          _isRecto = true;
-        });
-      }else if(q == 3){
-        image = await ImagePicker.pickImage(source: ImageSource.gallery);
-        setState(() {
-          _isVerso = true;
-        });
-      }else if(q == 4){
-        print("q vaut: $q");
-        image = await ImagePicker.pickImage(source: ImageSource.camera);
-        setState(() {
-          _isAvatar = true;
-        });
-      }else if(q == 5){
-        image = await ImagePicker.pickImage(source: ImageSource.camera);
-        print("hello selfie 5");
-        setState(() {
-          _isSelfie = true;
-        });
-      }else if(q == 6){
-        image = await ImagePicker.pickImage(source: ImageSource.camera);
-        setState(() {
-          _isRecto = true;
-        });
-      }else if(q == 7){
-        image = await ImagePicker.pickImage(source: ImageSource.camera);
-        setState(() {
-          _isVerso = true;
-        });
-      }
+    if(q == 0){
+      image = await ImagePicker.pickImage(source: ImageSource.gallery);
+      setState(() {
+        _isAvatar = true;
+      });
+    }else if(q == 1){
+      image = await ImagePicker.pickImage(source: ImageSource.gallery);
+      setState(() {
+        _isSelfie = true;
+      });
+    }else if(q == 2){
+      image = await ImagePicker.pickImage(source: ImageSource.gallery);
+      setState(() {
+        _isRecto = true;
+      });
+    }else if(q == 3){
+      image = await ImagePicker.pickImage(source: ImageSource.gallery);
+      setState(() {
+        _isVerso = true;
+      });
+    }else if(q == 4){
+      print("q vaut: $q");
+      image = await ImagePicker.pickImage(source: ImageSource.camera);
+      setState(() {
+        _isAvatar = true;
+      });
+    }else if(q == 5){
+      image = await ImagePicker.pickImage(source: ImageSource.camera);
+      print("hello selfie 5");
+      setState(() {
+        _isSelfie = true;
+      });
+    }else if(q == 6){
+      image = await ImagePicker.pickImage(source: ImageSource.camera);
+      setState(() {
+        _isRecto = true;
+      });
+    }else if(q == 7){
+      image = await ImagePicker.pickImage(source: ImageSource.camera);
+      setState(() {
+        _isVerso = true;
+      });
+    }
     print("%%%%%%%%%%%%%%%%%%%%%%%%%% $image");
-      if(image == null){
-        setState(() {
-          _isAvatar = false;
-          _isSelfie = false;
-          _isRecto = false;
-          _isVerso = false;
-        });
-      }else
+    if(image == null){
+      setState(() {
+        _isAvatar = false;
+        _isSelfie = false;
+        _isRecto = false;
+        _isVerso = false;
+      });
+    }else
       Upload(image, q);
     return null;
   }
@@ -375,6 +372,7 @@ class _MonprofileState extends State<Monprofile> {
 
     var stream = new http.ByteStream(DelegatingStream.typed(imageFile.openRead()));
     var length = await imageFile.length();
+    print("************* la taille $length");
     var multipartFile = new http.MultipartFile('file', stream, length, filename: imageFile.path.split('/').last);
     var uri = Uri.parse('$base');
     var request = new http.MultipartRequest("POST", uri);
@@ -455,136 +453,6 @@ class _MonprofileState extends State<Monprofile> {
 
   @override
   Widget build(BuildContext context) {
-    final _large = MediaQuery.of(context).size.width;
-    if(_large<=320){
-      hauteurcouverture = 150;
-      nomright = 0;
-      nomtop = 130;
-      datetop = 10;
-      titretop = 190;
-      titreleft = 20;
-      amounttop = 210;
-      amountleft = 20;
-      amountright = 20;
-      topcolect = 235;
-      topphoto = 250;
-      bottomphoto = 40;
-      desctop = 290; //pour l'étoile et Agriculture
-      descbottom = 0;
-      flex4 = 1;
-      flex6 = 5;
-      bottomtext = 35;
-      toptext = 260;
-      taille = 39;
-      enlev = 0;
-      rest = 30;
-      enlev1 = 243;
-      right1 = 120;
-      left1 = 0;
-      social = 25;
-      topo = 470;
-      div1 = 387;
-      margeleft = 11.5;
-      margeright = 11;
-      flex1 = 8;
-      flex2 = 4;
-    }else if(_large>320 && _large<=360){
-      left1 = 0;
-      right1 = 150;
-      hauteurcouverture = 300;
-      nomright =  MediaQuery.of(context).size.width-330;
-      nomtop = 280;
-      datetop = 10;
-      titretop = 340;
-      titreleft = 20;
-      amounttop = 360;
-      amountleft = 20;
-      amountright = 20;
-      topcolect = 385;
-      topphoto = 250;
-      bottomphoto = 0;
-      desctop = 490;
-      descbottom = 20;
-      flex4 = 5;
-      flex6 = 6;
-      bottomtext = 50;
-      toptext = 420;
-      taille = 250;
-      enlev = 104;
-      rest = 40;
-      enlev1 = 260;
-      social = 30;
-      topo = 480;
-      div1 = 388;
-      margeleft = 12.5;
-      margeright = 12.5;
-      flex1 = 8;
-      flex2 = 3;
-    }else if(_large == 375){
-      flex1 = 8;
-      flex2 = 4;
-      left1 = 0;
-      right1 = 197;
-      hauteurcouverture = 300;
-      nomright =  MediaQuery.of(context).size.width-330;
-      nomtop = 280;
-      datetop = 10;
-      titretop = 340;
-      titreleft = 20;
-      amounttop = 360;
-      amountleft = 20;
-      amountright = 20;
-      topcolect = 385;
-      topphoto = 250;
-      bottomphoto = 0;
-      desctop = 490;
-      descbottom = 20;
-      flex4 = 5;
-      flex6 = 6;
-      bottomtext = 50;
-      toptext = 420;
-      taille = 250;
-      enlev = 104;
-      rest = 40;
-      enlev1 = 260;
-      social = 30;
-      topo = 480;
-      div1 = 387;
-      margeleft = 13;
-      margeright = 13;
-    }else if(_large>360){
-      flex1 = 9;
-      flex2 = 3;
-      left1 = 0;
-      right1 = 197;
-      hauteurcouverture = 300;
-      nomright =  MediaQuery.of(context).size.width-330;
-      nomtop = 280;
-      datetop = 10;
-      titretop = 340;
-      titreleft = 20;
-      amounttop = 360;
-      amountleft = 20;
-      amountright = 20;
-      topcolect = 385;
-      topphoto = 250;
-      bottomphoto = 0;
-      desctop = 490;
-      descbottom = 20;
-      flex4 = 5;
-      flex6 = 6;
-      bottomtext = 50;
-      toptext = 420;
-      taille = 250;
-      enlev = 104;
-      rest = 40;
-      enlev1 = 260;
-      social = 30;
-      topo = 480;
-      div1 = 387;
-      margeleft = 15;
-      margeright = 14;
-    }
     return new MaterialApp(
       debugShowCheckedModeBanner: false,
       home: new DefaultTabController(
@@ -592,7 +460,6 @@ class _MonprofileState extends State<Monprofile> {
         child: new Scaffold(
           key: _scaffoldKey,
           body: _buildCarousel(context),
-          //bottomNavigationBar: bottomNavigate(context, _code, choix, getWidgetTontine(choix, context), Verification(_code), Pays()),
         ),
       ),
     );
@@ -607,8 +474,8 @@ class _MonprofileState extends State<Monprofile> {
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-                color: Colors.white,
-                //borderRadius: BorderRadius.circular(10.0)
+              color: Colors.white,
+              //borderRadius: BorderRadius.circular(10.0)
             ),
             child: Stack(
               children: <Widget>[
@@ -631,11 +498,11 @@ class _MonprofileState extends State<Monprofile> {
                               height: 150,
                               width: 150,
                               decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                      image: _image==null || _image=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_image),
-                                      fit: BoxFit.cover
-                                  ),
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                    image: _image==null || _image=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_image),
+                                    fit: BoxFit.cover
+                                ),
                                 border: new Border.all(
                                   color: Colors.white,
                                   width: 5.0,
@@ -701,10 +568,10 @@ class _MonprofileState extends State<Monprofile> {
                       },
                       child: Icon(Icons.camera_alt,size: 50, color: Colors.white,)):
                   Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10)
-                    ),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10)
+                      ),
                       child: CupertinoActivityIndicator(radius: 20,)
                   ),
                 ),
@@ -732,11 +599,11 @@ class _MonprofileState extends State<Monprofile> {
   Widget getMoyen(int index){
     String text;
     switch(index){
-      case 0: text = "MES INFOS";
+      case 1: text = "MES INFOS";
       break;
-      case 1: text = "PARRAINAGE";
+      case 2: text = "PARRAINAGE";
       break;
-      case 2: text = "SÉCURITÉ";
+      case 3: text = "SÉCURITÉ";
       break;
     }
     return Container(
@@ -765,7 +632,7 @@ class _MonprofileState extends State<Monprofile> {
           Text("$text",
             style: TextStyle(
                 color:orange_F,
-                fontSize: _tail,
+                fontSize: taille_champ-1,
                 fontWeight: FontWeight.bold
             ),)
         ],
@@ -796,10 +663,9 @@ class _MonprofileState extends State<Monprofile> {
   }
 
   Widget getView(){
-    //if(choice == 0){
     return Padding(
         padding: EdgeInsets.only(top: 210, left: 0, right: 0),
-        child: Stack(
+        child:nameStatus == null?Center(child: CupertinoActivityIndicator(radius: 30,)): Stack(
           children: <Widget>[
             Padding(
               padding: EdgeInsets.only(bottom: 20, left: 0, right: 0),
@@ -807,6 +673,7 @@ class _MonprofileState extends State<Monprofile> {
                 enlargeCenterPage: true,
                 autoPlay: false,
                 enableInfiniteScroll: true,
+                initialPage: 1,
                 onPageChanged: (value){
                   setState(() {
                     choice = value;
@@ -814,7 +681,7 @@ class _MonprofileState extends State<Monprofile> {
                   });
                 },
                 height: 80.0,
-                items: [0,1,2].map((i) {
+                items: [1,2,3].map((i) {
                   return Builder(
                     builder: (BuildContext context) {
                       return getMoyen(i);
@@ -868,6 +735,7 @@ class _MonprofileState extends State<Monprofile> {
                                     if(value.isEmpty){
                                       return "Champ prénom et nom vide !";
                                     }else{
+                                      _nom = value;
                                       return null;
                                     }
                                   },
@@ -922,6 +790,7 @@ class _MonprofileState extends State<Monprofile> {
                                     if(value.isEmpty){
                                       return "Champ pays vide !";
                                     }else{
+                                      _pays = value;
                                       return null;
                                     }
                                   },
@@ -976,6 +845,7 @@ class _MonprofileState extends State<Monprofile> {
                                     if(value.isEmpty){
                                       return "Champ ville vide !";
                                     }else{
+                                      _ville = value;
                                       return null;
                                     }
                                   },
@@ -1030,6 +900,7 @@ class _MonprofileState extends State<Monprofile> {
                                     if(value.isEmpty){
                                       return "Quartier vide";
                                     }else{
+                                      _quartier = value;
                                       return null;
                                     }
                                   },
@@ -1088,6 +959,7 @@ class _MonprofileState extends State<Monprofile> {
                                     if(value.isEmpty){
                                       return "Champ email vide !";
                                     }else{
+                                      _email = value;
                                       return null;
                                     }
                                   },
@@ -1195,7 +1067,7 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    nameStatus !="OCCASIONNEL"?Container(): Padding(
+                    nameStatus =="Permanent" || nameStatus =="Business"?Container(): Padding(
                       padding: EdgeInsets.only(top: 0),
                       child:_selfie==null?GestureDetector(
                         onTap: () async {
@@ -1222,21 +1094,21 @@ class _MonprofileState extends State<Monprofile> {
                             decoration: BoxDecoration(
                                 shape: BoxShape.rectangle,
                                 image: DecorationImage(
-                                    image: NetworkImage(_selfie),
-                                    fit: BoxFit.cover,
+                                  image: NetworkImage(_selfie),
+                                  fit: BoxFit.cover,
                                 )
                             ),
                             child: Image.network(_selfie, fit: BoxFit.contain,
-                              loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
-                                if (loadingProgress == null) return Container();
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value: loadingProgress.expectedTotalBytes != null ?
-                                    loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
-                                        : null,
-                                  ),
-                                );
-                              }
+                                loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                                  if (loadingProgress == null) return Container();
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      value: loadingProgress.expectedTotalBytes != null ?
+                                      loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                          : null,
+                                    ),
+                                  );
+                                }
                             ),
                           ),
                           GestureDetector(
@@ -1255,7 +1127,7 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    nameStatus != "OCCASIONNEL"?Container():Padding(
+                    nameStatus =="Permanent" || nameStatus =="Business"?Container():Padding(
                       padding: const EdgeInsets.only(left: 0.0, right: 0.0),
                       child: Container(
                         decoration: new BoxDecoration(
@@ -1315,7 +1187,7 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    nameStatus != "PERMANENT"?Container():Padding(
+                    nameStatus != "Permanent"?Container():Padding(
                       padding: const EdgeInsets.only(left: 0.0, right: 0.0),
                       child: Container(
                         decoration: new BoxDecoration(
@@ -1376,7 +1248,7 @@ class _MonprofileState extends State<Monprofile> {
                     ),
 
 
-                    nameStatus =="BUSINESS"?Container():Padding(
+                    nameStatus =="Business"?Container():Padding(
                       padding: EdgeInsets.only(top: 20, bottom: 20),
                       child: GestureDetector(
                         onTap: () async {
@@ -1389,7 +1261,7 @@ class _MonprofileState extends State<Monprofile> {
                           child: Center(child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              Text(nameStatus =="PERMANENT"?"Pièce justificative":"Recto de votre pièce d'identité", style: TextStyle(
+                              Text(nameStatus =="Permanent"?"Pièce justificative":nameStatus !="Permanent" && nameStatus !="Business"?"Recto de votre pièce d'identité":"", style: TextStyle(
                                   color: Colors.white,
                                   fontSize: taille_champ+3
                               ),),
@@ -1399,7 +1271,7 @@ class _MonprofileState extends State<Monprofile> {
                         ),
                       ),
                     ),
-//nameStatus =="PERMANENT"||nameStatus =="BUSINESS"?Container():
+//nameStatus =="Permanent"||nameStatus =="Business"?Container():
                     _recto==null?Container():
                     Padding(
                       padding: EdgeInsets.only(top: 0),
@@ -1428,7 +1300,7 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    nameStatus !="OCCASIONNEL"?Container():Padding(
+                    nameStatus =="Permanent" || nameStatus =="Business"?Container():Padding(
                       padding: EdgeInsets.only(top: 20, bottom: 20),
                       child: GestureDetector(
                         onTap: () async {
@@ -1479,64 +1351,64 @@ class _MonprofileState extends State<Monprofile> {
                       ),
                     ),
 
-                    nameStatus=="BUSINESS"?Container():Padding(
+                    nameStatus=="Business"?Container():Padding(
                       padding: EdgeInsets.only(top: 20, bottom: 20, left: 20, right: 20),
                       child: GestureDetector(
                         onTap: () {
-                            if(nameStatus == "OCCASIONNEL"){
-                              if(pieceName == null){
-                                showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey, 5);
+                          if(nameStatus !="Permanent" && nameStatus !="Business"){
+                            if(pieceName == null){
+                              showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey, 5);
+                            }else{
+                              if(_selfie == null || _recto == null || _verso == null){
+                                showInSnackBar("Veuillez entrer toutes les 3 pièces jointes (photo, recto et le verso de la pièce d'identité)", _scaffoldKey, 5);
                               }else{
-                                if(_selfie == null || _recto == null || _verso == null){
-                                  showInSnackBar("Veuillez entrer toutes les 3 pièces jointes (photo, recto et le verso de la pièce d'identité)", _scaffoldKey, 5);
+                                Composantes composante1, composante2, composante3;
+                                composante1 = new Composantes(
+                                    fileUrl: "$_selfie",
+                                    name: "selfie"
+                                );
+                                composante2 = new Composantes(
+                                    fileUrl: "$_recto",
+                                    name: "recto"
+                                );
+                                composante3 = new Composantes(
+                                    fileUrl: "$_verso",
+                                    name: "verso"
+                                );
+                                List<Composantes> composantes = [composante1,composante2,composante3];
+                                var piece = new Piece(
+                                    composantes: composantes,
+                                    pieceName: pieceName!="Carte Nationale d'identité"?pieceName:"CNI"
+                                );
+                                print(json.encode(piece));
+                                checkConnection(json.encode(piece));
+                              }
+                            }
+                          }else{
+                            setState(() {
+                              if(pieceName != null){
+                                if(_recto == null){
+                                  showInSnackBar("Veuillez filmer/charger la pièce justificative", _scaffoldKey, 5);
                                 }else{
-                                  Composantes composante1, composante2, composante3;
+                                  Composantes composante1;
                                   composante1 = new Composantes(
-                                      fileUrl: "$_selfie",
-                                      name: "selfie"
-                                  );
-                                  composante2 = new Composantes(
                                       fileUrl: "$_recto",
-                                      name: "recto"
+                                      name: "piece"
                                   );
-                                  composante3 = new Composantes(
-                                      fileUrl: "$_verso",
-                                      name: "verso"
-                                  );
-                                  List<Composantes> composantes = [composante1,composante2,composante3];
+
+                                  List<Composantes> composantes = [composante1];
                                   var piece = new Piece(
                                       composantes: composantes,
-                                      pieceName: pieceName!="Carte Nationale d'identité"?pieceName:"CNI"
+                                      pieceName: pieceName
                                   );
                                   print(json.encode(piece));
                                   checkConnection(json.encode(piece));
                                 }
+                              }else{
+                                showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey, 5);
                               }
-                            }else{
-                              setState(() {
-                                if(pieceName != null){
-                                  if(_recto == null){
-                                    showInSnackBar("Veuillez filmer/charger la pièce justificative", _scaffoldKey, 5);
-                                  }else{
-                                    Composantes composante1;
-                                    composante1 = new Composantes(
-                                        fileUrl: "$_recto",
-                                        name: "piece"
-                                    );
-
-                                    List<Composantes> composantes = [composante1];
-                                    var piece = new Piece(
-                                        composantes: composantes,
-                                        pieceName: pieceName
-                                    );
-                                    print(json.encode(piece));
-                                    checkConnection(json.encode(piece));
-                                  }
-                                }else{
-                                  showInSnackBar("Veuillez choisir la nature de la pièce à enregistrer", _scaffoldKey, 5);
-                                }
-                              });
-                            }
+                            });
+                          }
                         },
                         child: Container(
                           decoration: new BoxDecoration(
@@ -1550,7 +1422,7 @@ class _MonprofileState extends State<Monprofile> {
                           ),
                           height: 50,
                           child: Center(
-                              child:isLoadPiece==false? Text(nameStatus=="PERMANENT"?"Valider ma pièce":"Valider mes pièces", style: TextStyle(color: Colors.white, fontSize: taille_champ+3),):
+                              child:isLoadPiece==false? Text(nameStatus=="Permanent"?"Valider ma pièce":"Valider mes pièces", style: TextStyle(color: Colors.white, fontSize: taille_champ+3),):
                               CupertinoActivityIndicator()
                           ),
                         ),

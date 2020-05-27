@@ -82,7 +82,7 @@ class _PaystState extends State<Payst> {
   Future<bool>loadMap() async {
     var jsonText = await rootBundle.loadString('images/map.json');
     setState(() => this.data = json.decode(jsonText));
-    if(deviseLocale != "EUR"){
+    if(deviseLocale != "EUR" && deviseLocale != "USD"){
       var filterData = [];
       for(var i=0; i<data.length; i++){
         String continent = data[i]['continent'];
@@ -107,16 +107,12 @@ class _PaystState extends State<Payst> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-
-          leading: InkWell(
-              onTap: (){
-                setState(() {
-                  //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile(_code)));
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => Profile(_code)));
-                });
+          leading: IconButton(
+              onPressed: (){
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Profile(_code)));
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: bleu_F),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
         ),
         body: Column(
           children: <Widget>[

@@ -326,15 +326,12 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
             elevation: 0.0,
             backgroundColor: couleur_appbar,
             flexibleSpace: barreTop,
-            iconTheme: new IconThemeData(color: couleur_fond_bouton),
-            leading: GestureDetector(
-                onTap: (){
-                  setState(() {
-                    //navigatorKey.currentState.pushNamed("/connexion");
-                    Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
-                  });
+            //iconTheme: new IconThemeData(color: couleur_fond_bouton),
+            leading: IconButton(
+                onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion()));
                 },
-                child: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+                icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
             ),
           ),
         ),

@@ -2,12 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:services/auth/conditions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'connexion.dart';
 import 'package:http/http.dart' as http;
 import 'activation.dart';
 import 'package:services/composants/components.dart';
@@ -40,22 +38,6 @@ class _Inscription1State extends State<Inscription1> {
       _usernameController.text = _username;
     });
   }
-
-
-  Future<File> getPdfFromUrl(String url) async {
-    try{
-      var data = await http.get(url);
-      var bytes = data.bodyBytes;
-      var dir = await getApplicationDocumentsDirectory();
-      File file = File("${dir.path}/sprintpayconditions.pdf");
-
-      File urlFile = await file.writeAsBytes(bytes);
-      return urlFile;
-    }catch(e){
-      throw Exception("Erreur lors de l'ouverture du fichier");
-    }
-  }
-
 
   void _reg() async {
     final prefs = await SharedPreferences.getInstance();
@@ -192,9 +174,6 @@ class _Inscription1State extends State<Inscription1> {
     this.lire();
     super.initState();
     _url = "$base_url/member/createMemberTemp";
-    getPdfFromUrl("https://sprint-pay.com/wp-content/uploads/2018/11/CGU-Afrique-CEMAC-%E2%80%93-Sprint-Pay-2018.pdf").then((f) {
-      urlPath = f.path;
-    });
   }
 
   void _toggleVisibility(){
@@ -229,16 +208,13 @@ class _Inscription1State extends State<Inscription1> {
         elevation: 0.0,
         backgroundColor: couleur_appbar,
         flexibleSpace: barreTop,
-        leading: GestureDetector(
-            onTap: (){
-              setState(() {
-                Navigator.pop(context);
-                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion(_code)));
-                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
-              });
+        leading: IconButton(
+            onPressed: (){
+              Navigator.pop(context);
             },
-            child: Icon(Icons.arrow_back_ios,)),
-        iconTheme: new IconThemeData(color: couleur_fond_bouton),
+            icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+        ),
+        //iconTheme: new IconThemeData(color: couleur_fond_bouton),
       ),
       body:ListView(
         children: <Widget>[
@@ -520,29 +496,7 @@ class _Inscription1State extends State<Inscription1> {
                       ),
                       GestureDetector(
                         onTap: (){
-                          FocusScopeNode currentFocus = FocusScope.of(context);
-                          if (!currentFocus.hasPrimaryFocus) {
-                            currentFocus.unfocus();
-                            FocusScope.of(context).requestFocus(new FocusNode());
-                          }
-                          if(urlPath!="") {
-                            print(urlPath);
-                            Navigator.push(context, PageTransition(type: PageTransitionType.fade,
-                                child: PdfViewPage(path: urlPath,))
-                            );
-                          }else{
-                            setState(() {
-                              getPdfFromUrl("https://sprint-pay.com/wp-content/uploads/2018/11/CGU-Afrique-CEMAC-%E2%80%93-Sprint-Pay-2018.pdf").then((f) {
-                                setState(() {
-                                  urlPath = f.path;
-                                  print("mon path: $urlPath");
-                                });
-                              });
-                            });
-                            Navigator.push(context, PageTransition(type: PageTransitionType.fade,
-                                child: PdfViewPage(path: urlPath,))
-                            );
-                          }
+                          Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Conditions()));
                         },
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,118 +627,5 @@ void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey) {
         textAlign: TextAlign.center,),
         backgroundColor: couleur_fond_bouton,
         duration: Duration(seconds: 5),));
-}
-
-class createMemberTemp{
-  final String country;
-  final String username;
-  final String password;
-
-  createMemberTemp({this.country, this.username, this.password});
-
-  createMemberTemp.fromJson(Map<String, dynamic> json)
-      : country = json['country'],
-        username = json['username'],
-        password = json['password'];
-
-  Map<String, dynamic> toJson() =>
-      {
-        "country": country,
-        "username": username,
-        "password": password,
-      };
-}
-
-class PdfViewPage extends StatefulWidget {
-  final String path;
-
-  const PdfViewPage({Key key, this.path}) : super(key: key);
-  @override
-  _PdfViewPageState createState() => _PdfViewPageState();
-}
-
-class _PdfViewPageState extends State<PdfViewPage> {
-
-  int _totalPages = 0, _currentPage = 0;
-  bool pdfReady = false;
-  PDFViewController _pdfViewController;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Conditions d'utilisation SprintPay", style: TextStyle(
-          fontSize: taille_description_champ+3,
-          color: couleur_fond_bouton
-        ),),
-        elevation: 0.0,
-        leading: GestureDetector(
-            onTap: (){
-              setState(() {
-                Navigator.pop(context);
-              });
-            },
-            child: Icon(Icons.arrow_back_ios,)),
-        iconTheme: new IconThemeData(color: couleur_fond_bouton),
-      ),
-      body: Stack(
-        children: <Widget>[
-          PDFView(
-              filePath: widget.path,
-            autoSpacing: true,
-            enableSwipe: true,
-            pageSnap: true,
-            swipeHorizontal: true,
-            onError: (e){
-                print(e);
-            },
-            onRender: (_pages){
-                setState(() {
-                  _totalPages = _pages;
-                  pdfReady = true;
-                });
-            },
-            onViewCreated: (PDFViewController vc){
-                _pdfViewController = vc;
-            },
-
-            onPageChanged: (int page, int total){
-                setState(() {
-
-                });
-            },
-            onPageError: (page, e){
-
-            },
-          ),
-          !pdfReady?Center(
-            child: CupertinoActivityIndicator(radius: 30,),):Offstage(
-          )
-        ]
-      ),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          _currentPage>0?FloatingActionButton.extended(
-            backgroundColor: orange_F,
-            label: Icon(Icons.arrow_back_ios),
-              onPressed: (){
-                _currentPage -= 1;
-                _pdfViewController.setPage(_currentPage);
-              },
-          ):Offstage(),
-
-          _currentPage<_totalPages?FloatingActionButton.extended(
-            backgroundColor: bleu_F,
-            label: Icon(Icons.arrow_forward_ios),
-            onPressed: (){
-              _currentPage += 1;
-              _pdfViewController.setPage(_currentPage);
-            },
-          ):Offstage(),
-        ],
-      ),
-    );
-  }
 }
 

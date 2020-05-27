@@ -159,7 +159,7 @@ Widget getMoyen(int index, BuildContext context, int indik) {
         bottomLeft: Radius.circular(10.0),
       ),
       border: Border.all(color: index - 1 == indik ? orange_F : bleu_F),
-      color: index - 1 == indik ? orange_F : bleu_F,
+      color: index - 1 == indik ? Colors.white : bleu_F,
     ),
     child: Padding(
       padding: EdgeInsets.only(top: 0),

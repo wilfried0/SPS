@@ -94,15 +94,12 @@ class _WebviewState extends State<Webview> {
         elevation: 0.0,
         backgroundColor: couleur_appbar,
         flexibleSpace: barreTop,
-        leading: InkWell(
-            onTap: (){
-              setState(() {
-                Navigator.of(context).push(SlideLeftRoute(enterWidget: Encaisser2(_code), oldWidget: Webview(_code)));
-              });
-              //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Pays()));
+        leading: IconButton(
+            onPressed: (){
+              Navigator.of(context).push(SlideLeftRoute(enterWidget: Encaisser2(_code), oldWidget: Webview(_code)));
             },
-            child: Icon(Icons.arrow_back_ios,)),
-        iconTheme: new IconThemeData(color: couleur_fond_bouton),
+            icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+        ),
       ),
       /*url: payment_url,
       withZoom: true,

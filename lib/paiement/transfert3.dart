@@ -187,6 +187,8 @@ class _Transfert3State extends State<Transfert3> {
       url = '$base_url/transfert/eu/cashin';
     }else if(_lieu == "3"){
       url = '$base_url/transfert/wari/sendMoney';
+    }else if(_lieu == "4"){
+      url = '$base_url/transfert/atps/sendMoney';
     }else
       url = '$base_url/transfert/eu/sendMoney';
     print(url);
@@ -298,6 +300,11 @@ class _Transfert3State extends State<Transfert3> {
           isLoading = false;
         });
         navigatorKey.currentState.pushNamed("/echec");
+      }else{
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Service indisponible", _scaffoldKey, 5);
       }
     }else{
       setState(() {
@@ -357,18 +364,15 @@ class _Transfert3State extends State<Transfert3> {
         ),),
         backgroundColor: couleur_appbar,
         flexibleSpace: barreTop,
-
-        leading: InkWell(
-            onTap: (){
-              setState(() {
-                if(_lieu == "0"){
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22(_code)));
-                }else
+        leading: IconButton(
+            onPressed: (){
+              if(_lieu == "0"){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22(_code)));
+              }else
                 Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2(_code)));
-              });
             },
-            child: Icon(Icons.arrow_back_ios,)),
-        iconTheme: new IconThemeData(color: couleur_fond_bouton),
+            icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+        ),
       ),
       body: ListView(
         children: <Widget>[
@@ -626,7 +630,7 @@ class _Transfert3State extends State<Transfert3> {
                   padding: EdgeInsets.only(left: 20.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(_lieu=="3"?"Informations sur le bénéficiaire":'Identité & contact',
+                    child: Text(_lieu=="3"|| _lieu=="4"?"Informations sur le bénéficiaire":'Identité & contact',
                       style: TextStyle(
                           color: couleur_libelle_champ,
                           fontSize: taille_libelle_champ,
@@ -690,7 +694,7 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                _lieu!="3"?Container():Padding(
+                _lieu!="3" && _lieu!="4"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -795,9 +799,9 @@ class _Transfert3State extends State<Transfert3> {
                   ),
                 ),
 
-                _lieu=="3"?Padding(padding: EdgeInsets.only(top: marge_champ_libelle),):Container(),
+                _lieu=="3" || _lieu =="4"?Padding(padding: EdgeInsets.only(top: marge_champ_libelle),):Container(),
 
-                _lieu!="3"?Container():Padding(
+                _lieu!="3" && _lieu !="4"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
@@ -810,9 +814,9 @@ class _Transfert3State extends State<Transfert3> {
                   ),
                 ),
 
-                _lieu!="3"?Container():Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
+                _lieu!="3"&& _lieu !="4"?Container():Padding(padding: EdgeInsets.only(top: marge_libelle_champ),),
 
-                _lieu!="3"?Container():Padding(
+                _lieu!="3"&& _lieu !="4"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -866,7 +870,7 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                _lieu!="3"?Container():Padding(
+                _lieu!="3"&& _lieu !="4"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -916,7 +920,7 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                _lieu!="3"?Container():Padding(
+                _lieu!="3"&& _lieu !="4"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -966,7 +970,7 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                _lieu!="3"?Container():Padding(
+                _lieu!="3"&& _lieu !="4"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -1016,7 +1020,7 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                _lieu!="3"?Container():Padding(
+                _lieu!="3"&& _lieu !="4"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
@@ -1079,13 +1083,14 @@ class _Transfert3State extends State<Transfert3> {
                         if(isLoading == true){
 
                         }else{
+                          _to = _to.replaceAll(" ", "");
                           if(_lieu == "3") {
                             var _wariTrans = new wariTrans(
                                 to: this._to,
-                                amount: int.parse(this.montant),
-                                fees: double.parse(fees),
-                                description: this.description,
-                                deviseLocale: this.deviseLocale,
+                                amount: int.parse(this.montant),//
+                                fees: double.parse(fees),//
+                                description: this.description,//
+                                deviseLocale: this.deviseLocale,//
                                 toFirstname: ".",
                                 toCountryCode: this._payst,
                                 fromCardExpirationDate: _fromCardExpirationDate,
@@ -1098,7 +1103,26 @@ class _Transfert3State extends State<Transfert3> {
                             );
                             print(json.encode(_wariTrans));
                             checkConnection(json.encode(_wariTrans));
-                          }else if(_lieu == "1"){//sendMoney
+                          }else if(_lieu =="4") {
+                            var atpsTrans = new ATPSTrans(
+                                to: this._to,
+                                amount: int.parse(this.montant),//
+                                fees: double.parse(fees),//
+                                description: this.description,//
+                                deviseLocale: this.deviseLocale,//
+                                toFirstname: ".",
+                                toCountryCode: this._payst,
+                                fromCardExpirationDate: _fromCardExpirationDate,
+                                fromCardIssuingDate: _fromCardIssuingDate,
+                                fromCardNumber: _fromCardNumber,
+                                fromCardType: _fromCardType,
+                                type: "account",
+                                toAdress: _adresse,
+                                toLastname: this._name
+                            );
+                            print(json.encode(atpsTrans));
+                            checkConnection(json.encode(atpsTrans));
+                          } else if(_lieu == "1"){//sendMoney
                             var walletTr = new eucTrans(
                               to:this._to,
                               amount: int.parse(this.montant),

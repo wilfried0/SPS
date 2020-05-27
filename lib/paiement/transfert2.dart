@@ -63,14 +63,12 @@ class _Transfert2State extends State<Transfert2> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-          leading: InkWell(
-              onTap: (){
-                setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
-                });
+          leading: IconButton(
+              onPressed: (){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert1(_code)));
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: couleur_fond_bouton),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
         ),
         body: ListView(
           children: <Widget>[
@@ -85,7 +83,7 @@ class _Transfert2State extends State<Transfert2> {
               padding: EdgeInsets.only(left: 20.0),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: new Text(_lieu=="3"?"Informations sur le bénéficiaire":"Ajouter un bénéficiaire",
+                child: new Text(_lieu=="3" || _lieu == "4"?"Informations sur le bénéficiaire":"Ajouter un bénéficiaire",
                     style: TextStyle(
                         color: couleur_titre,
                         fontSize: taille_titre,
@@ -228,7 +226,7 @@ class _Transfert2State extends State<Transfert2> {
                     ),
                   ),
 
-                  _lieu=="3"?Padding(
+                  _lieu=="3" || _lieu == "4"?Padding(
                     padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                     child: Container(
                       margin: EdgeInsets.only(top: 0.0),
@@ -357,7 +355,7 @@ class _Transfert2State extends State<Transfert2> {
                         if(_formKey.currentState.validate()){
                           _name = "$_firstname $_lastname";
                           _sername = _to;
-                          if(_lieu=="3"){
+                          if(_lieu=="3" || _lieu=="4"){
                             this._save();
                             Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfer(_code)));
                           }else{

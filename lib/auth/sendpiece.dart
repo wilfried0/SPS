@@ -272,13 +272,11 @@ class _SendpieceState extends State<Sendpiece> {
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
           iconTheme: new IconThemeData(color: couleur_fond_bouton),
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                  Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Inscrip()));
-                });
+          leading: IconButton(
+              onPressed: (){
+                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Inscrip()));
               },
-              child: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
           ),
         ),
         body: SingleChildScrollView(

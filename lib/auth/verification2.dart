@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -133,16 +132,13 @@ class _Verification2State extends State<Verification2> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion1()));
-                });
-                //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Verification1(_code)));
+          leading: IconButton(
+              onPressed: (){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion1()));
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: bleu_F),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
+          //iconTheme: new IconThemeData(color: bleu_F),
         ),
       ),
       body: SingleChildScrollView(

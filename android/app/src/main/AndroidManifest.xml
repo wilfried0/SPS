@@ -2,11 +2,12 @@
     package="sprintpay.services">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="SP Transfert d'argent"
+        android:label="Sprint-Pay Money"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
         <activity

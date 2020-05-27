@@ -3,6 +3,7 @@ class Transaction {
   String beneficiaryEmail;
   String beneficiaryPhoneNumber;
   String buyerEmail;
+  String buyerName;
   String buyerId;
   bool buyerIsBeneficiary;
   String buyerPhoneNumber;
@@ -22,6 +23,7 @@ class Transaction {
         this.beneficiaryEmail,
         this.beneficiaryPhoneNumber,
         this.buyerEmail,
+        this.buyerName,
         this.buyerId,
         this.buyerIsBeneficiary,
         this.buyerPhoneNumber,
@@ -40,6 +42,7 @@ class Transaction {
     beneficiaryEmail = json['beneficiaryEmail'];
     beneficiaryPhoneNumber = json['beneficiaryPhoneNumber'];
     buyerEmail = json['buyerEmail'];
+    buyerName = json['buyerName'];
     buyerId = json['buyerId'];
     buyerIsBeneficiary = json['buyerIsBeneficiary'];
     buyerPhoneNumber = json['buyerPhoneNumber'];
@@ -60,6 +63,7 @@ class Transaction {
     data['beneficiaryEmail'] = this.beneficiaryEmail;
     data['beneficiaryPhoneNumber'] = this.beneficiaryPhoneNumber;
     data['buyerEmail'] = this.buyerEmail;
+    data['buyerName'] = this.buyerName;
     data['buyerId'] = this.buyerId;
     data['buyerIsBeneficiary'] = this.buyerIsBeneficiary;
     data['buyerPhoneNumber'] = this.buyerPhoneNumber;

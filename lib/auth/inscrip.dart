@@ -1078,7 +1078,13 @@ class _InscripState extends State<Inscrip> {
         if(responseJson['id_user'] == 0){
           if(responseJson['username'] == "CLIENT_NOT_MATURE")
             showInSnackBar("Echec de la création. Client immature!");
-          else
+          else if(responseJson['username'] == "COUNTRY_UNKNOW_BY_THE_SYSTEM"){
+            showInSnackBar("Le pays transmis n'existe pas dans le KYC");
+          }else if(responseJson['username'] == "CLIENT_NATURE_UNDEFINED"){
+            showInSnackBar("La nature client que vous utilisez est momentanément indisponible !");
+          }else if(responseJson['username'] == "INVALID_TOKEN"){
+            showInSnackBar("Service momentanément indisponible !");
+          }else
             showInSnackBar("Echec de la création!");
         }else{
           this._reg();
@@ -1094,47 +1100,7 @@ class _InscripState extends State<Inscrip> {
       return null;
   }
 
-  /*Future<String> createAccount(var body) async {
-    var _header = {
-      "accept": "application/json",
-      "content-type" : "application/json"
-    };
-    print("$_url/createMember");
-    return await http.post("$_url/createMember", body: body, headers: _header, encoding: Encoding.getByName("utf-8")).then((http.Response response) {
-      final int statusCode = response.statusCode;
-      print('voici le statusCode $statusCode');
-      print('voici le body ${response.body}');
-      if (statusCode < 200 || json == null) {
-        setState(() {
-          isLoding =false;
-        });
-        throw new Exception("Error while fetching data");
-      }else if(statusCode == 200){
-        var responseJson = json.decode(response.body);
-        print(responseJson);
-        setState(() {
-          isLoding =false;
-        });
-        if(responseJson['id_user'] == 0){
-          if(responseJson['username'] == "CLIENT_NOT_MATURE")
-            showInSnackBar("Echec de la création. Client immature!");
-          else
-            showInSnackBar("Echec de la création!");
-        }else{
-          this._reg();
-          Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Sendpiece()));
-        }
-        //    navigatorKey.currentState.pushNamed("/connexion");
-      }else {
-        setState(() {
-          isLoding =false;
-        });
-        showInSnackBar("Service indisponible!");
-      }
-      return response.body;
-    });
-  }*/
-
+  
   Future<void> _ackAlert(BuildContext context) {
     return showDialog<void>(
       context: context,

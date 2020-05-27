@@ -348,14 +348,13 @@ class _Retrait2State extends State<Retrait2> {
                     padding: EdgeInsets.only(top: 23, left: 20, right: 20),
                     child: Row(
                       children: <Widget>[
-                        GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                Navigator.pop(context);
-                              });
+                        IconButton(
+                            onPressed: (){
+                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
                             },
-                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                            icon: Icon(Icons.arrow_back_ios,color: Colors.white,)
                         ),
+
                         GestureDetector(
                           onTap: (){
                             setState(() {
@@ -709,6 +708,7 @@ class _Retrait2State extends State<Retrait2> {
                           if(isLoading == true){
 
                           }else{
+                            _to = _to.replaceAll(" ", "");
                             if(_formKey.currentState.validate()){
                               var walletTr = _code == "0"? new walletTrans(
                                 to:'$_to',

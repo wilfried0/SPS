@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:page_transition/page_transition.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:services/auth/conditions.dart';
 import 'package:services/auth/connexion.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/marketplace/lib/Home.dart';
@@ -12,7 +12,6 @@ import 'package:services/paiement/historique.dart';
 import 'package:services/paiement/payst.dart';
 import 'package:services/paiement/retrait1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'inscription1.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
@@ -43,12 +42,13 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
 
   @override
   void initState(){
-    //print("************** "+MediaQuery.of(context).size.width.toString()+" **********");
     super.initState();
-    //lireNotif();
-    this.lire();
-    this.getSolde();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      this.getSolde();
+      this.lire();
+    });
   }
+
 
   void reg() async {
     final prefs = await SharedPreferences.getInstance();
@@ -87,8 +87,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
                         Text("$sms",style: TextStyle(
-                          color: Colors.black,
-                          fontSize: taille_champ+3
+                            color: Colors.black,
+                            fontSize: taille_champ+3
                         ),textAlign: TextAlign.justify,),
                         i==listSms.length-1?Padding(
                           padding: EdgeInsets.only(top: 20),
@@ -124,26 +124,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                   ),
                 );
               }
-            ),
+          ),
         );
       },
     );
   }
-
-  Future<File> getPdfFromUrl(String url) async {
-    try{
-      var data = await http.get(url);
-      var bytes = data.bodyBytes;
-      var dir = await getApplicationDocumentsDirectory();
-      File file = File("${dir.path}/sprintpayconditions.pdf");
-
-      File urlFile = await file.writeAsBytes(bytes);
-      return urlFile;
-    }catch(e){
-      throw Exception("Erreur lors de l'ouverture du fichier");
-    }
-  }
-
 
   void showInSnackBar(String value) {
     _scaffoldKey.currentState.showSnackBar(
@@ -258,7 +243,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     lireNotif();
-    this.getSolde();
+    //this.getSolde();
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
     double ad=100;
@@ -430,7 +415,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                   if(nbNotif == 0){
                     showInSnackBar("Aucune notification enregistrée");
                   }else
-                  this._ackAlert(context);
+                    this._ackAlert(context);
                 },
                 child: Stack(
                   children: <Widget>[
@@ -532,7 +517,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                           Text('SOLDE', style: TextStyle(
                               color: Colors.white,
                               fontSize: taille_libelle_etape,
-                            fontWeight: FontWeight.bold
+                              fontWeight: FontWeight.bold
                           ),),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -1070,12 +1055,28 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     width: 70,
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        image: DecorationImage(
-                            image: _pathImage==null || _pathImage=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_pathImage),
+                        gradient: LinearGradient(
+                            begin: FractionalOffset.topCenter,
+                            end: FractionalOffset.bottomCenter,
+                            colors: [
+                              Colors.white,
+                              bleu_F,
+                            ],
+                            stops: [
+                              0.0,
+                              1.0
+                            ]
+                        ),
+                        image:_pathImage != null && _pathImage != "null"?
+                        DecorationImage(
+                            image: NetworkImage(_pathImage),
+                            fit: BoxFit.cover
+                        ):
+                        DecorationImage(
+                            image: AssetImage("images/ellipse1.png"),
                             fit: BoxFit.cover
                         )
-                    ),
-                  ),
+                    ),),
                 ),
                 Text(_nom==null?"":"$_nom", style: TextStyle(
                     color: Colors.white,
@@ -1418,18 +1419,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
-              setState(() {
-                getPdfFromUrl("https://sprint-pay.com/wp-content/uploads/2018/11/CGU-Afrique-CEMAC-%E2%80%93-Sprint-Pay-2018.pdf").then((f) {
-                  setState(() {
-                    urlPath = f.path;
-                    print(urlPath);
-                  });
-                });
-              });
-              Navigator.push(context, PageTransition(type: PageTransitionType.fade,
-                  child: PdfViewPage(path: urlPath,))
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Conditions())
               );
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
             },
           ),
           Padding(

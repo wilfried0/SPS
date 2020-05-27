@@ -60,7 +60,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
   var _formKey_2 = GlobalKey<FormState>();
   GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   String _montant, _nom, _recepteur, _description, amountCible, deviseLocale, country, devisebenef;
-  String beneficiaryPhoneNumber, beneficiaryPhone;
+  String beneficiaryPhoneNumber, beneficiaryPhone, buyerName;
   var _commission;
   String coched;
 
@@ -945,6 +945,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                     _transaction.paymentType = method;
                     _transaction.mobileMoneyPaymentNumber =
                         phoneController.text;
+                    _transaction.buyerName = buyerName;
 
                     coched == "false"
                         ? _transaction.buyerIsBeneficiary = true

@@ -286,16 +286,11 @@ class _Encaisser1State extends State<Encaisser1> {
                     padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
                     child: Row(
                       children: <Widget>[
-                        GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile(_code)));
-                                //Navigator.pop(context);
-                                //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
-                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
-                              });
+                        IconButton(
+                            onPressed: (){
+                              Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile(_code)));
                             },
-                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                            icon: Icon(Icons.arrow_back_ios,color: Colors.white,)
                         ),
                         GestureDetector(
                           onTap: (){
@@ -408,7 +403,14 @@ class _Encaisser1State extends State<Encaisser1> {
                           enlargeCenterPage: true,
                           autoPlay: false,
                           enableInfiniteScroll: false,
-                          onPageChanged: (value){},
+                          //initialPage: 2,
+                          onPageChanged: (value){
+                            setState(() {
+                              indik = value;
+                              _code = "$indik";
+                              print(indik);
+                            });
+                          },
                           height: 136.0,
                           items: [3].map((i) {
                             return Builder(
@@ -524,6 +526,7 @@ class _Encaisser1State extends State<Encaisser1> {
                                 case 0: code = "MOMO_TO_WALLET";break;
                                 case 1: code = "OM_TO_WALLET";break;
                                 case 2: code = "CARD_TO_WALLET";break;
+                                case 3: code = "CARD_TO_WALLET";break;
                               }
                               if(_formKey.currentState.validate()) {
                                 var getcommission = getCommission(
@@ -590,7 +593,13 @@ class _Encaisser1State extends State<Encaisser1> {
       break;
       case 2: text = "ORANGE MONEY";img = 'images/orange.png';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
+      case 6: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
+      break;
+      case 4: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
+      break;
+      case 5: text = "YUP";img = 'marketimages/yup.jpg';
+      break;
+      case 3: text = "CARTE PAYPAL";img = 'images/paypal.jpg';
       break;
     }
     return Container(

@@ -120,12 +120,13 @@ final marge_libelle_champ = 5.0;
 // ignore: non_constant_identifier_names
 double marge_champ_libelle = 20.0;
 // ignore: non_constant_identifier_names
-final base_url = "https://pcs.sprint-pay.com/corebanking/rest";//"http://74.208.183.205:8086/corebanking/rest";
-final baseUrl = "https://pcs.sprint-pay.com/paymentcore/rest/users/contact";//"http://74.208.183.205:7086/paymentcore/rest/users/contact";
-final base = "http://kyc.sprint-pay.com/spkyc-identitymanager/upload";//"http://74.208.183.205:8086/spkyc-identitymanager/upload";
-final Nature = "http://kyc.sprint-pay.com:60000/spkycgateway/api/administration/getNatureClientByService/4";//"http://74.208.183.205:8086/spkycgateway/api/administration/getNatureClientByService/773";
-final lien_android = "https://play.google.com/apps/test/sprintpay.services/7";
-final lien_ios = "";
+final base_url = /*"https://pcs.sprint-pay.com/corebanking/rest";*/"http://74.208.183.205:8086/corebanking/rest";
+final baseUrl = /*"https://pcs.sprint-pay.com/paymentcore/rest/users/contact";*/"http://74.208.183.205:7086/paymentcore/rest/users/contact";
+final base = /*"http://kyc.sprint-pay.com/spkyc-identitymanager/upload";*/"http://74.208.183.205:8086/spkyc-identitymanager/upload";
+final Nature = /*"http://kyc.sprint-pay.com:60000/spkycgateway/api/administration/getNatureClientByService/4";*/"http://74.208.183.205:8086/spkycgateway/api/administration/getNatureClientByService/773";
+final lien_android = "https://play.google.com/store/apps/details?id=sprintpay.services&hl=fr";
+final lien_ios = "https://apps.apple.com/ng/app/sprint-pay/id1511300855";
+final cond = "https://sprint-pay.com/wp-content/uploads/2018/11/CGU-Afrique-CEMAC-%E2%80%93-Sprint-Pay-2018.pdf";
 
 bool search = false;
 
@@ -176,15 +177,6 @@ String getMillis(String amount){
       }
     }
   return nombre.toString()+','+reste;
-}
-
-
-
-String values;
-Future<void> getAvatar(String _token) async {
-  var response = await http.get(Uri.encodeFull("$base_url/user/infosConnectUser"), headers: {"Accept": "application/json", "Authorization": "Bearer $_token"},);
-  var info = json.decode(utf8.decode(response.bodyBytes));
-  values = "${info['firstname']} ${info['lastname']}^${info['town']}";
 }
 
 Future<String> getMonSolde(GlobalKey<ScaffoldState> _scaffoldKey, String _username, String _password) async {
@@ -280,15 +272,11 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
         elevation: 0.0,
         items: [
           BottomNavigationBarItem(
-            icon: GestureDetector(
-              onTap:(){
-                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. $lien_android");
+            icon: IconButton(
+              onPressed:(){
+                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit.\nLien android: $lien_android \nLien ios: $lien_ios");
               },
-              child: Container(
-                  height: 20,
-                  width: 20,
-                  child: new Icon(Icons.thumb_up, )
-              ),//Image.asset('images/creer.png')),
+              icon: new Icon(Icons.thumb_up, size: 30,) //Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
               onTap:(){
@@ -306,16 +294,12 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
             ),
           ),
           BottomNavigationBarItem(
-            icon: GestureDetector(
-              onTap:(){
+            icon: IconButton(
+              onPressed:(){
                 //showInSnackBar("Service pas encore disponible!", _scaffoldKey);
                 Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: ListDisplay()));
               },
-              child: Container(
-                  height: 20,
-                  width: 20,
-                  child: new Icon(Icons.help_outline, )//Image.asset('images/creer.png')),
-              ),
+              icon: new Icon(Icons.help, size: 30,)
             ),
             title: GestureDetector(
               onTap:(){
@@ -331,15 +315,12 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
             ),
           ),
           BottomNavigationBarItem(
-            icon: GestureDetector(
-              onTap:(){
+            icon: IconButton(
+              onPressed:(){
                 Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
                 //Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
               },
-              child: Container(
-                  height: 20,
-                  width: 20,
-                  child: new Icon(Icons.lock,)),//Image.asset('images/creer.png')),
+              icon: new Icon(Icons.lock, size: 30,) ,//Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
               onTap:(){
@@ -379,6 +360,26 @@ class getRateAmount {
         "countryCible": countryCible,
         "amount": amount,
         "deviseLocale": deviseLocale,
+      };
+}
+
+class createMemberTemp{
+  final String country;
+  final String username;
+  final String password;
+
+  createMemberTemp({this.country, this.username, this.password});
+
+  createMemberTemp.fromJson(Map<String, dynamic> json)
+      : country = json['country'],
+        username = json['username'],
+        password = json['password'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "country": country,
+        "username": username,
+        "password": password,
       };
 }
 
@@ -543,6 +544,39 @@ class orangeTrans {
       };
 }
 
+class paypalTrans {
+  final String email;
+  final String description;
+  final int amount;
+  final double fees;
+  final String deviseLocale;
+  final String successUrl;
+  final String failureUrl;
+
+
+  paypalTrans({this.email, this.amount, this.fees, this.description, this.deviseLocale, this.successUrl, this.failureUrl});
+
+  paypalTrans.fromJson(Map<String, dynamic> json)
+      :email = json['email'],
+        amount = json['amount'],
+        fees = json['fees'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        successUrl = json['deviseLocale'],
+        failureUrl = json['failureUrl'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "email": email,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "successUrl": successUrl,
+        "failureUrl": failureUrl,
+      };
+}
+
 class yupTrans {
   final String description;
   final int amount;
@@ -690,6 +724,60 @@ class wariTrans {
       };
 }
 
+class ATPSTrans {
+  final String to;
+  final String description;
+  final int amount;
+  final double fees;
+  final String deviseLocale;
+  final String toFirstname;
+  final String toLastname;
+  final String toCountryCode;
+  final String toAdress;
+  final String type;
+  final String fromCardType;
+  final String fromCardNumber;
+  final String fromCardIssuingDate;
+  final String fromCardExpirationDate;
+
+
+  ATPSTrans({this.to, this.amount,this.fees, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.fromCardExpirationDate, this.fromCardIssuingDate, this.fromCardNumber, this.fromCardType, this.type, this.toAdress});
+
+  ATPSTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        fees = json['fees'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        toFirstname = json['toFirstname'],
+        toCountryCode = json['toCountryCode'],
+        toLastname = json['toLastname'],
+        toAdress = json['toAdress'],
+        type = json['type'],
+        fromCardType = json['fromCardType'],
+        fromCardNumber = json['fromCardNumber'],
+        fromCardIssuingDate = json['fromCardIssuingDate'],
+        fromCardExpirationDate = json['fromCardExpirationDate'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "toFirstname": toFirstname,
+        "toCountryCode": toCountryCode,
+        "toLastname": toLastname,
+        "toAdress": toAdress,
+        "type": type,
+        "fromCardType": fromCardType,
+        "fromCardNumber": fromCardNumber,
+        "fromCardIssuingDate": fromCardIssuingDate,
+        "fromCardExpirationDate": fromCardExpirationDate,
+      };
+}
+
 
 class contact {
   final String username;
@@ -715,8 +803,8 @@ Widget getMoyen(int index, BuildContext context, int indik) {
       img = 'marketimages/sprintpay.png';
       break;
     case 2:
-      text = "CARTE BANCAIRE";
-      img = 'marketimages/carte.jpg';
+      text = "CARTE PAYPAL";
+      img = 'images/paypal.jpg';
       break;
     case 3:
       text = "ORANGE";

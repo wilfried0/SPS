@@ -1,20 +1,15 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/rendering.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/composants/components.dart';
-import 'package:services/composants/services.dart';
-import 'package:services/paiement/encaisser1.dart';
 import 'package:services/paiement/encaisser2.dart';
 import 'package:services/paiement/historique.dart';
 import 'package:flutter/material.dart';
-import 'package:services/paiement/retrait1.dart';
 import 'package:services/paiement/retrait2.dart';
 import 'dart:async';
-
 import 'package:services/paiement/transfert3.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,7 +26,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   _DetailState(this._code);
   String _code;
   int currentPage = 0, choix;
-  String solde, idUser, _lieu, fromMember,exp,expName,_toMember, codeIso2, nomPays, iso, namePays, _url, toMember, userImage, deviseLocale, _serviceName, _name, _nomd, _amount, _fees, _status, _transactionid, _date, _payst, _paysf, _username;
+  String solde, idUser, _lieu, fromMember,exp, _typeOper, expName,_toMember, codeIso2, nomPays, iso, namePays, _url, toMember, userImage, deviseLocale, _serviceName, _name, _nomd, _amount, _fees, _status, _transactionid, _date, _payst, _paysf, _username;
   bool isLoding = false, replay = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb;
@@ -96,6 +91,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       _payst = prefs.getString("payst");
       _username = prefs.getString("username");
       _paysf = prefs.getString("paysf");
+      _typeOper = prefs.getString("typeOper");
       _serviceName = prefs.getString("serviceName");
       _name = prefs.getString("named");
       _nomd = prefs.getString("nomd");
@@ -191,28 +187,28 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
     return _status;
   }
 
-  String getNature(String nature){
+  String getNature(String nature, String typeOper){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "AGENT_TO_USER"){
       _nature = "Transfert d'argent";
-    }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET" || nature == "WALLET_TO_YUP"){
+    }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "PAYPAL_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET" || nature == "WALLET_TO_YUP"){
       _nature = "Recharge d'argent";
-    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE" || nature == "TRANSFERT"){
+    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE" || nature == "WALLET_TO_MOMO" || nature == "WALLET_TO_OM" || nature == "TRANSFERT" || (nature == "RETRAIT" && typeOper == "WALLET_TO_OM")){
       _nature = "Retrait d'argent";
-    }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST" || nature == "SPRINTPAY_TO_WALLET" || nature == "SPAPI_TO_WALLET"){
+    }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST" || nature == "WALLET_PAYMENT_CODEREQUEST" || nature == "SPRINTPAY_TO_WALLET" || nature == "SPAPI_TO_WALLET"){
       _nature = "Paiement marketplace";
     }
     return _nature;
   }
 
-  String getMoyen(String nature){
+  String getMoyen(String nature, String typeOper){
     String _natures = "";
-    if(nature == "WALLET_TO_WALLET"){
+    if(nature == "WALLET_TO_WALLET" || nature == "AGENT_TO_USER"){
       _natures = "Wallet SprintPay";
       _code = "";
       _lieu = "0";
       //this.getTransactionById();
-    }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST"){
+    }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST"|| nature == "WALLET_PAYMENT_CODEREQUEST"){
       _natures = "Wallet SprintPay";
       _code = "";
       _lieu = "-1";
@@ -228,8 +224,8 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       }
       _code = "";
       //this.loadMap(0);
-    }else if(nature == "CARD_TO_WALLET"){
-      _natures = "Carte bancaire -> Wallet";
+    }else if(nature == "PAYPAL_TO_WALLET"){
+      _natures = "Paypal -> Wallet";
       _code = "2";
       _lieu = "-1";
     }else if(nature == "OM_TO_WALLET"){
@@ -248,7 +244,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       _natures = "Wallet -> MTN Mobile Money";
       _code = "0";
       _lieu = "-2";
-    }else if(nature == "WALLET_TO_OM" || nature == "TRANSFERT"){
+    }else if(nature == "WALLET_TO_OM" || nature == "WALLET_TO_MOMO" || nature == "WALLET_TO_ORANGE" || nature == "TRANSFERT" || (nature == "RETRAIT" && typeOper == "WALLET_TO_OM")){
       _natures = "Wallet -> ORANGE Money";
       _code = "1";
       _lieu = "-2";
@@ -424,13 +420,20 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                       children: <Widget>[
                         Expanded(
                           flex: 1,
-                          child: GestureDetector(
+                          child: IconButton(
+                              onPressed: (){
+                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique('$_code')));
+                              },
+                              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+                          ),
+
+                          /*GestureDetector(
                               onTap: (){
                                 Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique('$_code')));
                                 //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Detail(_code)));
                               },
                               child: Icon(Icons.arrow_back_ios,color: Colors.white,)
-                          ),
+                          ),*/
                         ),
                         Expanded(
                           flex: 3,
@@ -543,7 +546,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                Text(getNature(_serviceName),
+                                Text(getNature(_serviceName, _typeOper),
                                   style: TextStyle(
                                       color: couleur_titre,
                                       fontSize: taille_champ+3,
@@ -611,7 +614,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                   ),
                 ),
               ),
-              _serviceName == "SPRINTPAY_TO_WALLET_CODEREQUEST"?Container():Padding(
+              _serviceName == "SPRINTPAY_TO_WALLET_CODEREQUEST" || _serviceName == "WALLET_PAYMENT_CODEREQUEST"?Container():Padding(
                 padding: EdgeInsets.only(top: top1+70, left: 50, right: 20),
                 child: Row(
                   children: <Widget>[
@@ -676,7 +679,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         padding: EdgeInsets.only(right: 20),
                         child: Align(
                           alignment: Alignment.topRight,
-                          child: Text(getMoyen(_serviceName), style: TextStyle(
+                          child: Text(getMoyen(_serviceName, _typeOper), style: TextStyle(
                               color: couleur_fond_bouton,
                               fontSize: taille_champ+2,
                             fontWeight: FontWeight.bold
@@ -718,7 +721,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: <Widget>[
-                            _serviceName == "EU_TO_WALLET" || _serviceName == "CARD_TO_WALLET" || _serviceName == "OM_TO_WALLET" || _serviceName == "TRANSFERT" || _serviceName == "MOMO_TO_WALLET" || _serviceName == "SPRINTPAY_TO_WALLET_CODEREQUEST"?
+                            _serviceName == "EU_TO_WALLET" || _serviceName == "CARD_TO_WALLET" || _serviceName == "PAYPAL_TO_WALLET" || _serviceName == "OM_TO_WALLET" || _serviceName == "TRANSFERT" || _serviceName == "MOMO_TO_WALLET" || _serviceName == "SPRINTPAY_TO_WALLET_CODEREQUEST" || _serviceName == "WALLET_PAYMENT_CODEREQUEST"?
                             _toMember == null?Container():Text(_toMember, style: TextStyle(
                                 color: couleur_fond_bouton,
                                 fontSize: taille_champ+2,
@@ -943,11 +946,11 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
     if(_toMember == _username){
       return expName == null?"...":expName.length>12?expName.substring(0,12):expName;
     }else{
-      if(_serviceName == "EU_TO_WALLET" || _serviceName == "CARD_TO_WALLET" || _serviceName == "OM_TO_WALLET" || _serviceName == "MOMO_TO_WALLET"){
+      if(_serviceName == "EU_TO_WALLET" || _serviceName == "CARD_TO_WALLET" || _serviceName == "PAYPAL_TO_WALLET" || _serviceName == "OM_TO_WALLET" || _serviceName == "MOMO_TO_WALLET"){
         return _username == null?"...":_username.length>12?_username.substring(0,12):_username;
-      }else if(_serviceName == "WALLET_TO_WALLET" || _serviceName == "WALLET_TO_EU" || _serviceName == "WALLET_TO_WARI" || _serviceName == "TRANSFERT"){
+      }else if(_serviceName == "WALLET_TO_WALLET" || _serviceName == "WALLET_TO_EU" || _serviceName == "WALLET_TO_WARI" || _serviceName == "TRANSFERT" || _serviceName == "AGENT_TO_USER"){
         return _nomd== null?"...":_nomd.length>12?_nomd.substring(0,12):_nomd;
-      }else if(_serviceName == "SPRINTPAY_TO_WALLET_CODEREQUEST"){
+      }else if(_serviceName == "SPRINTPAY_TO_WALLET_CODEREQUEST" || _serviceName == "WALLET_PAYMENT_CODEREQUEST"){
         return _username == null?"...":_username.length>12?_username.substring(0,12):_username;
       }
     }

@@ -53,7 +53,8 @@ class _Encaisser2State extends State<Encaisser2> {
     switch(int.parse(_code)){
       case 0:url = '$base_url/transfert/refillByMomo';break;
       case 1:url = '$base_url/transfert/refillByOrange';break;
-      case 2:url = '$base_url/transfert/refillByCard'; break;
+      case 2:url = '$base_url/transfert/refillByPayPal'; break;
+      //case 2:url = '$base_url/transfert/refillByCard'; break;
       //case 4:url = '$base_url/transfert/refillByYup'; break;
     }
     super.initState();
@@ -88,6 +89,7 @@ class _Encaisser2State extends State<Encaisser2> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       montant = prefs.getString("montant");
+      email = prefs.getString("email");
       fees = double.parse(prefs.getString("fees"));
       deviseLocale = prefs.getString("deviseLocale");
       _to = prefs.getString("username");
@@ -195,10 +197,11 @@ class _Encaisser2State extends State<Encaisser2> {
             save(payment_url);
             _save(_id);
           });
-          if(Platform.isIOS){
+          navigatorKey.currentState.pushNamed("/ioswebview");
+          /*if(Platform.isIOS){
             navigatorKey.currentState.pushNamed("/ioswebview");
           }else
-          navigatorKey.currentState.pushNamed("/webview");
+          navigatorKey.currentState.pushNamed("/webview");*/
         }else{
           this.getStatus(_id);
         }
@@ -383,14 +386,13 @@ class _Encaisser2State extends State<Encaisser2> {
                     padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
                     child: Row(
                       children: <Widget>[
-                        GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                navigatorKey.currentState.pushNamed("/encaisser");
-                              });
+                        IconButton(
+                            onPressed: (){
+                              navigatorKey.currentState.pushNamed("/encaisser");
                             },
-                            child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                            icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
                         ),
+
                         GestureDetector(
                           onTap: (){
                             setState(() {
@@ -465,24 +467,7 @@ class _Encaisser2State extends State<Encaisser2> {
                       ),
                     ),
                   ),
-                  deviseLocale != "XAF"?Padding(
-                    padding: EdgeInsets.only(top: 70, left: 0, right: 0),
-                    child: CarouselSlider(
-                      enlargeCenterPage: true,
-                      autoPlay: false,
-                      enableInfiniteScroll: false,
-                      onPageChanged: (value){},
-                      height: 135.0,
-                      items: [3].map((i) {
-                        return Builder(
-                          builder: (BuildContext context) {
-                            return getMoyen(3);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  )
-                      :Padding(
+                  Padding(
                       padding: EdgeInsets.only(top: 70, left: 0, right: 0),
                       child: CarouselSlider(
                         enlargeCenterPage: true,
@@ -646,7 +631,9 @@ class _Encaisser2State extends State<Encaisser2> {
                         setState(() {
                           if(isLoading == true){
                           }else{
+                            _to = _to.replaceAll(" ", "");
                             if(_formKey.currentState.validate()){
+                              print("Le code $_code");
                               if(_code == "0"){//MTN
                                 if(_to.startsWith('67') || _to.startsWith('68') || _to.startsWith('654') || _to.startsWith('653') || _to.startsWith('652') || _to.startsWith('651') || _to.startsWith('650')){
                                   var walletTr = new mtnTrans(
@@ -662,7 +649,20 @@ class _Encaisser2State extends State<Encaisser2> {
                                   showInSnackBar("Le numéro à débiter n'est pas un compte MTN MoMo valide!", _scaffoldKey);
                                 }
                               }else if(_code == "2"){
-                                print("******************* je suis la carte");
+                                print("******************* je suis la carte paypal");
+                                var walletTr = new paypalTrans(
+                                    email:this.email,
+                                    amount: int.parse(this.montant),
+                                    fees: fees,
+                                    description: this.description,
+                                    deviseLocale: this.deviseLocale,
+                                    successUrl: "http://www.sprint-pay.com",
+                                    failureUrl: "http://www.sprint-pay.com"
+                                );
+                                print(json.encode(walletTr));
+                                checkConnection(json.encode(walletTr));
+                              }else if(_code == "5"){
+                                print("******************* je suis la carte visa");
                                 var walletTr = new cardTrans(
                                     to:this._to,
                                     amount: int.parse(this.montant),
@@ -670,8 +670,8 @@ class _Encaisser2State extends State<Encaisser2> {
                                     description: this.description,
                                     ipAddress: this._ip,
                                     deviseLocale: this.deviseLocale,
-                                    successUrl: "http://www.sprintpay.com",
-                                    failureUrl: "http://www.sprintpay.com"
+                                    successUrl: "http://www.sprint-pay.com",
+                                    failureUrl: "http://www.sprint-pay.com"
                                 );
                                 print(json.encode(walletTr));
                                 checkConnection(json.encode(walletTr));
@@ -682,8 +682,8 @@ class _Encaisser2State extends State<Encaisser2> {
                                     fees: fees,
                                     description: this.description,
                                     deviseLocale: this.deviseLocale,
-                                    successUrl: "http://www.sprintpay.com",
-                                    failureUrl: "http://www.sprintpay.com"
+                                    successUrl: "http://www.sprint-pay.com",
+                                    failureUrl: "http://www.sprint-pay.com"
                                 );
                                 print(json.encode(walletTr));
                                 checkConnection(json.encode(walletTr));
@@ -695,8 +695,8 @@ class _Encaisser2State extends State<Encaisser2> {
                                       fees: fees,
                                       description: this.description,
                                       deviseLocale: this.deviseLocale,
-                                      successUrl: "http://www.sprintpay.com",
-                                      failureUrl: "http://www.sprintpay.com"
+                                      successUrl: "http://www.sprint-pay.com",
+                                      failureUrl: "http://www.sprint-pay.com"
                                   );
                                   print(json.encode(walletTr));
                                   checkConnection(json.encode(walletTr));
@@ -757,11 +757,13 @@ class _Encaisser2State extends State<Encaisser2> {
       break;
       case 2: text = "ORANGE MONEY";img = 'images/orange.png';
       break;
-      case 3: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
+      case 6: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
       break;
       case 4: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
       break;
       case 5: text = "YUP";img = 'marketimages/yup.jpg';
+      break;
+      case 3: text = "CARTE PAYPAL";img = 'images/paypal.jpg';
       break;
     }
     return Container(

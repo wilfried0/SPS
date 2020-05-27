@@ -34,16 +34,13 @@ class _ModifierState extends State<Modifier> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Verification3(_code)));
-                });
-                //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Verification3(_code)));
+          leading: IconButton(
+              onPressed: (){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Verification3(_code)));
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: couleur_fond_bouton),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
+          //iconTheme: new IconThemeData(color: couleur_fond_bouton),
         ),
       ),
       body: SingleChildScrollView(

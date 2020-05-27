@@ -1,14 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_inappbrowser/flutter_inappbrowser.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:flutter/material.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/composants/transition.dart';
 import 'package:services/paiement/encaisser2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'confirma.dart';
 import 'echec.dart';
 
@@ -30,28 +28,16 @@ class _WebviewState extends State<IosWebview> {
   int temps = 200;
   String _username, _password, payment_url, _id;
   FlutterWebviewPlugin flutterWebviewPlugin = FlutterWebviewPlugin();
-  InAppWebViewController webView;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     this.read();
-     /*_onUrlChanged = flutterWebviewPlugin.onUrlChanged.listen((String url) {
-      if (mounted) {
-        print("mon url $payment_url et mon id $_id");
-        print("Current URL: $url");
-        if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
-          this._getStatus(_id);
-        }else{
-
-        }
-      }
-    });*/
    flutterWebviewPlugin.onStateChanged.listen((WebViewStateChanged webViewStateChanged){
     url = webViewStateChanged.url;
     print("Current url: $url");
-    if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
+    if(url == "https://cargosprint.com/" || url == "http://www.sprint-pay.com"){
       this._getStatus(_id);
     }else{
       print("déjà $_status");
@@ -124,15 +110,12 @@ class _WebviewState extends State<IosWebview> {
               elevation: 0.0,
               backgroundColor: couleur_appbar,
               flexibleSpace: barreTop,
-              leading: InkWell(
-                  onTap: (){
-                    setState(() {
-                      Navigator.of(context).push(SlideLeftRoute(enterWidget: Encaisser2(_code), oldWidget: IosWebview(_code)));
-                    });
-                    //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Pays()));
+              leading: IconButton(
+                  onPressed: (){
+                    Navigator.of(context).push(SlideLeftRoute(enterWidget: Encaisser2(_code), oldWidget: IosWebview(_code)));
                   },
-                  child: Icon(Icons.arrow_back_ios,)),
-              iconTheme: new IconThemeData(color: couleur_fond_bouton),
+                  icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+              ),
             ),
             //supportMultipleWindows: true,
             initialChild:Center(

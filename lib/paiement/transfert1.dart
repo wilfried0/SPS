@@ -139,6 +139,7 @@ class _Transfert1State extends State<Transfert1> {
           lieu = q;
           this._save();
           setState(() {
+            print("q vaut: $q");
             if(q == 0){
               isLoadClient = false;
               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22(_code)));
@@ -273,7 +274,17 @@ class _Transfert1State extends State<Transfert1> {
                           print(json.encode(getrateAmount));
                           this.getRateAmountByCurrency(json.encode(getrateAmount), 1);
                         }
-                      }else{
+                      }else if(q == 1){
+                        Navigator.pop(context);
+                        var getcommission = getCommission(
+                            typeOperation: "WALLET_TO_WARI",
+                            country: "$country",
+                            amount: int.parse(this.montant),
+                            deviseLocale: deviseLocale
+                        );
+                        print(json.encode(getcommission));
+                        checkConnection(json.encode(getcommission), 3);
+                      } else{
                         Navigator.pop(context);//Vers un compte mobile WARI
                         showInSnackBar("Pas encore disponible.");
                         /*var getcommission = getCommission(
@@ -299,7 +310,7 @@ class _Transfert1State extends State<Transfert1> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: new Center(child:new Text(from=="UEMOA"?"Vers un compte mobile WARI":'Vers EU sans compte', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
+                        child: new Center(child:new Text(from=="UEMOA"?"Via WARI":'Vers EU sans compte', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
                         ),
                       ),
                     ),
@@ -336,7 +347,17 @@ class _Transfert1State extends State<Transfert1> {
                             print(json.encode(getrateAmount));
                             this.getRateAmountByCurrency(json.encode(getrateAmount), 2);
                           }
-                        }else{
+                        }else if(q == 1){
+                          Navigator.pop(context);
+                          var getcommission = getCommission(
+                              typeOperation: "WALLET_TO_WARI",
+                              country: "$country",
+                              amount: int.parse(this.montant),
+                              deviseLocale: deviseLocale
+                          );
+                          print(json.encode(getcommission));
+                          checkConnection(json.encode(getcommission), 4);
+                        } else{
                           Navigator.pop(context);//Vers un compte bancaire WARI
                           showInSnackBar("Pas encore disponible.");
                           /*var getcommission = getCommission(
@@ -362,7 +383,7 @@ class _Transfert1State extends State<Transfert1> {
                             ),
                             borderRadius: new BorderRadius.circular(10.0),
                           ),
-                          child: new Center(child:new Text(from=="UEMOA"?"Vers un compte bancaire WARI":'Vers un compte EU Mobile', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
+                          child: new Center(child:new Text(from=="UEMOA"?"Via ATPS":'Vers un compte EU Mobile', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
                           ),
                         ),
                       ),
@@ -461,21 +482,15 @@ class _Transfert1State extends State<Transfert1> {
                   padding: const EdgeInsets.only(top: 23, left: 20, right: 20),
                   child: Row(
                     children: <Widget>[
-                      GestureDetector(
-                          onTap: (){
-                            setState(() {
-                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
-                            });
+                      IconButton(
+                          onPressed: (){
+                            Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
                           },
-                          child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                          icon: Icon(Icons.arrow_back_ios,color: Colors.white,)
                       ),
                       GestureDetector(
                         onTap: (){
-                          setState(() {
-                            //Navigator.pop(context);
                             Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
-                            //Navigator.of(context).push(SlideLeftRoute(enterWidget: Detail(_code), oldWidget: Encaisser1(_code)));
-                          });
                         },
                         child: Text('Retour',
                           style: TextStyle(color: Colors.white, fontSize: taille_champ),),
@@ -784,16 +799,7 @@ class _Transfert1State extends State<Transfert1> {
                                   if(from == "CEMAC"){
                                     this._Alert(context, 0);
                                   }else if(from == "UEMOA"){
-                                    var getcommission = getCommission(
-                                        typeOperation: "WALLET_TO_WARI",
-                                        country: "$country",
-                                        amount: int.parse(this.montant),
-                                        deviseLocale: deviseLocale
-                                    );
-                                    print(json.encode(getcommission));
-                                    checkConnection(json.encode(getcommission), 3);
-
-                                    //this._Alert(context, 1);
+                                    this._Alert(context, 1);
                                   }else{
                                     showInSnackBar("Service pas encore disponible vers ce pays.");
                                   }

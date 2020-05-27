@@ -51,7 +51,7 @@ class _getSoldeWidgetState extends State<getSoldeWidget> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(top: 35, ),//solde du compte
+      padding: EdgeInsets.only(top: 15, ),//solde du compte
       child:deviseLocale=='EUR'? Column(
         children: <Widget>[
           Text('SOLDE', style: TextStyle(

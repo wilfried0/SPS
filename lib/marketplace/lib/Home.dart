@@ -254,9 +254,8 @@ class _HomeState extends State<Home> {
               ),
               GestureDetector(
                 onTap: () {
-                  SysSnackBar().show(
-                      _scaffoldKey, "Service pas encore disponible !");
-                  //this.getPharmacies();
+                  //SysSnackBar().show(_scaffoldKey, "Service pas encore disponible !");
+                  this.getPharmacies();
                 },
                 child: Card(
                   elevation: 4,

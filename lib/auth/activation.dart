@@ -242,14 +242,13 @@ class _ActivationState extends State<Activation> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                });
+          leading: IconButton(
+              onPressed: (){
                 Navigator.pop(context);
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: couleur_fond_bouton),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
+          //iconTheme: new IconThemeData(color: couleur_fond_bouton),
         ),
       ),
 

@@ -59,7 +59,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     }
   }
 
-  void _save(String _fromCountry, String _toCountry, String _serviceName, String _name, String _amount, String _fees, String _status, String _nature, String _transactionid, String _date) async {
+  void _save(String _fromCountry, String _toCountry, String _serviceName, String _name, String _amount, String _fees, String _status, String _typeOper, String _transactionid, String _date) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString("payst", "$_toCountry");
     prefs.setString("paysf", "$_fromCountry");
@@ -67,7 +67,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     prefs.setString("montant", "$_amount");
     prefs.setString("fees", "$_fees");
     prefs.setString("status", "$_status");
-    prefs.setString("nature", "$_nature");
+    prefs.setString("typeOper", "$_typeOper");
     prefs.setString("nomd", "$_name");
     prefs.setString("transactionid", "$_transactionid");
     prefs.setString("date", "$_date");
@@ -380,12 +380,11 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                         children: <Widget>[
                           Expanded(
                             flex: 1,
-                            child: GestureDetector(
-                                onTap: (){
-                                    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
-                                    //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Detail(_code)));
+                            child: IconButton(
+                                onPressed: (){
+                                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
                                 },
-                                child: Icon(Icons.arrow_back_ios,color: Colors.white,)
+                                icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
                             ),
                           ),
                           Expanded(
@@ -462,7 +461,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                var _fees = data[i]['fees'];
                var _toCountry = data[i]['tocountry'];
                var _status = data[i]['status'];
-               var _nature = data[i]['typeOper'];
+               var _typeOper = data[i]['typeOper'];
                var _fromCountry = data[i]['fromcountry'];
                var _serviceName = data[i]['serviceName'];
                var _transactionid = data[i]['transactionid'];
@@ -471,7 +470,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                   padding: EdgeInsets.only(left: 20, right: 20, top: 20),
                   child: GestureDetector(
                     onTap: (){
-                      _save(_fromCountry, _toCountry, _serviceName ,_toFirstName,_amount.toString().split('.')[0], _fees.toString(), _status, _nature ,_transactionid, _date);
+                      _save(_fromCountry, _toCountry, _serviceName ,_toFirstName,_amount.toString().split('.')[0], _fees.toString(), _status, _typeOper ,_transactionid, _date);
                       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                     },
                     child: Card(
@@ -501,7 +500,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: <Widget>[
-                                          Text(getNature(_serviceName), style: TextStyle(
+                                          Text(getNature(_serviceName, _typeOper), style: TextStyle(
                                               color: couleur_titre,
                                               fontWeight: FontWeight.bold,
                                               fontSize: taille_champ
@@ -589,15 +588,15 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     return _status;
   }
 
-  String getNature(String nature){
+  String getNature(String nature, String typeOper){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "AGENT_TO_USER"){
       _nature = "Transfert d'argent";
-    }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
+    }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "PAYPAL_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
       _nature = "Recharge d'argent";
-    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE" || nature == "TRANSFERT"){
+    }else if(nature == "WALLET_TO_MTN" || nature == "WALLET_TO_ORANGE" || nature == "WALLET_TO_OM" || nature == "WALLET_TO_MOMO" || nature == "WALLET_TO_MOMO" || nature == "TRANSFERT" || (nature == "RETRAIT" && typeOper == "WALLET_TO_OM")){
       _nature = "Retrait d'argent";
-    }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST"){
+    }else if(nature == "SPRINTPAY_TO_WALLET_CODEREQUEST" || nature == "WALLET_PAYMENT_CODEREQUEST"){
       _nature = "Paiement market...";
     }
     return _nature;

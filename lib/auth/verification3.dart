@@ -96,17 +96,12 @@ class _Verification3State extends State<Verification3> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-
-          leading: GestureDetector(
-              onTap: (){
-                setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
-                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Verification3(_code)));
-                });
-                //Navigator.of(context).push(MaterialPageRoute(builder: (context) => Verification2(_code)));
+          leading: IconButton(
+              onPressed: (){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: couleur_fond_bouton),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
         ),
       ),
       body: SingleChildScrollView(

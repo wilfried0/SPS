@@ -130,15 +130,12 @@ class _TransferState extends State<Transfer> {
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-          leading: InkWell(
-              onTap: (){
-                setState(() {
-                  Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2(_code)));
-                  //Navigator.of(context).push(SlideLeftRoute(enterWidget: Connexion(_code), oldWidget: Inscription(_code)));
-                });
+          leading: IconButton(
+              onPressed: (){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2(_code)));
               },
-              child: Icon(Icons.arrow_back_ios,)),
-          iconTheme: new IconThemeData(color: couleur_fond_bouton),
+              icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+          ),
         ),
         body: ListView(
           children: <Widget>[
