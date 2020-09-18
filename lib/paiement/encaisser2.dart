@@ -33,18 +33,18 @@ class _Encaisser2State extends State<Encaisser2> {
   int currentPage = 0;
   int choice = 0;
   int recenteLenght, archiveLenght, populaireLenght;
-  var _formKey = GlobalKey<FormState>();
+  var _formKey = GlobalKey<FormState>(), flagUri;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   final navigatorKey = GlobalKey<NavigatorState>();
   int flex4, flex6, taille, enlev, rest, enlev1, indik;
   double gauch,fees, droit,_taill, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   List data, list;
   bool isLoading = false;
-  String url, _id, _to, payment_url, _ip;
+  String url, _id, _to, payment_url, _ip, lang;
   int temps = 600;
   var _userTextController = new TextEditingController();
   // ignore: non_constant_identifier_names
-  String kittyImage,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
+  String kittyImage,solde, previsional_amount,_mySelection, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", _username, _password, deviseLocale, local, devise, country;
 
   @override
   void initState() {
@@ -53,8 +53,8 @@ class _Encaisser2State extends State<Encaisser2> {
     switch(int.parse(_code)){
       case 0:url = '$base_url/transfert/refillByMomo';break;
       case 1:url = '$base_url/transfert/refillByOrange';break;
-      case 2:url = '$base_url/transfert/refillByPayPal'; break;
-      //case 2:url = '$base_url/transfert/refillByCard'; break;
+      case 3:url = '$base_url/transfert/refillByPayPal'; break;
+      case 2:url = '$base_url/transfert/refillByCard'; break;
       //case 4:url = '$base_url/transfert/refillByYup'; break;
     }
     super.initState();
@@ -93,6 +93,10 @@ class _Encaisser2State extends State<Encaisser2> {
       fees = double.parse(prefs.getString("fees"));
       deviseLocale = prefs.getString("deviseLocale");
       _to = prefs.getString("username");
+      country = prefs.getString("iso3");
+      _mySelection = prefs.getString("dial");
+      flagUri = prefs.getString("flag");
+      lang = prefs.getString("lang");
     });
   }
 
@@ -135,6 +139,7 @@ class _Encaisser2State extends State<Encaisser2> {
     _username = prefs.getString("username");
     _password = prefs.getString("password");
     print("$_username, $_password");
+    print("voici l'url:  $url");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
     HttpClient client = new HttpClient();
@@ -148,7 +153,12 @@ class _Encaisser2State extends State<Encaisser2> {
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");
     print("body $reply");
-      if (response.statusCode < 200 || json == null) {
+    if(reply.isEmpty){
+      setState(() {
+        isLoading = false;
+      });
+      showInSnackBar("Service indisponible!", _scaffoldKey);
+    }else if (response.statusCode < 200 || json == null) {
         setState(() {
           isLoading = false;
         });
@@ -230,11 +240,11 @@ class _Encaisser2State extends State<Encaisser2> {
     request.headers.set('content-type', 'application/json');
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
-    print("statusCode ${response.statusCode}");
-    print("body $reply");
+    print("statusCode au statusCode ${response.statusCode}");
+    print("body au statusCode $reply");
     if(response.statusCode == 200){
       var responseJson = json.decode(reply);
-      if(responseJson['status'] == "CREATED"){
+      if(responseJson['status'] == "CREATED" || responseJson['status'] == "PENDING"){
         if(temps == 0){
           setState(() {
             isLoading = false;
@@ -327,7 +337,40 @@ class _Encaisser2State extends State<Encaisser2> {
       gauch = 20;
       droit = 20;
       _taill = taille_description_champ-3;
-    }else if(_large>320 && _large<=414){
+    }else if(_large>=1000){
+      left1 = 0;
+      right1 = 197;
+      hauteurcouverture = 300;
+      nomright =  MediaQuery.of(context).size.width-330;
+      nomtop = 280;
+      datetop = 10;
+      titretop = 340;
+      titreleft = 20;
+      amounttop = 360;
+      amountleft = 20;
+      amountright = 20;
+      topcolect = 385;
+      topphoto = 250;
+      bottomphoto = 0;
+      desctop = 490;
+      descbottom = 20;
+      flex4 = 5;
+      flex6 = 6;
+      bottomtext = 50;
+      toptext = 420;
+      taille = 250;
+      enlev = 104;
+      rest = 40;
+      enlev1 = 260;
+      social = 30;
+      topo = 480;
+      div1 = 387;
+      margeleft = 15;
+      margeright = 14;
+      gauch = 20;
+      droit = 20;
+      _taill = taille_description_champ-1;
+    }else if(_large>320){
       left1 = 0;
       right1 = 197;
       hauteurcouverture = 300;
@@ -375,6 +418,7 @@ class _Encaisser2State extends State<Encaisser2> {
       home: new DefaultTabController(
         length: 1,
         child: new Scaffold(
+          backgroundColor: GRIS,
           key: _scaffoldKey,
           appBar: PreferredSize(
             preferredSize: Size.fromHeight(fromHeight),
@@ -390,7 +434,7 @@ class _Encaisser2State extends State<Encaisser2> {
                             onPressed: (){
                               navigatorKey.currentState.pushNamed("/encaisser");
                             },
-                            icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+                            icon: Icon(Icons.arrow_back_ios,color: Colors.white,)
                         ),
 
                         GestureDetector(
@@ -450,7 +494,7 @@ class _Encaisser2State extends State<Encaisser2> {
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-                color: Colors.white,
+                color: GRIS,
                 borderRadius: BorderRadius.circular(10.0)
             ),
             child: Form(
@@ -551,7 +595,7 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
 
-                  indik==3||indik==5||deviseLocale!="XAF"?Container():Padding(
+                  indik==3||indik==4||indik==5||deviseLocale!="XAF"?Container():Padding(
                     padding: EdgeInsets.only(top:MediaQuery.of(context).size.width<=320?530: 510, left: gauch, right: droit),
                     child: Text(indik==1?"Téléphone MoMo à débiter":indik==2?"Téléphone OM à débiter":"Téléphone bénéficiaire",
                       style: TextStyle(
@@ -562,7 +606,7 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
 
-                  indik==3||indik==5||deviseLocale!="XAF"?Container():Padding(
+                  indik==3||indik==4||indik==5||deviseLocale!="XAF"?Container():Padding(
                     padding: EdgeInsets.only(left: gauch, right: droit, top:MediaQuery.of(context).size.width<=320?560 :540),
                     child: Container(
                       decoration: new BoxDecoration(
@@ -572,7 +616,7 @@ class _Encaisser2State extends State<Encaisser2> {
                           bottomRight: Radius.circular(10.0),
                           bottomLeft: Radius.circular(10.0)
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             width: bordure,
                             color: couleur_bordure
@@ -584,22 +628,26 @@ class _Encaisser2State extends State<Encaisser2> {
                         child: Row(
                           children: <Widget>[
                             Expanded(
-                                flex: 5,
-                                child: CountryCodePicker(
-                                  showFlag: true,
-                                  onChanged: (CountryCode code){
-                                    //_mySelection = code.dialCode.toString();
-                                  },
+                              flex:2,
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child:flagUri==null?Container(): new Image.asset('$flagUri'),
+                              ),
+                            ),
+                            Expanded(
+                                flex: 2,
+                                child: Padding(
+                                  padding: EdgeInsets.only(left: 10),
+                                  child: _mySelection == null?Container():Text("$_mySelection"),
                                 )
                             ),
                             Expanded(
-                              flex: 10,
+                              flex: 8,
                               child: TextFormField(
                                 //controller: _userTextController3,
                                 keyboardType: TextInputType.phone,
                                 style: TextStyle(
                                     fontSize: taille_libelle_champ+3,
-                                    color: couleur_libelle_champ,
                                     fontFamily: police_champ
                                 ),
                                 validator: (String value){
@@ -625,7 +673,7 @@ class _Encaisser2State extends State<Encaisser2> {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(top:(MediaQuery.of(context).size.width<=320 && indik==3||indik==5||deviseLocale!="XAF")?520:(MediaQuery.of(context).size.width<=320 && indik!=3)?640:indik==3||deviseLocale!="XAF"?510:620,left: gauch, right: droit, bottom: 20),
+                    padding: EdgeInsets.only(top:(MediaQuery.of(context).size.width<=320 && indik==3||indik==4||indik==5||deviseLocale!="XAF")?520:(MediaQuery.of(context).size.width<=320 && indik!=3)?640:indik==3||deviseLocale!="XAF"?510:620,left: gauch, right: droit, bottom: 20),
                     child: GestureDetector(
                       onTap: () async {
                         setState(() {
@@ -635,9 +683,23 @@ class _Encaisser2State extends State<Encaisser2> {
                             if(_formKey.currentState.validate()){
                               print("Le code $_code");
                               if(_code == "0"){//MTN
-                                if(_to.startsWith('67') || _to.startsWith('68') || _to.startsWith('654') || _to.startsWith('653') || _to.startsWith('652') || _to.startsWith('651') || _to.startsWith('650')){
+                                if(country == "CMR"){
+                                  if(_to.startsWith('67') || _to.startsWith('68') || _to.startsWith('654') || _to.startsWith('653') || _to.startsWith('652') || _to.startsWith('651') || _to.startsWith('650')){
+                                    var walletTr = new mtnTrans(
+                                        to:'$_to',
+                                        amount: int.parse(this.montant),
+                                        fees: fees,
+                                        description: this.description,
+                                        deviseLocale: this.deviseLocale
+                                    );
+                                    print(json.encode(walletTr));
+                                    checkConnection(json.encode(walletTr));
+                                  }else{
+                                    showInSnackBar("Le numéro à débiter n'est pas un compte MTN MoMo valide!", _scaffoldKey);
+                                  }
+                                }else{//Country == "COG"Congo brazzaville
                                   var walletTr = new mtnTrans(
-                                      to:'$_to',
+                                      to:'${_mySelection.substring(1)}$_to',
                                       amount: int.parse(this.montant),
                                       fees: fees,
                                       description: this.description,
@@ -645,10 +707,8 @@ class _Encaisser2State extends State<Encaisser2> {
                                   );
                                   print(json.encode(walletTr));
                                   checkConnection(json.encode(walletTr));
-                                }else{
-                                  showInSnackBar("Le numéro à débiter n'est pas un compte MTN MoMo valide!", _scaffoldKey);
                                 }
-                              }else if(_code == "2"){
+                              }else if(_code == "3"){
                                 print("******************* je suis la carte paypal");
                                 var walletTr = new paypalTrans(
                                     email:this.email,
@@ -661,7 +721,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                 );
                                 print(json.encode(walletTr));
                                 checkConnection(json.encode(walletTr));
-                              }else if(_code == "5"){
+                              }else if(_code == "2"){
                                 print("******************* je suis la carte visa");
                                 var walletTr = new cardTrans(
                                     to:this._to,
@@ -669,6 +729,7 @@ class _Encaisser2State extends State<Encaisser2> {
                                     fees: fees,
                                     description: this.description,
                                     ipAddress: this._ip,
+                                    language: lang,
                                     deviseLocale: this.deviseLocale,
                                     successUrl: "http://www.sprint-pay.com",
                                     failureUrl: "http://www.sprint-pay.com"
@@ -682,8 +743,8 @@ class _Encaisser2State extends State<Encaisser2> {
                                     fees: fees,
                                     description: this.description,
                                     deviseLocale: this.deviseLocale,
-                                    successUrl: "http://www.sprint-pay.com",
-                                    failureUrl: "http://www.sprint-pay.com"
+                                    successUrl: "https://sprint-pay.com/",
+                                    failureUrl: "https://sprint-pay.com/"
                                 );
                                 print(json.encode(walletTr));
                                 checkConnection(json.encode(walletTr));
@@ -695,8 +756,8 @@ class _Encaisser2State extends State<Encaisser2> {
                                       fees: fees,
                                       description: this.description,
                                       deviseLocale: this.deviseLocale,
-                                      successUrl: "http://www.sprint-pay.com",
-                                      failureUrl: "http://www.sprint-pay.com"
+                                      successUrl: "https://sprint-pay.com/",
+                                      failureUrl: "https://sprint-pay.com/"
                                   );
                                   print(json.encode(walletTr));
                                   checkConnection(json.encode(walletTr));
@@ -734,8 +795,10 @@ class _Encaisser2State extends State<Encaisser2> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: new Center(child: isLoading==false? new Text('Confirmer la recharge', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton, fontFamily: police_bouton),):
-                          CupertinoActivityIndicator()
+                        child: new Center(child: isLoading==false? new Text('Confirmer la recharge', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton),):
+                        Theme(
+                            data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                            child: CupertinoActivityIndicator(radius: 20,)),
                         ),
                       ),
                     ),
@@ -753,17 +816,17 @@ class _Encaisser2State extends State<Encaisser2> {
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MTN MOBILE MONEY";img = 'images/mtn.jpg';
+      case 1: text =country == "COG"?"MTN MOBILE MONEY CONGO": "MTN MOBILE MONEY CMR";img ='images/mtn.jpg';
       break;
       case 2: text = "ORANGE MONEY";img = 'images/orange.png';
       break;
-      case 6: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
+      case 3: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
       break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
+      case 6: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
       break;
       case 5: text = "YUP";img = 'marketimages/yup.jpg';
       break;
-      case 3: text = "CARTE PAYPAL";img = 'images/paypal.jpg';
+      case 4: text = "CARTE PAYPAL";img = 'images/paypal.jpg';
       break;
     }
     return Container(

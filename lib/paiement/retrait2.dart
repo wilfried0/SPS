@@ -38,7 +38,7 @@ class _Retrait2State extends State<Retrait2> {
   var _userTextController = new TextEditingController();
   var _phoneTextController = new TextEditingController();
   bool isLoading =false;
-  String url, _id, _to, payment_url, echec;
+  String url, _id, _to, payment_url, echec, country;
   int temps = 600;
   // ignore: non_constant_identifier_names
   String kittyImage,solde, previsional_amount, amount_collected, kittyId, firstnameBenef,particip, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="",  _username, _password, deviseLocale;
@@ -198,7 +198,7 @@ class _Retrait2State extends State<Retrait2> {
     print("body $reply");
     if(response.statusCode == 200){
       var responseJson = json.decode(reply);
-      if(responseJson['status'] == "CREATED"){
+      if(responseJson['status'] == "CREATED" || responseJson['status'] == "PENDING"){
         if(temps == 0){
           setState(() {
             isLoading = false;
@@ -332,6 +332,39 @@ class _Retrait2State extends State<Retrait2> {
       gauch = 20;
       droit = 20;
       _taill = taille_description_champ-1;
+    }else if(_large>414){
+      left1 = 0;
+      right1 = 197;
+      hauteurcouverture = 300;
+      nomright =  MediaQuery.of(context).size.width-330;
+      nomtop = 280;
+      datetop = 10;
+      titretop = 340;
+      titreleft = 20;
+      amounttop = 360;
+      amountleft = 20;
+      amountright = 20;
+      topcolect = 385;
+      topphoto = 250;
+      bottomphoto = 0;
+      desctop = 490;
+      descbottom = 20;
+      flex4 = 5;
+      flex6 = 6;
+      bottomtext = 50;
+      toptext = 420;
+      taille = 250;
+      enlev = 104;
+      rest = 40;
+      enlev1 = 260;
+      social = 30;
+      topo = 480;
+      div1 = 387;
+      margeleft = 15;
+      margeright = 14;
+      gauch = 20;
+      droit = 20;
+      _taill = taille_description_champ-1;
     }
     return new MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -416,7 +449,7 @@ class _Retrait2State extends State<Retrait2> {
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-                color: Colors.white,
+                color: GRIS,
                 borderRadius: BorderRadius.circular(10.0)
             ),
             child:  Form(
@@ -538,7 +571,7 @@ class _Retrait2State extends State<Retrait2> {
                           bottomLeft: Radius.circular(indik==1|| indik==2?10.0:0),
                           bottomRight: Radius.circular(indik==1|| indik==2?10.0:0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -595,7 +628,7 @@ class _Retrait2State extends State<Retrait2> {
                           bottomLeft: Radius.circular(0),
                           bottomRight: Radius.circular(0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -652,7 +685,7 @@ class _Retrait2State extends State<Retrait2> {
                           bottomLeft: Radius.circular(10.0),
                           bottomRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -743,7 +776,9 @@ class _Retrait2State extends State<Retrait2> {
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
                         child: new Center(child:isLoading==false? new Text('Confirmer le retrait', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton),):
-                            CupertinoActivityIndicator()
+                        Theme(
+                            data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                            child: CupertinoActivityIndicator(radius: 20,)),
                         ),
                       ),
                     ),
@@ -762,6 +797,7 @@ class _Retrait2State extends State<Retrait2> {
     setState(() {
       montant = prefs.getString("montant");
       _to = prefs.getString("to");
+      country = prefs.getString("iso3");
       _phoneTextController.text = _to;
       fees = double.parse(prefs.getString("fees"));
       deviseLocale = prefs.getString("deviseLocale");
@@ -771,7 +807,7 @@ class _Retrait2State extends State<Retrait2> {
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MTN MOBILE MONEY";img = 'mtn.jpg';
+      case 1: text = country == "COG"?"MTN MOBILE MONEY CONGO": "MTN MOBILE MONEY CMR";img ='mtn.jpg';
       break;
       case 2: text = "ORANGE MONEY";img = 'orange.png';
       break;

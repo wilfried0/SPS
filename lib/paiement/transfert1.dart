@@ -139,11 +139,14 @@ class _Transfert1State extends State<Transfert1> {
           lieu = q;
           this._save();
           setState(() {
-            print("q vaut: $q");
+            print("q vaut: $q et newSolde vaut $newSolde" );
             if(q == 0){
               isLoadClient = false;
               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22(_code)));
-            }else{
+            }/*else if(q == 5){
+              isLoadDirect = false;
+              showInSnackBar("Pas encore disponible!");
+            } */else{
               isLoadDirect = false;
               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2(_code)));
             }
@@ -356,12 +359,12 @@ class _Transfert1State extends State<Transfert1> {
                               deviseLocale: deviseLocale
                           );
                           print(json.encode(getcommission));
-                          checkConnection(json.encode(getcommission), 4);
+                          checkConnection(json.encode(getcommission), 5);
                         } else{
                           Navigator.pop(context);//Vers un compte bancaire WARI
                           showInSnackBar("Pas encore disponible.");
                           /*var getcommission = getCommission(
-                              typeOperation: "WARI_TO_WALLET",
+                              typeOperation:from=="UEMOA"?"WALLET_TO_BRM": "WARI_TO_WALLET",
                               country: "$country",
                               amount: int.parse(this.montant),
                               deviseLocale: deviseLocale
@@ -383,12 +386,47 @@ class _Transfert1State extends State<Transfert1> {
                             ),
                             borderRadius: new BorderRadius.circular(10.0),
                           ),
-                          child: new Center(child:new Text(from=="UEMOA"?"Via ATPS":'Vers un compte EU Mobile', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
+                          child: new Center(child:new Text(from=="UEMOA"?"Via BRM":'Vers un compte EU Mobile', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
                           ),
                         ),
                       ),
                     ),
                   ),
+
+                  //ATPS
+                  /*from == "UEMOA" && country == "SEN"?Padding(
+                    padding: EdgeInsets.only(top: 20),
+                    child: GestureDetector(
+                      onTap: (){
+                        Navigator.pop(context);
+                        var getcommission = getCommission(
+                            typeOperation: "WALLET_TO_ATPS",
+                            country: "$country",
+                            amount: int.parse(this.montant),
+                            deviseLocale: deviseLocale
+                        );
+                        print(json.encode(getcommission));
+                        checkConnection(json.encode(getcommission), 4);
+                      },
+                      child: Padding(
+                        padding: EdgeInsets.only(right: 10),
+                        child: Container(
+                          height: hauteur_bouton,
+                          width: MediaQuery.of(context).size.width/2-gauch,
+                          decoration: new BoxDecoration(
+                            color: couleur_fond_bouton,
+                            border: new Border.all(
+                              color: Colors.transparent,
+                              width: 0.0,
+                            ),
+                            borderRadius: new BorderRadius.circular(10.0),
+                          ),
+                          child: new Center(child:new Text("Via ATPS", style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),)
+                          ),
+                        ),
+                      ),
+                    ),
+                  ):Container(),*/
                 ],
               ),
             ),
@@ -472,6 +510,7 @@ class _Transfert1State extends State<Transfert1> {
     }
     return new Scaffold(
       key: _scaffoldKey,
+        backgroundColor: GRIS,
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(fromHeight),
           child: new Container(
@@ -544,7 +583,7 @@ class _Transfert1State extends State<Transfert1> {
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-                color: Colors.white,
+                color: GRIS,
                 borderRadius: BorderRadius.circular(10.0)
             ),
             child: Form(
@@ -573,7 +612,7 @@ class _Transfert1State extends State<Transfert1> {
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -630,7 +669,7 @@ class _Transfert1State extends State<Transfert1> {
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -695,7 +734,7 @@ class _Transfert1State extends State<Transfert1> {
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -782,7 +821,9 @@ class _Transfert1State extends State<Transfert1> {
                                   borderRadius: new BorderRadius.circular(10.0),
                                 ),
                                 child: new Center(child: isLoadClient == false? new Text('Client SprintPay', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),):
-                                    CupertinoActivityIndicator()
+                                Theme(
+                                    data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                    child: CupertinoActivityIndicator(radius: 20,)),
                                 ),
                               ),
                             ),
@@ -796,10 +837,19 @@ class _Transfert1State extends State<Transfert1> {
                                 if(_motif == null){
                                   showInSnackBar("Veuillez sélectionner un motif");
                                 }else{
+                                  print("***************** voici from $from");
                                   if(from == "CEMAC"){
                                     this._Alert(context, 0);
                                   }else if(from == "UEMOA"){
-                                    this._Alert(context, 1);
+                                    //this._Alert(context, 1);
+                                    var getcommission = getCommission(
+                                        typeOperation: "WALLET_TO_WARI",
+                                        country: "$country",
+                                        amount: int.parse(this.montant),
+                                        deviseLocale: deviseLocale
+                                    );
+                                    print(json.encode(getcommission));
+                                    checkConnection(json.encode(getcommission), 3);
                                   }else{
                                     showInSnackBar("Service pas encore disponible vers ce pays.");
                                   }
@@ -820,7 +870,9 @@ class _Transfert1State extends State<Transfert1> {
                                   borderRadius: new BorderRadius.circular(10.0),
                                 ),
                                 child: new Center(child:isLoadDirect == false? new Text('Direct to cash', style: new TextStyle(fontSize: taille_text_bouton, color: couleur_text_bouton),):
-                                    CupertinoActivityIndicator()
+                                Theme(
+                                    data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                    child: CupertinoActivityIndicator(radius: 20,)),
                                 ),
                               ),
                             ),
@@ -848,8 +900,6 @@ class _Transfert1State extends State<Transfert1> {
   read() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      //montant = prefs.getString("wallet")==null?"":prefs.getString("wallet");
-      //_userTextController.text = montant==""?"0":montant;
       country = prefs.getString("payst");
       nomPays = prefs.getString("nomPays");
       codeIso2 = prefs.getString("codeIso2");
@@ -859,86 +909,6 @@ class _Transfert1State extends State<Transfert1> {
       local = prefs.getString("local");
       deviseLocale = prefs.getString("deviseLocale");
     });
-  }
-
-
-  Widget getMoyen(int index){
-    String text, img;
-    switch(index){
-      case 1: text = "MOBILE MONEY";img = 'mobilemoney.jpg';
-      break;
-      case 2: text = "PORTE MONEY";img = 'wallet.png';
-      break;
-      case 3: text = "CARTE BANCAIRE";img = 'carte.jpg';
-      break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'eu.png';
-      break;
-    }
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      margin: EdgeInsets.symmetric(horizontal: 5.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(10.0),
-          topRight: Radius.circular(10.0),
-          bottomRight: Radius.circular(10.0),
-          bottomLeft: Radius.circular(10.0),
-        ),
-        border: Border.all(
-            color: index-1==indik?orange_F:bleu_F
-        ),
-        color: index-1==indik?orange_F:bleu_F,
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(top: 0),
-        child: GestureDetector(
-          onTap: (){
-            setState(() {
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
-            });
-          },
-          child: Column(
-            children: <Widget>[
-              Container(
-                height: 90,
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      topRight: Radius.circular(10.0),
-                      bottomRight: Radius.circular(10.0),
-                      bottomLeft: Radius.circular(10.0),
-                    ),
-                    image: DecorationImage(
-                      image: AssetImage('images/$img'),
-                      fit: BoxFit.cover,
-                    )
-                ),),
-              Padding(
-                padding: EdgeInsets.only(top: 10),
-                child: index-1!=indik? Text('$text',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: _taill,
-                      fontWeight: FontWeight.bold
-                  ),):Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text('$text',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: _taill,
-                          fontWeight: FontWeight.bold
-                      ),),
-                    Icon(Icons.check, color: Colors.white,)
-                  ],
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

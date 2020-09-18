@@ -53,12 +53,12 @@ class _AccueilState extends State<Accueil> {
   Widget First(BuildContext context){
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        /*gradient: LinearGradient(
           colors: [
             Colors.purple,
             Colors.purpleAccent,
           ],
-        ),
+        ),*/
         image: DecorationImage(
           image: AssetImage("images/ic_communiti.jpg"),
           fit: BoxFit.cover,
@@ -246,12 +246,12 @@ class _AccueilState extends State<Accueil> {
   Widget Second(BuildContext context){
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        /*gradient: LinearGradient(
           colors: [
             Colors.yellow,
             Colors.yellowAccent,
           ],
-        ),
+        ),*/
         image: DecorationImage(
           image: AssetImage("images/ic_markertplac.jpg"),
           fit: BoxFit.cover,
@@ -471,12 +471,12 @@ class _AccueilState extends State<Accueil> {
   Widget Third(BuildContext context){
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        /*gradient: LinearGradient(
           colors: [
             Colors.blue,
             Colors.blueAccent,
           ],
-        ),
+        ),*/
         image: DecorationImage(
           image: AssetImage("images/ic_service.jpg"),
           fit: BoxFit.cover,

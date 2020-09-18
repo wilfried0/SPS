@@ -4,14 +4,14 @@ import 'ServerResponseValidator.dart';
 
 class PharmacyController extends BaseController {
   ServerResponseValidator _responseValidator = new ServerResponseValidator();
-
   Future getList(Function onSuccess, Function onFailure,
       Function onRequestComplete) async {
     try {
-      var _url = "${Route.merchantServices}?category=PHARMACY";
+      var _url = "${Route.merchantServices}?category=PHARMACY&countryCode=CMR";
       _responseValidator = await get(_url);
       if (this.statusCode == 200) {
-        if (_responseValidator.isSuccess()) {
+        print("voilà: ${_responseValidator.status}");
+        if (_responseValidator.status == "SUCCESS") {
           onSuccess(_responseValidator.data['items']);
         } else {
           onFailure(_responseValidator);

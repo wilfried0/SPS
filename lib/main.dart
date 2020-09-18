@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:services/accueil.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:services/community/lib/utils/components.dart';
+import 'package:services/lang/sit_localizations_delegate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_localizations.dart';
 import 'auth/connexion.dart';
@@ -19,14 +23,14 @@ void main() async{
       debugShowCheckedModeBanner: false,
      localizationsDelegates: [
       // ... app-specific localization delegate[s] here
-      AppLocalizations.delegate,
+      const SitLocalizationsDelegate(),
       GlobalMaterialLocalizations.delegate,
       GlobalWidgetsLocalizations.delegate,
       GlobalCupertinoLocalizations.delegate,
     ],
     supportedLocales: [
-      const Locale('en', 'US'), // English
-      const Locale('fr', 'FR'), // French
+      const Locale('fr'), // French
+      const Locale('en'), // English
     ],
     localeResolutionCallback: (locale, supportedLocales){
       for(var supportedLocale in supportedLocales){
@@ -48,14 +52,59 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-  String test;
+  String test, token;
 
   @override
   void initState(){
     super.initState();
+    this.lecture();
+    this.save();
     this.lire("first");
     Timer(Duration(seconds: 5), onDoneLoading);
   }
+
+  lecture() async{
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString(TOKEN);
+    if(token != null){
+      logOut();
+    }
+  }
+
+  logOut() async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = "$cagnotte_url/user/auth/signout";
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    request.headers.set('Authorization', 'Bearer $token');
+    HttpClientResponse response = await request.close();
+    //String reply = await response.transform(utf8.decoder).join();
+  }
+
+
+
+  void save() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString(LIBELLE, null);
+    prefs.setString(VISIBLE, null);
+    prefs.setString(CATEGORIE, null);
+    prefs.setString(MONTANT_CAGNOTTE, null);
+    prefs.setString(TOKEN, null);
+    prefs.setString(ORIGIN, null);
+    prefs.setString(KITTY_IMAGE, null);
+
+    prefs.setString('id', null);
+    prefs.setString('nom', null);
+    prefs.setString('ville', null);
+    prefs.setString('quartier', null);
+    prefs.setString('password', null);
+    prefs.setString('avatar', null);
+    prefs.setString('email', null);
+    prefs.setString('pays', null);
+    prefs.setString('username', null);
+  }
+
 
   @override
   Widget build(BuildContext context){
@@ -78,6 +127,19 @@ class _SplashScreenState extends State<SplashScreen> {
               ),//new CircularProgressIndicator(),
             ),
           ),
+          Padding(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height-40),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.copyright, color: couleur_champ,),
+                Text("Copyright Sprint-Pay", style: TextStyle(
+                    color: couleur_champ,
+                  fontStyle: FontStyle.italic
+                ),),
+              ],
+            ),
+          )
         ],
       ),
     );
@@ -94,8 +156,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   lire(String v) async {
     final prefs = await SharedPreferences.getInstance();
+    SharedPreferences.setMockInitialValues({});
     setState(() {
       test = prefs.getString(v)==null?'true':prefs.getString(v);
     });
+
+    print("la valeur test est de ************************** $test");
   }
 }

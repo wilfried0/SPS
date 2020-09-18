@@ -27,7 +27,7 @@ class _Encaisser1State extends State<Encaisser1> {
   String _code;
   PageController pageController;
   int currentPage = 0;
-  int choice = 2,indik=2;
+  int indik=1;
   var _userTextController;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   //final navigatorKey = GlobalKey<NavigatorState>();
@@ -35,11 +35,11 @@ class _Encaisser1State extends State<Encaisser1> {
   int recenteLenght, archiveLenght, populaireLenght, id_kitty;
   var _formKey = GlobalKey<FormState>();
   int flex4, flex6, taille, enlev, rest, enlev1;
-  double _taill,gauch,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
+  double _taill,gauch,amountCible,fees,newSolde, droit, hauteurcouverture, nomright, nomtop, right1, datetop, titretop, titreleft, amounttop, amountleft, amountright, topcolect, topphoto, bottomphoto, desctop, descbottom, bottomtext, toptext, left1, social, topo, div1, div2, margeleft, margeright;
   List data, list;
   bool isLoading = false;
   // ignore: non_constant_identifier_names
-  String kittyImage, firstnameBenef,_username, _password, kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", solde, deviseLocale, local, devise, country;
+  String kittyImage,code, _url, firstnameBenef,_username, _password, kittyId,remain, particip, previsional_amount,amount_collected, endDate, startDate, title, suggested_amount, amount, description, number, nom="", tel="", email="", montant="", mot="", solde, deviseLocale, local, devise, country;
 
   @override
   void initState() {
@@ -51,6 +51,7 @@ class _Encaisser1State extends State<Encaisser1> {
         keepPage: false,
         viewportFraction: 0.8
     );
+    _url = "$base_url/transaction/getRateAmountByCurrency";
     //BackButtonInterceptor.add(myInterceptor);
   }
 
@@ -81,6 +82,50 @@ class _Encaisser1State extends State<Encaisser1> {
     });
   }
 
+  Future<String> getRateAmountByCurrency(var body) async {
+    final prefs = await SharedPreferences.getInstance();
+    _username = prefs.getString("username");
+    _password = prefs.getString("password");
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.postUrl(Uri.parse(_url));
+    request.headers.set('accept', 'application/json');
+    request.headers.set('content-type', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    request.add(utf8.encode(body));
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    print("url $_url");
+    if (response.statusCode < 200 || json == null) {
+      throw new Exception("Error while fetching data");
+    }else if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      amountCible = responseJson['amountCible'];
+      if(amountCible<100){
+        setState(() {
+          isLoading = false;
+        });
+        showInSnackBar("Le montant doit être supérieur ou égale à 100 XAF");
+      }else{
+        var getcommission = getCommission(
+            typeOperation:code,
+            country: "$country",
+            amount: int.parse(this.montant.replaceAll(".", "")),
+            deviseLocale: deviseLocale
+        );
+        print(json.encode(getcommission));
+        checkConnection(json.encode(getcommission), indik);
+      }
+    }else {
+      showInSnackBar("Service indisponible!");
+    }
+    return null;
+  }
+
   void checkConnection(var body, int q) async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile) {
@@ -92,11 +137,10 @@ class _Encaisser1State extends State<Encaisser1> {
           getSoldeCommission(body, q);
         }else if(q == 1){//ORANGE
           getSoldeCommission(body, q);
-        }else if(q == 2){//CARD
+        }else if(q == 2){//PAYPAL
           getSoldeCommission(body, q);
-        }else if(q == 4){//YUP
-          isLoading = false;
-          showInSnackBar("Service pas encore disponible!");
+        }else if(q == 3){//CARD
+          getSoldeCommission(body, q);
           //getSoldeCommission(body, q);
         }else{
           isLoading = false;
@@ -107,14 +151,15 @@ class _Encaisser1State extends State<Encaisser1> {
     } else if (connectivityResult == ConnectivityResult.wifi) {
       //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
       setState(() {
+        print("q vaut $q");
         isLoading = true;
         if(q == 0){//MTN
           getSoldeCommission(body, q);
         }else if(q == 1){//ORANGE
           getSoldeCommission(body, q);
-        }else if(q == 2){//CARD
+        }else if(q == 2){//PAYPAL
           getSoldeCommission(body, q);
-        }else if(q == 4){//YUP
+        }else if(q == 3){//CARD
           getSoldeCommission(body, q);
         }else{
           isLoading = false;
@@ -275,6 +320,7 @@ class _Encaisser1State extends State<Encaisser1> {
     return new DefaultTabController(
       length: 1,
       child: new Scaffold(
+        backgroundColor: GRIS,
           key: _scaffoldKey,
           appBar: PreferredSize(
             preferredSize: Size.fromHeight(fromHeight),
@@ -377,7 +423,7 @@ class _Encaisser1State extends State<Encaisser1> {
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-                color: Colors.white,
+                color: GRIS,
                 borderRadius: BorderRadius.circular(10.0)
             ),
             child: Form(
@@ -397,49 +443,73 @@ class _Encaisser1State extends State<Encaisser1> {
                           ),
                         ),
                       ),
-                      country != "CMR"?Padding(
+                      country == null?Container():
+                      country == "COG"?
+                      Padding(
                         padding: EdgeInsets.only(top: 20, left: 0, right: 0),
                         child: CarouselSlider(
                           enlargeCenterPage: true,
                           autoPlay: false,
                           enableInfiniteScroll: false,
-                          //initialPage: 2,
-                          onPageChanged: (value){
-                            setState(() {
-                              indik = value;
-                              _code = "$indik";
-                              print(indik);
-                            });
-                          },
-                          height: 136.0,
-                          items: [3].map((i) {
-                            return Builder(
-                              builder: (BuildContext context) {
-                                return getMoyen(3);
-                              },
-                            );
-                          }).toList(),
-                        ),
-                      )
-                          :Padding(
-                        padding: EdgeInsets.only(top: 20, left: 0, right: 0),
-                        child: CarouselSlider(
-                          enlargeCenterPage: true,
-                          autoPlay: false,
-                          enableInfiniteScroll: true,
                           initialPage: 2,
                           onPageChanged: (value){
                             setState(() {
                               indik = value;
                               _code = "$indik";
-                              print(indik);
+                              print("Congo ******* $indik");
                             });
                           },
-                          height: 136.0,
+                          height:MediaQuery.of(context).size.width>1000?286: 136.0,
+                          items: [1,2].map((i) {
+                            return Builder(
+                              builder: (BuildContext context) {
+                                return getMoyen(i);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ):country == "CMR"?Padding(
+                        padding: EdgeInsets.only(top: 20, left: 0, right: 0),
+                        child: CarouselSlider(
+                          enlargeCenterPage: true,
+                          autoPlay: false,
+                          enableInfiniteScroll: true,
+                          initialPage: 1,
+                          onPageChanged: (value){
+                            setState(() {
+                              indik = value;
+                              _code = "$indik";
+                              print("cameroun ******* $indik");
+                            });
+                          },
+                          height:MediaQuery.of(context).size.width>1000?286: 136.0,
                           items: [1,2,3].map((i) {
                             return Builder(
                               builder: (BuildContext context) {
                                 return getMoyen(i);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ):Padding(
+                        padding: EdgeInsets.only(top: 20, left: 0, right: 0),
+                        child: CarouselSlider(
+                          enlargeCenterPage: true,
+                          autoPlay: false,
+                          enableInfiniteScroll: false,
+                          //initialPage: 1,
+                          onPageChanged: (value){
+                            setState(() {
+                              indik = value;
+                              _code = "$indik";
+                              print("europe et autres ******* $indik");
+                            });
+                          },
+                          height:MediaQuery.of(context).size.width>1000?286: 136.0,
+                          items: [3].map((i) {
+                            return Builder(
+                              builder: (BuildContext context) {
+                                return getMoyen(3);
                               },
                             );
                           }).toList(),
@@ -468,7 +538,7 @@ class _Encaisser1State extends State<Encaisser1> {
                               topLeft: Radius.circular(10.0),
                               topRight: Radius.circular(10.0),
                             ),
-                            color: Colors.transparent,
+                            color: Colors.white,
                             border: Border.all(
                                 color: couleur_bordure,
                                 width: bordure
@@ -518,25 +588,24 @@ class _Encaisser1State extends State<Encaisser1> {
                         child: GestureDetector(
                           onTap: (){
                             setState(() {
-                              if(country != "CMR")
+                              if(country != "CMR" && country != "COG")
                                 indik = 2;
                               _code = '$indik';
-                              String code;
+                              //String code;
                               switch(indik){
                                 case 0: code = "MOMO_TO_WALLET";break;
-                                case 1: code = "OM_TO_WALLET";break;
+                                case 1: code = country == "COG"?"CARD_TO_WALLET" :"OM_TO_WALLET";country == "COG"?_code = '2':_code='$indik';break;
+                                case 3: code = "PAYPAL_TO_WALLET";break;
                                 case 2: code = "CARD_TO_WALLET";break;
-                                case 3: code = "CARD_TO_WALLET";break;
                               }
                               if(_formKey.currentState.validate()) {
-                                var getcommission = getCommission(
-                                    typeOperation:code,
-                                    country: "$country",
+                                var getrateAmount = getRateAmount(
+                                    countryCible: "$country",
                                     amount: int.parse(this.montant.replaceAll(".", "")),
                                     deviseLocale: deviseLocale
                                 );
-                                print(json.encode(getcommission));
-                                checkConnection(json.encode(getcommission), indik);
+                                print(json.encode(getrateAmount));
+                                this.getRateAmountByCurrency(json.encode(getrateAmount));
                               }
                             });
                           },
@@ -551,8 +620,10 @@ class _Encaisser1State extends State<Encaisser1> {
                               ),
                               borderRadius: new BorderRadius.circular(10.0),
                             ),
-                            child: new Center(child:isLoading==false? new Text('Poursuivre', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton, fontFamily: police_bouton),):
-                            CupertinoActivityIndicator()
+                            child: new Center(child:isLoading==false? new Text('Poursuivre', style: new TextStyle(fontSize: taille_text_bouton+3, color: couleur_text_bouton),):
+                            Theme(
+                                data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                child: CupertinoActivityIndicator(radius: 20,)),
                             ),
                           ),
                         ),
@@ -589,17 +660,17 @@ class _Encaisser1State extends State<Encaisser1> {
   Widget getMoyen(int index){
     String text, img;
     switch(index){
-      case 1: text = "MTN MOBILE MONEY";img = 'images/mtn.jpg';
+      case 1: text =country == "COG"?"MTN MOBILE MONEY CONGO": "MTN MOBILE MONEY CMR";img ='images/mtn.jpg';
       break;
-      case 2: text = "ORANGE MONEY";img = 'images/orange.png';
+      case 2: text = country == "COG"?"CARTE BANCAIRE" :"ORANGE MONEY";img = country == "COG"? 'images/carte.jpg':'images/orange.png';
       break;
-      case 6: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
+      case 3: text = "CARTE BANCAIRE";img = 'images/carte.jpg';
       break;
-      case 4: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
+      case 6: text = "CASH PAR EXPRESS UNION";img = 'images/eu.png';
       break;
       case 5: text = "YUP";img = 'marketimages/yup.jpg';
       break;
-      case 3: text = "CARTE PAYPAL";img = 'images/paypal.jpg';
+      case 4: text = "CARTE PAYPAL";img = 'images/paypal.jpg';
       break;
     }
     return Container(
@@ -628,7 +699,7 @@ class _Encaisser1State extends State<Encaisser1> {
           child: Column(
             children: <Widget>[
               Container(
-                height: 80,
+                height:MediaQuery.of(context).size.width>1000?210: 80,
                 width: MediaQuery.of(context).size.width,
                 decoration: BoxDecoration(
                     borderRadius: BorderRadius.only(

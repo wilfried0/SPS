@@ -7,10 +7,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:services/auth/connexion.dart';
 import 'package:services/auth/verification2.dart';
+import 'package:services/community/lib/cagnotte.dart';
+import 'package:services/community/lib/cagnottes/configuration.dart';
+import 'package:services/community/lib/paiement/participation1.dart';
+import 'package:services/community/lib/tontines/settings.dart';
+import 'package:services/community/lib/tontines/tontine.dart';
+import 'package:services/community/lib/utils/components.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/composants/services.dart';
 import 'profile.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // ignore: must_be_immutable
@@ -23,7 +28,7 @@ class Connexion1 extends StatefulWidget {
 class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
 
   _Connexion1State();
-  String _username, _password, _nom, _url, _urlc, _ville, _quartier, _email, _avatar, _account_Type, typeMember;
+  String _username, _password, _nom, _url, _urlc, _token, _urlspc, _ville, _quartier, _email, _avatar, _account_Type, typeMember;
 
   var _formKey = GlobalKey<FormState>(), passController;
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -31,6 +36,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
   //var _userTextController = new TextEditingController();
   int ad=3, _id;
   bool isBackButtonActivated = false;
+  String currencyConnexion, origin;
 
   @override
   void initState(){
@@ -38,6 +44,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
     this._lect();
     _url = '$base_url/member/login';
     _urlc = '$base_url/user/getCode/';
+    _urlspc = '$cagnotte_url/user/auth/signin';
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     //BackButtonInterceptor.add(myInterceptor);
@@ -50,16 +57,43 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
       setState(() {
         q == 0?isLoding = true: isLoading = true;
       });
-      q == 0?makeLogin():getCode();
+      q == 0?getToken():getCode();
     } else if (connectivityResult == ConnectivityResult.wifi) {
       //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
       setState(() {
         q == 0?isLoding = true: isLoading = true;
       });
-      q == 0?makeLogin():getCode();
+      q == 0?getToken():getCode();
     } else {
       _ackAlert(context);
     }
+  }
+
+  Future<void> getToken() async {
+    _username = this._username;
+    _password = this._password;
+    var bytes = utf8.encode('$_username:$_password');
+    var credentials = base64.encode(bytes);
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    HttpClientRequest request = await client.getUrl(Uri.parse(_urlspc));
+    request.headers.set('Accept', 'application/json');
+    request.headers.set('Authorization', 'Basic $credentials');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print("statusCode ${response.statusCode}");
+    print("body $reply");
+    if(response.statusCode == 200){
+      var responseJson = json.decode(reply);
+      _token = responseJson['token'];
+      makeLogin();
+    }else{
+      setState(() {
+        isLoding = false;
+      });
+      showInSnackBar("Service indisponible!");
+    }
+    return null;
   }
 
   Future<void> _ackAlert(BuildContext context) {
@@ -208,9 +242,21 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
         passController.clear();
         if(_account_Type != "MSP"){
         showInSnackBar("Ce numéro est un compte Marchand. Veuillez-vous connecter sur SP-Marchand");
-        }else
-        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile('')));
-        //navigatorKey.currentState.pushNamed("/profile");
+        }else{
+          this._reg();
+          if(origin == "configuration")
+            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Configuration()));
+          else if(origin == "participation1"){
+            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Paiement1('')));
+          }else if(origin == "Settings"){
+            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Settings()));
+          }else if(origin == "tontine"){
+            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Tontine('')));
+          } else if(origin == "cagnotte"){
+            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Cagnotte('')));
+          }else
+            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Profile('')));
+        }
       }
     }else{
       setState(() {
@@ -320,11 +366,12 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
       debugShowCheckedModeBanner: false,
       home: new Scaffold(
         key: _scaffoldKey,
+        backgroundColor: GRIS,
         appBar: PreferredSize(
           preferredSize: Size.fromHeight(55.0),
           child: new AppBar(
             elevation: 0.0,
-            backgroundColor: couleur_appbar,
+            backgroundColor: GRIS,
             flexibleSpace: barreTop,
             //iconTheme: new IconThemeData(color: couleur_fond_bouton),
             leading: IconButton(
@@ -366,7 +413,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                               topLeft: Radius.circular(10.0),
                               topRight: Radius.circular(10.0),
                             ),
-                            color: Colors.transparent,
+                            color: Colors.white,
                             border: Border.all(
                               width: bordure,
                               color: couleur_bordure
@@ -449,7 +496,9 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                             borderRadius: new BorderRadius.circular(10.0),
                           ),
                           child: new Center(child: isLoding==false?new Text('Connexion', style: new TextStyle(fontSize: taille_text_bouton+ad, color: couleur_text_bouton),):
-                          CupertinoActivityIndicator(),),
+                          Theme(
+                              data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                              child: CupertinoActivityIndicator(radius: 20,)),),
                         ),
                       ),
                     ),
@@ -468,11 +517,11 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                               fontSize: taille_champ+ad,
                               fontWeight: FontWeight.bold
                           ),
-                        ):CupertinoActivityIndicator(),
+                        ):CupertinoActivityIndicator(radius: 20,),
                       ),
                     ),
 
-                    Padding(
+                    /*Padding(
                       padding: EdgeInsets.only(top:20.0),
                       child: GestureDetector(
                           onTap: (){
@@ -487,7 +536,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
                             ),textAlign: TextAlign.center,
                           )
                       ),
-                    )
+                    )*/
                   ],
                 ),
               ),
@@ -503,6 +552,8 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _username = prefs.getString('username')!=null?prefs.getString('username'):"";
+      origin = prefs.getString(ORIGIN);
+      currencyConnexion = prefs.getString(CURRENCYSYMBOL_CONNEXION);
     });
     print(_username);
   }
@@ -516,6 +567,7 @@ class _Connexion1State extends State<Connexion1> with WidgetsBindingObserver {
     prefs.setString('password', "$_password");
     prefs.setString('avatar', "$_avatar");
     prefs.setString('email', "$_email");
+    prefs.setString(TOKEN, "$_token");
     //MarketPlace
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);

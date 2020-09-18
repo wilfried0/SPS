@@ -1,7 +1,9 @@
 class Transaction {
   String amount;
   String beneficiaryEmail;
+  String beneficiaryCountry;
   String beneficiaryPhoneNumber;
+  String buyerCountry;
   String buyerEmail;
   String buyerName;
   String buyerId;
@@ -20,8 +22,10 @@ class Transaction {
 
   Transaction(
       {this.amount,
+        this.beneficiaryCountry,
         this.beneficiaryEmail,
         this.beneficiaryPhoneNumber,
+        this.buyerCountry,
         this.buyerEmail,
         this.buyerName,
         this.buyerId,
@@ -39,8 +43,10 @@ class Transaction {
 
   Transaction.fromJson(Map<String, dynamic> json) {
     amount = json['amount'];
+    beneficiaryCountry = json['beneficiaryCountry'];
     beneficiaryEmail = json['beneficiaryEmail'];
     beneficiaryPhoneNumber = json['beneficiaryPhoneNumber'];
+    buyerCountry = json['buyerCountry'];
     buyerEmail = json['buyerEmail'];
     buyerName = json['buyerName'];
     buyerId = json['buyerId'];
@@ -60,8 +66,10 @@ class Transaction {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['amount'] = this.amount;
+    data['beneficiaryCountry'] = this.beneficiaryCountry;
     data['beneficiaryEmail'] = this.beneficiaryEmail;
     data['beneficiaryPhoneNumber'] = this.beneficiaryPhoneNumber;
+    data['buyerCountry'] = this.buyerCountry;
     data['buyerEmail'] = this.buyerEmail;
     data['buyerName'] = this.buyerName;
     data['buyerId'] = this.buyerId;

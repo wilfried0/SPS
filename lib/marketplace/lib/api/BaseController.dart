@@ -41,6 +41,7 @@ class BaseController {
     request.add(utf8.encode(jsonEncode(json)));
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
+    print("Route ${Route.build(route)}");
     print("Sending data post $reply");
     _statusCode = response.statusCode;
     return ServerResponseValidator.fromJson(jsonDecode(reply));
@@ -72,8 +73,8 @@ class BaseController {
     request.headers.set('content-type', 'application/json');
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
-    print("Sending data get $reply");
-    print("Ma route $baseUrl/$route");
+    print("geting data get $reply");
+    print("Ma route ${_buildRoute(baseUrl, route)}");
     _statusCode = response.statusCode;
     return ServerResponseValidator.fromJson(jsonDecode(reply));
   }

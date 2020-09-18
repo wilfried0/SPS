@@ -65,10 +65,12 @@ class _WebviewState extends State<Webview> {
           _getStatus(id);
         }
       }else if(_status == "PROCESSED"){
+        temps = -1;
         _status = "PROCESSED";
         flutterWebviewPlugin.dispose();
         Navigator.of(context).push(SlideLeftRoute(enterWidget: Confirma("recharge"), oldWidget: Webview(_code)));
       }else if(_status == "REFUSED"){
+        temps = -1;
         _status = "REFUSED";
         flutterWebviewPlugin.dispose();
         Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: Webview(_code)));
@@ -139,15 +141,11 @@ class _WebviewState extends State<Webview> {
                       ),
                     ),
                     onWebViewCreated: (InAppWebViewController controller) {
-                      if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
-                        //controller.loadUrl(url: null);
-                        controller.stopLoading();
-                      }else
                       controller.loadUrl(url: payment_url);
                     },
                     onLoadStart: (InAppWebViewController controller, String url) {
                       print("URL actuelle: $url");
-                      if(url == "https://cargosprint.com/" || url == "http://www.sprintpay.com"){
+                      if(url == "https://cargosprint.com/" || url == "https://sprint-pay.com/"){
                         controller.stopLoading();
                         this._getStatus(_id);
                       }

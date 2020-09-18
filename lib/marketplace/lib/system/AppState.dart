@@ -41,5 +41,5 @@ enum Data {
   CURRENCY,
   CITY,
   DISTRICT,
-  PHARMACY
+  TYPE
 }

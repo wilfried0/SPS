@@ -5,6 +5,7 @@ class Services {
   static const UTILITY_CATEGORY = "UTILITY";
   static const TELCO_CATEGORY = "TELCO";
   static const PHARMACY_CATEGORY = "PHARMACY";
+  static const QUINCAILLERY_CATEGORY = "HARDWARESTORE";
 
   static var merchants = [
     {
@@ -150,7 +151,7 @@ class Services {
       "userType": "ALL",
       "category": "PHARMACY"
     },
-    {
+    {//Pharmacie des Hopitaux
       "id": 12,
       "name": "Pharmacie Bonanjo",
       "description": "Pharmacie Bonanjo",
@@ -162,6 +163,58 @@ class Services {
       "countryCode": "CMR",
       "userType": "USER",
       "category": "PHARMACY"
+    },
+    {
+      "id": 13,
+      "name": "Pharmacie des Hopitaux",
+      "description": "Pharmacie des Hopitaux",
+      "logoFileId": "marketimages/pharmacie.png",
+      "address": "Douala, Cameroun",
+      "neighborhood": "Akwa",
+      "city": "Douala",
+      "country": "Cameroon",
+      "countryCode": "CMR",
+      "userType": "USER",
+      "category": "PHARMACY"
+    },
+    {
+      "id": 14,
+      "name": "Quincaillerie Bonanjo",
+      "description": "Quincaillerie Bonanjo",
+      "logoFileId": "marketimages/quincaillerie.jpg",
+      "address": "Douala, Cameroun",
+      "neighborhood": "Bonanjo",
+      "city": "Douala",
+      "country": "Cameroon",
+      "countryCode": "CMR",
+      "userType": "USER",
+      "category": "QUINCAILLERY"
+    },
+    {
+      "id": 15,
+      "name": "Quincaillerie Yaoundé",
+      "description": "Quincaillerie Yaoundé",
+      "logoFileId": "marketimages/quincaillerie.jpg",
+      "address": "Douala, Cameroun",
+      "neighborhood": "Yaoundé",
+      "city": "Yaoundé",
+      "country": "Cameroon",
+      "countryCode": "CMR",
+      "userType": "USER",
+      "category": "QUINCAILLERY"
+    },
+    {
+      "id": 16,
+      "name": "Quincaillerie Bafoussam",
+      "description": "Quincaillerie Bafoussam",
+      "logoFileId": "marketimages/quincaillerie.jpg",
+      "address": "Douala, Cameroun",
+      "neighborhood": "Bafoussam",
+      "city": "Bafoussam",
+      "country": "Cameroon",
+      "countryCode": "CMR",
+      "userType": "USER",
+      "category": "QUINCAILLERY"
     }
   ];
 

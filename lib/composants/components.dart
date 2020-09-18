@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/service_client.dart';
+import 'package:services/community/lib/utils/components.dart';
 import 'package:share/share.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -119,16 +121,17 @@ final marge_apres_champ = 20.0;
 final marge_libelle_champ = 5.0;
 // ignore: non_constant_identifier_names
 double marge_champ_libelle = 20.0;
+
+final GRIS = const Color(0xFFF1F3F9);
 // ignore: non_constant_identifier_names
 final base_url = /*"https://pcs.sprint-pay.com/corebanking/rest";*/"http://74.208.183.205:8086/corebanking/rest";
 final baseUrl = /*"https://pcs.sprint-pay.com/paymentcore/rest/users/contact";*/"http://74.208.183.205:7086/paymentcore/rest/users/contact";
-final base = /*"http://kyc.sprint-pay.com/spkyc-identitymanager/upload";*/"http://74.208.183.205:8086/spkyc-identitymanager/upload";
-final Nature = /*"http://kyc.sprint-pay.com:60000/spkycgateway/api/administration/getNatureClientByService/4";*/"http://74.208.183.205:8086/spkycgateway/api/administration/getNatureClientByService/773";
+final base = /*"https://kyc.sprint-pay.com/spkyc-identitymanager/uploadFile";*/"http://74.208.183.205:8086/spkyc-identitymanager/uploadFile";
+final Nature = /*"https://kyc.sprint-pay.com/spkyc-administration/api/getNatureClientByService/4";*/"http://74.208.183.205:8086/spkycgateway/api/administration/getNatureClientByService/773";
+final carte_url = "http://74.208.183.205:8086/sp-tutukacore/api";
 final lien_android = "https://play.google.com/store/apps/details?id=sprintpay.services&hl=fr";
 final lien_ios = "https://apps.apple.com/ng/app/sprint-pay/id1511300855";
 final cond = "https://sprint-pay.com/wp-content/uploads/2018/11/CGU-Afrique-CEMAC-%E2%80%93-Sprint-Pay-2018.pdf";
-
-bool search = false;
 
 var current;
 String reversed(String str){
@@ -204,6 +207,26 @@ Future<String> getMonSolde(GlobalKey<ScaffoldState> _scaffoldKey, String _userna
   }
 }
 
+logOut() async {
+  String token;
+  final prefs = await SharedPreferences.getInstance();
+  token = prefs.getString(TOKEN);
+  HttpClient client = new HttpClient();
+  client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+  String url = "$cagnotte_url/user/auth/signout";
+  HttpClientRequest request = await client.getUrl(Uri.parse(url));
+  request.headers.set('Accept', 'application/json');
+  request.headers.set('Authorization', 'Bearer $token');
+  HttpClientResponse response = await request.close();
+  String reply = await response.transform(utf8.decoder).join();
+  print("reply $reply");
+  prefs.setString(TOKEN, null);
+  prefs.setString('nom', null);
+  prefs.setString('ville', null);
+  prefs.setString('quartier', null);
+  prefs.setString('pays', null);
+  prefs.setString('avatar', null);
+}
 
 void showInSnackBar(String value, GlobalKey<ScaffoldState> _scaffoldKey, int val) {
   _scaffoldKey.currentState.showSnackBar(
@@ -272,21 +295,25 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
         elevation: 0.0,
         items: [
           BottomNavigationBarItem(
-            icon: IconButton(
-              onPressed:(){
-                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit.\nLien android: $lien_android \nLien ios: $lien_ios");
+            icon: GestureDetector(
+              onTap:(){
+                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. $lien_android\n$lien_ios");
               },
-              icon: new Icon(Icons.thumb_up, size: 30,) //Image.asset('images/creer.png')),
+              child: Container(
+                  height:MediaQuery.of(context).size.width>1000?50: 20,
+                  width:MediaQuery.of(context).size.width>1000?50: 20,
+                  child: new Icon(Icons.thumb_up, size:MediaQuery.of(context).size.width>1000?50: 25,)
+              ),//Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
               onTap:(){
-                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. $lien_android");
+                Share.share("Je te recommande de télécharger SprintPay, l'application de transfert d'argent gratuit. $lien_android\n$lien_ios");
               },
               child: Padding(
                 padding: EdgeInsets.only(left: 20),
                 child: Text('Recommander à un ami',
                   style: TextStyle(
-                      fontSize: taille_text_bouton,
+                      fontSize:MediaQuery.of(context).size.width>1000?20: taille_text_bouton,
                       fontWeight: FontWeight.bold,
                       color: orange_F
                   ),),
@@ -294,12 +321,15 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
             ),
           ),
           BottomNavigationBarItem(
-            icon: IconButton(
-              onPressed:(){
-                //showInSnackBar("Service pas encore disponible!", _scaffoldKey);
+            icon: GestureDetector(
+              onTap:(){
                 Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: ListDisplay()));
               },
-              icon: new Icon(Icons.help, size: 30,)
+              child: Container(
+                  height:MediaQuery.of(context).size.width>1000?50: 20,
+                  width:MediaQuery.of(context).size.width>1000?50: 20,
+                  child: new Icon(Icons.help_outline, size: MediaQuery.of(context).size.width>1000?50:25,)//Image.asset('images/creer.png')),
+              ),
             ),
             title: GestureDetector(
               onTap:(){
@@ -308,28 +338,31 @@ bottomNavigate(BuildContext context, int enlev, GlobalKey<ScaffoldState> _scaffo
               },
               child: Text('Service client',
                 style: TextStyle(
-                    fontSize: taille_text_bouton,
+                    fontSize:MediaQuery.of(context).size.width>1000?20: taille_text_bouton,
                     fontWeight: FontWeight.bold,
                     color: orange_F
                 ),),
             ),
           ),
           BottomNavigationBarItem(
-            icon: IconButton(
-              onPressed:(){
-                Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
-                //Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
+            icon: GestureDetector(
+              onTap:(){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
               },
-              icon: new Icon(Icons.lock, size: 30,) ,//Image.asset('images/creer.png')),
+              child: Container(
+                  height:MediaQuery.of(context).size.width>1000?50:20,
+                  width:MediaQuery.of(context).size.width>1000?50: 20,
+                  child: new Icon(Icons.lock,size: MediaQuery.of(context).size.width>1000?50:25)),//Image.asset('images/creer.png')),
             ),
             title: GestureDetector(
               onTap:(){
+                logOut();
                 Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => Connexion()), (Route<dynamic> route) => false);
                 //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Connexion()));
               },
               child: Text('Déconnexion',
                 style: TextStyle(
-                    fontSize: taille_text_bouton,
+                    fontSize:MediaQuery.of(context).size.width>1000?20: taille_text_bouton,
                     fontWeight: FontWeight.bold,
                     color: orange_F
                 ),),
@@ -577,6 +610,45 @@ class paypalTrans {
       };
 }
 
+class RequestCard {
+  final String username;
+  final String firstName;
+  final String lastName;
+  final double fees;
+  final String idOrPassport;
+  final String cellphoneNumber;
+  final String expiryDate;
+  final int amount;
+  final String countryCodeISO3;
+
+
+  RequestCard({this.username, this.firstName, this.lastName, this.idOrPassport, this.cellphoneNumber, this.expiryDate, this.amount, this.fees, this.countryCodeISO3});
+
+  RequestCard.fromJson(Map<String, dynamic> json)
+      :username = json['username'],
+        firstName = json['firstName'],
+        lastName = json['lastName'],
+        idOrPassport = json['idOrPassport'],
+        cellphoneNumber = json['cellphoneNumber'],
+        expiryDate = json['expiryDate'],
+        amount = json['amount'],
+        fees = json['fees'],
+        countryCodeISO3 = json['countryCodeISO3'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "username": username,
+        "firstName": firstName,
+        "lastName": lastName,
+        "idOrPassport": idOrPassport,
+        "cellphoneNumber": cellphoneNumber,
+        "expiryDate": expiryDate,
+        "amount": amount,
+        "fees": fees,
+        "countryCodeISO3": countryCodeISO3,
+      };
+}
+
 class yupTrans {
   final String description;
   final int amount;
@@ -614,17 +686,19 @@ class cardTrans {
   final int amount;
   final double fees;
   final String deviseLocale;
+  final String language;
   final String successUrl;
   final String failureUrl;
 
 
-  cardTrans({this.to, this.amount, this.fees, this.description, this.ipAddress, this.deviseLocale, this.successUrl, this.failureUrl});
+  cardTrans({this.to, this.amount, this.fees, this.description, this.ipAddress,this.language, this.deviseLocale, this.successUrl, this.failureUrl});
 
   cardTrans.fromJson(Map<String, dynamic> json)
       :to = json['to'],
         amount = json['amount'],
         fees = json['fees'],
         ipAddress = json['ipAddress'],
+        language = json['language'],
         description = json['description'],
         deviseLocale = json['deviseLocale'],
         successUrl = json['deviseLocale'],
@@ -637,6 +711,7 @@ class cardTrans {
         "fees": fees,
         "description": description,
         "ipAddress": ipAddress,
+        "language": language,
         "deviseLocale": deviseLocale,
         "successUrl": successUrl,
         "failureUrl": failureUrl,
@@ -725,23 +800,27 @@ class wariTrans {
 }
 
 class ATPSTrans {
-  final String to;
-  final String description;
-  final int amount;
   final double fees;
+  final int amount;
   final String deviseLocale;
-  final String toFirstname;
-  final String toLastname;
+  final String description;
+  final String to;
   final String toCountryCode;
+  final String toLastname;
+  final String toFirstname;
   final String toAdress;
-  final String type;
+  final String toTown;
+  final String fromFirstname;
+  final String fromLastname;
+  final String fromAdress;
+  final String fromPlaceOfBith;
   final String fromCardType;
   final String fromCardNumber;
   final String fromCardIssuingDate;
   final String fromCardExpirationDate;
 
 
-  ATPSTrans({this.to, this.amount,this.fees, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.fromCardExpirationDate, this.fromCardIssuingDate, this.fromCardNumber, this.fromCardType, this.type, this.toAdress});
+  ATPSTrans({this.to,this.fromFirstname,this.fromPlaceOfBith, this.fromAdress, this.fromLastname, this.amount,this.fees, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.fromCardExpirationDate, this.fromCardIssuingDate, this.fromCardNumber, this.fromCardType, this.toTown, this.toAdress});
 
   ATPSTrans.fromJson(Map<String, dynamic> json)
       :to = json['to'],
@@ -753,7 +832,11 @@ class ATPSTrans {
         toCountryCode = json['toCountryCode'],
         toLastname = json['toLastname'],
         toAdress = json['toAdress'],
-        type = json['type'],
+        toTown = json['toTown'],
+        fromFirstname = json['fromFirstname'],
+        fromPlaceOfBith = json['fromPlaceOfBith'],
+        fromLastname = json['fromLastname'],
+        fromAdress = json['fromAdress'],
         fromCardType = json['fromCardType'],
         fromCardNumber = json['fromCardNumber'],
         fromCardIssuingDate = json['fromCardIssuingDate'],
@@ -769,12 +852,143 @@ class ATPSTrans {
         "toFirstname": toFirstname,
         "toCountryCode": toCountryCode,
         "toLastname": toLastname,
+        "fromFirstname": fromFirstname,
+        "fromLastname": fromLastname,
+        "fromPlaceOfBith": fromPlaceOfBith,
+        "fromAdress": fromAdress,
         "toAdress": toAdress,
-        "type": type,
+        "toTown": toTown,
         "fromCardType": fromCardType,
         "fromCardNumber": fromCardNumber,
         "fromCardIssuingDate": fromCardIssuingDate,
         "fromCardExpirationDate": fromCardExpirationDate,
+      };
+}
+
+class BRMCashTrans {
+  final double fees;
+  final int amount;
+  final String deviseLocale;
+  final String description;
+  final String type;
+  final String to;
+  final String toCountryCode;
+  final String fromCountryCode;
+  final String toLastname;
+  final String toFirstname;
+  final String toAdress;
+  final String toTown;
+  final String fromTown;
+  final String fromFirstname;
+  final String fromLastname;
+  final String fromAdress;
+
+
+  BRMCashTrans({this.to, this.amount,this.fees, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.type, this.fromAdress, this.fromFirstname, this.fromLastname, this.fromTown, this.toAdress, this.toTown, this.fromCountryCode});
+
+  BRMCashTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        fees = json['fees'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        toFirstname = json['toFirstname'],
+        toCountryCode = json['toCountryCode'],
+        toLastname = json['toLastname'],
+        toAdress = json['toAdress'],
+        toTown = json['toTown'],
+        fromTown = json['fromTown'],
+        fromCountryCode = json['fromCountryCode'],
+        fromLastname = json['fromLastname'],
+        fromFirstname = json['fromFirstname'],
+        type = json['type'],
+        fromAdress = json['fromAdress'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "toFirstname": toFirstname,
+        "toCountryCode": toCountryCode,
+        "toLastname": toLastname,
+        "toAdress": toAdress,
+        "toTown": toTown,
+        "fromTown": fromTown,
+        "fromCountryCode": fromCountryCode,
+        "fromLastname": fromLastname,
+        "fromFirstname": fromFirstname,
+        "type": type,
+        "fromAdress": fromAdress,
+      };
+}
+
+
+class BRMAccountTrans {
+  final double fees;
+  final int amount;
+  final String deviseLocale;
+  final String description;
+  final String type;
+  final String to;
+  final String toCountryCode;
+  final String fromCountryCode;
+  final String toLastname;
+  final String toFirstname;
+  final String toAdress;
+  final String toTown;
+  final String fromTown;
+  final String fromFirstname;
+  final String fromLastname;
+  final String fromAdress;
+  final String accountNumber;
+  final String bankName;
+
+
+  BRMAccountTrans({this.to,this.accountNumber, this.bankName, this.amount,this.fees, this.description, this.deviseLocale, this.toFirstname,this.toLastname, this.toCountryCode, this.type, this.fromAdress, this.fromFirstname, this.fromLastname, this.fromTown, this.toAdress, this.toTown, this.fromCountryCode});
+
+  BRMAccountTrans.fromJson(Map<String, dynamic> json)
+      :to = json['to'],
+        amount = json['amount'],
+        fees = json['fees'],
+        accountNumber = json['accountNumber'],
+        bankName = json['bankName'],
+        description = json['description'],
+        deviseLocale = json['deviseLocale'],
+        toFirstname = json['toFirstname'],
+        toCountryCode = json['toCountryCode'],
+        toLastname = json['toLastname'],
+        toAdress = json['toAdress'],
+        toTown = json['toTown'],
+        fromTown = json['fromTown'],
+        fromCountryCode = json['fromCountryCode'],
+        fromLastname = json['fromLastname'],
+        fromFirstname = json['fromFirstname'],
+        type = json['type'],
+        fromAdress = json['fromAdress'];
+
+  Map<String, dynamic> toJson() =>
+      {
+        "to": to,
+        "amount": amount,
+        "fees": fees,
+        "description": description,
+        "deviseLocale": deviseLocale,
+        "toFirstname": toFirstname,
+        "toCountryCode": toCountryCode,
+        "toLastname": toLastname,
+        "toAdress": toAdress,
+        "toTown": toTown,
+        "fromTown": fromTown,
+        "fromCountryCode": fromCountryCode,
+        "fromLastname": fromLastname,
+        "fromFirstname": fromFirstname,
+        "type": type,
+        "fromAdress": fromAdress,
+        "bankName": bankName,
+        "accountNumber": accountNumber,
       };
 }
 
@@ -802,19 +1016,19 @@ Widget getMoyen(int index, BuildContext context, int indik) {
       text = "SPRINTPAY";
       img = 'marketimages/sprintpay.png';
       break;
-    case 2:
+    case 5:
       text = "CARTE PAYPAL";
       img = 'images/paypal.jpg';
       break;
-    case 3:
+    case 2:
       text = "ORANGE";
       img = 'images/orange.png';
       break;
-    case 4:
+    case 3:
       text = "MTN";
       img = 'images/mtn.jpg';
       break;
-    case 5:
+    case 4:
       text = "YUP";
       img = 'marketimages/yup.jpg';
       break;
@@ -883,7 +1097,7 @@ double getHeight(int index) {
     case 1:
       return 555;
     case 2:
-      return 455;
+      return 500;
     case 3:
       return 500;
     case 4:

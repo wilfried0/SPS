@@ -39,8 +39,9 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
   final Duration animDuration = Duration(milliseconds: 250);
   List data;
   int touchedIndex;
-
+  GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isPlaying = false;
+  double _bar = 20;
 
   @override
   void initState(){
@@ -91,11 +92,15 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     String reply = await response.transform(utf8.decoder).join();
     print("statusCode ${response.statusCode}");
     print("body $reply");
-    if(response.statusCode == 200){
-      var responseJson = json.decode(reply);
-      setState(() {
-        data = responseJson;
-      });
+    if(reply.isEmpty){
+      showInSnackBar("Service indisponible. Réessayer plus tard.", _scaffoldKey, 5);
+    }else{
+      if(response.statusCode == 200){
+        var responseJson = json.decode(reply);
+        setState(() {
+          data = responseJson;
+        });
+      }
     }
   }
 
@@ -129,6 +134,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
     double fromHeight,topcagnotte, bottomcagnotte;
+    print("Hauteur = $_haut et largeur = $_large");
     if(_large<=320){
       _height = MediaQuery.of(context).size.height;
       filtre = taille_libelle_etape-1.5;
@@ -331,6 +337,74 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       enlevt = 20;
       r = 1;l=1;
       grand = 0;
+    }else if(_large == 414.0 && _haut == 736.0){
+      filtre = taille_libelle_etape;
+      fromHeight = 250;
+      topcagnotte = 40;
+      bottomcagnotte = 70;
+      hauteurcouverture = 203;
+      nomright =  MediaQuery.of(context).size.width-330;
+      nomtop = 180;
+      datetop = 10;
+      titretop = 240;
+      titreleft = 20;
+      amounttop = 260;
+      amountleft = 20;
+      amountright = 20;
+      topcolect = 280;
+      topphoto = 0;
+      bottomphoto = 90;
+      desctop = 410;
+      descbottom = 0;
+      flex4 = 4;
+      flex6 = 6;
+      bottomtext = 50;
+      toptext = 310;
+      taille = 437;
+      enlev = 104;
+      rest = 40;
+      enlev1 = 2;
+      xval = 40;
+      star = 30;
+      grand = 0;
+      enlvb = 60;
+      enlevt = 20;
+      r = 1;l=1;
+      _bar = 25;
+    }else if(_large>412){
+      filtre = taille_libelle_etape;
+      fromHeight = 425;
+      topcagnotte = 40;
+      bottomcagnotte = 70;
+      hauteurcouverture = 203;
+      nomright =  MediaQuery.of(context).size.width-330;
+      nomtop = 180;
+      datetop = 10;
+      titretop = 240;
+      titreleft = 20;
+      amounttop = 260;
+      amountleft = 20;
+      amountright = 20;
+      topcolect = 280;
+      topphoto = 0;
+      bottomphoto = 90;
+      desctop = 410;
+      descbottom = 0;
+      flex4 = 4;
+      flex6 = 6;
+      bottomtext = 50;
+      toptext = 310;
+      taille = 437;
+      enlev = 104;
+      rest = 40;
+      enlev1 = 2;
+      xval = 40;
+      star = 30;
+      grand = 0;
+      enlvb = 60;
+      enlevt = 20;
+      r = 1;l=1;
+      _bar = 50;
     }
     else if(_large>360){
       filtre = taille_libelle_etape;
@@ -367,6 +441,8 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       r = 1;l=1;
     }
     return new Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: GRIS,
           appBar: new PreferredSize(
               preferredSize: Size.fromHeight(fromHeight+180), //200
               child: new Container(
@@ -384,7 +460,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                                 onPressed: (){
                                   Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
                                 },
-                                icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
+                                icon: Icon(Icons.arrow_back_ios,color: Colors.white,)
                             ),
                           ),
                           Expanded(
@@ -465,78 +541,105 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
                var _fromCountry = data[i]['fromcountry'];
                var _serviceName = data[i]['serviceName'];
                var _transactionid = data[i]['transactionid'];
-
-                return Padding(
-                  padding: EdgeInsets.only(left: 20, right: 20, top: 20),
+               print("********************ServiceName: $_serviceName   &&   $_transactionid");
+                return _serviceName == "CAGNOTTE_OFFER" || _serviceName =="CAGNOTTE_ENCASH"?Container(): Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20, top:i==0?20:5),
                   child: GestureDetector(
                     onTap: (){
+
                       _save(_fromCountry, _toCountry, _serviceName ,_toFirstName,_amount.toString().split('.')[0], _fees.toString(), _status, _typeOper ,_transactionid, _date);
                       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Detail('$_code')));
                     },
                     child: Card(
                       elevation: .5,
-                      color: couleur_appbar,
+                      color: Colors.white,
                       child: Padding(
-                        padding: EdgeInsets.only(top: 5, bottom: 5),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                                flex: 6,
-                                child: Row(
-                                  children: <Widget>[
-                                    Container(
-                                      width: 5,
-                                      height: 30.0,
-                                      decoration: BoxDecoration(
-                                          color:getStatus(_status)=="Approuvé"? Colors.green:Colors.red,
-                                          borderRadius: BorderRadius.only(
-                                              bottomRight: Radius.circular(10),
-                                              topRight: Radius.circular(10)
-                                          )
+                        padding: EdgeInsets.only(top: 5),
+                        child: Container(
+                          height: 60,
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                  flex: 6,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Container(
+                                        width: 5,
+                                        height: 70.0,
+                                        decoration: BoxDecoration(
+                                            color:getStatus(_status)=="Approuvé"? Colors.green:Colors.red,
+                                            borderRadius: BorderRadius.only(
+                                                bottomRight: Radius.circular(10),
+                                                topRight: Radius.circular(10)
+                                            )
+                                        ),
                                       ),
-                                    ),
-                                    Padding(
-                                      padding: EdgeInsets.only(left: 10),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          Text(getNature(_serviceName, _typeOper), style: TextStyle(
-                                              color: couleur_titre,
+                                      Padding(
+                                        padding: EdgeInsets.only(left: 10, top: 5),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: <Widget>[
+                                            Padding(
+                                              padding: EdgeInsets.only(bottom: 5),
+                                              child: Text(getNature(_serviceName, _typeOper), style: TextStyle(
+                                                  color: couleur_titre,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: taille_champ
+                                              ),),
+                                            ),
+                                            Padding(
+                                              padding: EdgeInsets.only(top: 5),
+                                              child: Text(getStatus(_status), style: TextStyle(
+                                                  color: getStatus(_status)=="Approuvé"?Colors.green: Colors.red,
+                                                  fontSize: taille_champ-2
+                                              ),),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                              ),
+
+                              Expanded(
+                                  flex: 6,
+                                  child: Padding(
+                                    padding: EdgeInsets.only(right: 10, top: 5),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: <Widget>[
+                                        Padding(
+                                          padding: EdgeInsets.only(bottom: 5),
+                                          child: Text("${getMillis(_amount.toString())} $deviseLocale", style: TextStyle(
+                                              color:getStatus(_status)=="Approuvé"? Colors.green:Colors.red,
                                               fontWeight: FontWeight.bold,
                                               fontSize: taille_champ
                                           ),),
-                                          Text(getStatus(_status), style: TextStyle(
-                                              color: getStatus(_status)=="Approuvé"?Colors.green: Colors.red,
+                                        ),
+                                        Padding(
+                                          padding: EdgeInsets.only(top: 5),
+                                          child: Text(getMonth(_date), style: TextStyle(
+                                              color: couleur_titre,
                                               fontSize: taille_champ-2
                                           ),),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                )
-                            ),
-
-                            Expanded(
-                                flex: 6,
-                                child: Padding(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: <Widget>[
-                                      Text("${getMillis(_amount.toString())} $deviseLocale", style: TextStyle(
-                                          color:getStatus(_status)=="Approuvé"? Colors.green:Colors.red,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: taille_champ
-                                      ),),
-                                      Text(getMonth(_date), style: TextStyle(
-                                          color: couleur_titre,
-                                          fontSize: taille_champ-2
-                                      ),),
-                                    ],
-                                  ),
-                                )
-                            )
-                          ],
+                                  )
+                              ),
+                              Container(
+                                width: 5,
+                                height: 70.0,
+                                decoration: BoxDecoration(
+                                    color:getStatus(_status)=="Approuvé"? Colors.green:Colors.red,
+                                    borderRadius: BorderRadius.only(
+                                        bottomLeft: Radius.circular(10),
+                                        topLeft: Radius.circular(10)
+                                    )
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -590,7 +693,7 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
 
   String getNature(String nature, String typeOper){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "AGENT_TO_USER"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "AGENT_TO_USER" || nature == "WALLET_TO_ATPS" || nature == "WALLET_TO_BRM"){
       _nature = "Transfert d'argent";
     }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "PAYPAL_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET"){
       _nature = "Recharge d'argent";
@@ -607,14 +710,13 @@ class _HistoriqueState extends State<Historique> with SingleTickerProviderStateM
       double y, {
         bool isTouched = false,
         Color barColor = Colors.white,
-        double width = 20,
         List<int> showTooltips = const [],
       }) {
     return BarChartGroupData(x: x, barRods: [
       BarChartRodData(
         y: isTouched ? y + 1 : y,
         color: isTouched ? orange_F: couleur_fond_bouton,
-        width: width,
+        width: _bar,
         isRound: false,
         backDrawRodData: BackgroundBarChartRodData(
           show: true,

@@ -36,9 +36,14 @@ class _WebviewState extends State<IosWebview> {
     this.read();
    flutterWebviewPlugin.onStateChanged.listen((WebViewStateChanged webViewStateChanged){
     url = webViewStateChanged.url;
-    print("Current url: $url");
-    if(url == "https://cargosprint.com/" || url == "http://www.sprint-pay.com"){
-      this._getStatus(_id);
+    print("Current urls: $url");
+    if(url == "https://cargosprint.com/" || url == "https://sprint-pay.com/"){//https://sprint-pay.com/
+      if(_status == "PROCESSED" || _status == "REFUSED"){
+
+      } else{
+        flutterWebviewPlugin.dispose();
+        this._getStatus(_id);
+      }
     }else{
       print("déjà $_status");
     }
@@ -61,29 +66,42 @@ class _WebviewState extends State<IosWebview> {
     request.headers.set('Authorization', 'Basic $credentials');
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
-    print("statusCode ${response.statusCode}");
+    print("statusCodes ${response.statusCode}");
     print("body $reply");
+    print("temps vaut: $temps");
+    print("status vaut: $_status");
     if(response.statusCode == 200){
       var responseJson = json.decode(reply);
-      _status = responseJson['status'];
+      setState(() {
+        _status = responseJson['status'];
+      });
       if(_status == "CREATED"){
         if(temps <= 0){
-          Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: IosWebview(_code)));
+          flutterWebviewPlugin.dispose();
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => Echec("^&")));
+          //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: IosWebview(_code)));
         }else if(temps > 0){
           temps--;
           _getStatus(id);
         }
       }else if(_status == "PROCESSED"){
+        temps = -1;
         _status = "PROCESSED";
         flutterWebviewPlugin.dispose();
-        Navigator.of(context).push(SlideLeftRoute(enterWidget: Confirma("recharge"), oldWidget: IosWebview(_code)));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => Confirma("recharge")));
+        //Navigator.of(context).push(SlideLeftRoute(enterWidget: Confirma("recharge"), oldWidget: IosWebview(_code)));
       }else if(_status == "REFUSED"){
+        temps = -1;
         _status = "REFUSED";
         flutterWebviewPlugin.dispose();
-        Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: IosWebview(_code)));
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => Echec("^&")));
+        //Navigator.of(context).pushReplacement(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: IosWebview(_code)));
       }
     }else{
-      Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: IosWebview(_code)));
+      temps = -1;
+      flutterWebviewPlugin.dispose();
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => Echec("^&")));
+      //Navigator.of(context).push(SlideLeftRoute(enterWidget: Echec("^&"), oldWidget: IosWebview(_code)));
     }
   }
 
@@ -118,8 +136,9 @@ class _WebviewState extends State<IosWebview> {
               ),
             ),
             //supportMultipleWindows: true,
-            initialChild:Center(
-                child: CupertinoActivityIndicator(radius: 30,)
+            initialChild:
+            Center(
+                child:CupertinoActivityIndicator(radius: 30,)
             )
       );
   }

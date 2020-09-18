@@ -39,6 +39,16 @@ class _EchecState extends State<Echec> {
       notif = "Votre transfert a échoué!";
       img = "payment-method.png";
       this.save();
+    }else if(_code.split('^').last == 'c'){
+      sms = "Désolé!\nEchec de la commande!";
+      notif = "Votre commande de la carte prépayée a échoué!";
+      img = "credit-card-2.png";
+      this.save();
+    }else if(_code.split('^').last == 'v'){
+      sms = "Désolé!\nEchec de la commande!";
+      notif = "Votre commande de la carte prépayée a échoué!";
+      img = "credit-card.png";
+      this.save();
     } else{
       sms = "Désolé!\nVotre participation n'a été enregistrée!";
       img = "exchange.png";
@@ -163,6 +173,7 @@ class _EchecState extends State<Echec> {
                     child: new GestureDetector(
                       onTap: (){
                         setState(() {
+                          init();
                           Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile('$_code')));
                           //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Echec(_code)));
                         });
@@ -190,5 +201,18 @@ class _EchecState extends State<Echec> {
       ),
       bottomNavigationBar: barreBottom,
     );
+  }
+
+  init() async{
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("prenomt", null);
+    prefs.setString("prenomf", null);
+    prefs.setString("nomt", null);
+    prefs.setString("nomf", null);
+    prefs.setString("adressed", null);
+    prefs.setString("adressef", null);
+    prefs.setString("villef", null);
+    prefs.setString("villed", null);
+    prefs.setString("nomd", null);
   }
 }

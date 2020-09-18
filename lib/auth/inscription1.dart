@@ -204,9 +204,10 @@ class _Inscription1State extends State<Inscription1> {
 
     return new Scaffold(
       key: _scaffoldKey,
+      backgroundColor: GRIS,
       appBar: new AppBar(
         elevation: 0.0,
-        backgroundColor: couleur_appbar,
+        backgroundColor: GRIS,
         flexibleSpace: barreTop,
         leading: IconButton(
             onPressed: (){
@@ -282,7 +283,7 @@ class _Inscription1State extends State<Inscription1> {
                         topLeft: Radius.circular(10.0),
                         topRight: Radius.circular(10.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                           width: bordure,
                           color: couleur_bordure
@@ -339,7 +340,7 @@ class _Inscription1State extends State<Inscription1> {
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                           width: bordure,
                           color: couleur_bordure
@@ -414,7 +415,7 @@ class _Inscription1State extends State<Inscription1> {
                         bottomLeft: Radius.circular(10.0),
                         bottomRight: Radius.circular(10.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                           width: bordure,
                           color: couleur_bordure
@@ -587,14 +588,17 @@ class _Inscription1State extends State<Inscription1> {
                       borderRadius: new BorderRadius.circular(10.0),
                     ),
                     child: Center(
-                        child: isLoding==false? new Text('Je m\'inscris', style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),):CupertinoActivityIndicator()
+                        child: isLoding==false? new Text('Je m\'inscris', style: new TextStyle(fontSize: taille_text_bouton+ad, color: Colors.white),):
+                        Theme(
+                            data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                            child: CupertinoActivityIndicator(radius: 20,)),
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Padding(
+          /*Padding(
             padding: EdgeInsets.only(top:20.0),
             child: GestureDetector(
               onTap: (){
@@ -610,7 +614,7 @@ class _Inscription1State extends State<Inscription1> {
                 ),textAlign: TextAlign.center,
               ),
             ),
-          ),
+          ),*/
         ],
       ),
       bottomNavigationBar: barreBottom,

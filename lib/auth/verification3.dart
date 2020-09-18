@@ -89,12 +89,13 @@ class _Verification3State extends State<Verification3> {
 
     //double sp = MediaQuery.of(context).size.height;
     return new Scaffold(
+      backgroundColor: GRIS,
       key: _scaffoldKey,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(55.0),
         child: new AppBar(
           elevation: 0.0,
-          backgroundColor: couleur_appbar,
+          backgroundColor: GRIS,
           flexibleSpace: barreTop,
           leading: IconButton(
               onPressed: (){
@@ -175,7 +176,7 @@ class _Verification3State extends State<Verification3> {
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -236,7 +237,7 @@ class _Verification3State extends State<Verification3> {
                           bottomLeft: Radius.circular(10.0),
                           bottomRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -316,7 +317,10 @@ class _Verification3State extends State<Verification3> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: Center(child:isLoading==false? new Text('Actualiser mon mot de passe', style: new TextStyle(fontSize: taille_champ+3, color: Colors.white),):CupertinoActivityIndicator()),
+                        child: Center(child:isLoading==false? new Text('Actualiser mon mot de passe', style: new TextStyle(fontSize: taille_champ+3, color: Colors.white),):
+                        Theme(
+                            data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                            child: CupertinoActivityIndicator(radius: 20,)),),
                       ),
                     ),
                   ),

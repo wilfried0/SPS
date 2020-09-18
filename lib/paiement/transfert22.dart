@@ -110,7 +110,7 @@ class _Transfert22State extends State<Transfert22> {
     }
   }
 
-  Future<void> addUser(var body) async {
+  Future<void> addUser2(var body) async {
     final prefs = await SharedPreferences.getInstance();
     _username = prefs.getString("username");
     _password = prefs.getString("password");
@@ -157,7 +157,7 @@ class _Transfert22State extends State<Transfert22> {
     });
   }
 
-  Future<void> addUser2(var body) async {
+  Future<void> addUser(var body) async {
     final prefs = await SharedPreferences.getInstance();
     _username = prefs.getString("username");
     _password = prefs.getString("password");
@@ -214,6 +214,7 @@ class _Transfert22State extends State<Transfert22> {
     _password = prefs.getString("password");
     print("$_username, $_password");
     String _url = "$baseUrl/all";
+    print("url: $_url");
     var bytes = utf8.encode('$_username:$_password');
     var credentials = base64.encode(bytes);
     HttpClient client = new HttpClient();
@@ -337,10 +338,11 @@ class _Transfert22State extends State<Transfert22> {
   Widget build(BuildContext context) {
     marge = (5*MediaQuery.of(context).size.width)/414;
     return new Scaffold(
+      backgroundColor: GRIS,
         key: _scaffoldKey,
         appBar: new AppBar(
           elevation: 0.0,
-          backgroundColor: couleur_appbar,
+          backgroundColor: GRIS,
           flexibleSpace: barreTop,
           leading: IconButton(
               onPressed: (){
@@ -398,7 +400,7 @@ class _Transfert22State extends State<Transfert22> {
                     topLeft: Radius.circular(10.0),
                     topRight: Radius.circular(10.0),
                   ),
-                  color: couleur_champ,
+                  color: Colors.white,
                   border: Border.all(
                       width: .1,
                       color: couleur_champ
@@ -454,7 +456,10 @@ class _Transfert22State extends State<Transfert22> {
                             padding: const EdgeInsets.only(left:15.0, right: 15),
                             child:isLoading==false? new Icon(Icons.search,
                               size: 20.0,
-                              color: Colors.white,):CupertinoActivityIndicator(),
+                              color: Colors.white,):
+                            Theme(
+                                data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                child: CupertinoActivityIndicator(radius: 20,)),
                           ),
                         ),
                       ),

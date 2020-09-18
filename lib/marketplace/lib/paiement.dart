@@ -47,6 +47,8 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
   static const String SP_CREDENTIAL = "SP_CREDENTIAL";
   static const String BUYER_ID = "BUYER_ID";
   static const String ACCOUNT_TYPE = "ACCOUNT_TYPE";
+  static const String BUYER_COUNTRY = "BUYER_COUNTRY";
+  static const String BENEFICIARY_COUNTRY = "BENEFICIARY_COUNTRY";
 
   var method = "";
 
@@ -134,7 +136,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
       /*_commission = prefs.getString("commission") == null
           ? null
           : prefs.getString("commission");*/
-      _nom = prefs.getString("nom") == null ? null : prefs.getString("nom");
+      buyerName = prefs.getString("nom") == null ? null : prefs.getString("nom");
       _recepteur = prefs.getString("recepteur") == null
           ? null
           : prefs.getString("recepteur");
@@ -144,6 +146,8 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
       _transaction.spauthToken = prefs.getString(SP_CREDENTIAL);
       _transaction.buyerId = prefs.getString(BUYER_ID);
       _transaction.accountType = prefs.getString(ACCOUNT_TYPE);
+      _transaction.beneficiaryCountry = prefs.getString(BENEFICIARY_COUNTRY);
+      _transaction.buyerCountry = prefs.getString(BUYER_COUNTRY);
       emailController.text = _transaction.buyerEmail;
       _transaction.clientIpAddress = "127.0.0.0";
       this.getMontantCible();
@@ -237,6 +241,8 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                 Services.UTILITY_CATEGORY ||
                             _merchant.category ==
                                 Services.PHARMACY_CATEGORY ||
+                            _merchant.category ==
+                                Services.QUINCAILLERY_CATEGORY ||
                             _merchant.logoFileId.contains("tv.png")) &&
                             beneficiaryPhoneNumber == null
                             ? Container()
@@ -252,8 +258,9 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                       _merchant.category ==
                                           Services.UTILITY_CATEGORY ||
                                       _merchant.category ==
-                                          Services
-                                              .PHARMACY_CATEGORY ||
+                                          Services.PHARMACY_CATEGORY ||
+                                      _merchant.category ==
+                                          Services.QUINCAILLERY_CATEGORY ||
                                       (_merchant.logoFileId
                                           .contains("tv.png")) &&
                                           beneficiaryPhoneNumber !=
@@ -275,14 +282,17 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                       _merchant.category ==
                                           Services.UTILITY_CATEGORY ||
                                       _merchant.category ==
-                                          Services
-                                              .PHARMACY_CATEGORY ||
+                                          Services.PHARMACY_CATEGORY ||
+                                      _merchant.category ==
+                                          Services.QUINCAILLERY_CATEGORY ||
                                       (_merchant.logoFileId
                                           .contains("tv.png") &&
                                           beneficiaryPhoneNumber !=
                                               null) ||
                                       _merchant.category ==
-                                          Services.PHARMACY_CATEGORY
+                                          Services.PHARMACY_CATEGORY ||
+                                      _merchant.category ==
+                                          Services.QUINCAILLERY_CATEGORY
                                       ? "+${_transaction.beneficiaryPhoneNumber} "
                                       : "Non Réquis",
                                   style: TextStyle(
@@ -415,7 +425,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                               print(indik);
                             });
                             switch (indik) {
-                              case 2:
+                              case 1:
                                 setState(() {
                                   _commission = Amount.getCommission(
                                       _serviceItem.commissionType,
@@ -423,7 +433,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                       double.parse(_transaction.amount));
                                 });
                                 break;
-                              case 3:
+                              case 2:
                                 setState(() {
                                   _commission = Amount.getCommission(
                                       _serviceItem.commissionType,
@@ -431,7 +441,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                       double.parse(_transaction.amount));
                                 });
                                 break;
-                              case 4:
+                              case 3:
                                 setState(() {
                                   _commission = Amount.getCommission(
                                       _serviceItem.commissionType,
@@ -439,7 +449,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                                       double.parse(_transaction.amount));
                                 });
                                 break;
-                              case 1:
+                              case 4:
                                 setState(() {
                                   _commission = Amount.getCommission(
                                       _serviceItem.commissionType,
@@ -458,7 +468,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                             }
                           },
                           height: 90.0,
-                          items: [1, 2, 3, 4, 5].map((i) {
+                          items: [1, 2, 3].map((i) {
                             return Builder(
                               builder: (BuildContext context) {
                                 return getMoyen(i, context, indik);
@@ -681,7 +691,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                               )),
                         )
                             : Container(),
-                        indik == 3 || indik == 2 || indik == 4
+                        indik == 3 || indik == 2 || indik == 1
                             ? Padding(
                           padding: EdgeInsets.only(top: 20),
                           child: Form(
@@ -819,7 +829,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                               )),
                         )
                             : Container(),
-                        indik == 1
+                        indik == 4
                             ? Padding(
                           padding: EdgeInsets.only(top: 20),
                           child: Container(
@@ -905,16 +915,16 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                   print("Method = $indik");
                   if (isForm2Valid && isForm1Valid) {
                     switch (indik) {
-                      case 2:
+                      case 1:
                         method = "ORANGE_MONEY_CM";
                         break;
-                      case 3:
+                      case 2:
                         method = "MTN_MOMO_CM";
                         break;
-                      case 4:
+                      case 3:
                         method = "YUP_CM";
                         break;
-                      case 1:
+                      case 4:
                         method = "CREDIT_CARD";
                         break;
                       default:
@@ -969,6 +979,7 @@ class _PaiementState extends State<Paiement> implements HandleResponseListener {
                           "Impossible de traiter votre requete, veuillez verifiez votre connexion internet");
                     }
                   }
+                  print("${_transaction.toString()}");
                 },
                 child: new Container(
                   height: hauteur_champ,

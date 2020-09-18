@@ -1,0 +1,81 @@
+{
+  "@@last_modified": "2020-06-30T11:36:22.232346",
+  "suivant": "Suivant",
+  "@suivant": {
+    "description": "Bouton de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "bienvenue": "Bienvenue",
+  "@bienvenue": {
+    "description": "Bienvenue  de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "bienvenu_text": "sur la première plateforme d'interopérabilité des services financiers",
+  "@bienvenu_text": {
+    "description": "Texte de bienvenue de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "souvenir": "Se souvenir de moi",
+  "@souvenir": {
+    "description": "Se souvenir de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "phone": "Numéro de téléphone",
+  "@phone": {
+    "description": "numéro de téléphone",
+    "type": "text",
+    "placeholders": {}
+  },
+  "exit": "Fermer l'application ?",
+  "@exit": {
+    "description": "Fermer l'application depuis la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "non": "Non",
+  "@non": {
+    "description": "non",
+    "type": "text",
+    "placeholders": {}
+  },
+  "oui": "Oui",
+  "@oui": {
+    "description": "oui",
+    "type": "text",
+    "placeholders": {}
+  },
+  "empty_phone": "Champ téléphone vide !",
+  "@empty_phone": {
+    "description": "champ téléphone vide",
+    "type": "text",
+    "placeholders": {}
+  },
+  "invalid_phone": "Numéro de téléphone invalide !",
+  "@invalid_phone": {
+    "description": "téléphone invalide",
+    "type": "text",
+    "placeholders": {}
+  },
+  "service_indis": "Service indisponible !",
+  "@service_indis": {
+    "description": "service indisponible",
+    "type": "text",
+    "placeholders": {}
+  },
+  "check_conn": "Vérifier votre connexion internet.",
+  "@check_conn": {
+    "description": "vérifier la connexion internet",
+    "type": "text",
+    "placeholders": {}
+  },
+  "error_get_dev": "Une erreur est survenue lors de la récupération de la dévise!",
+  "@error_get_dev": {
+    "description": "Page de connexion erreru lors de la récuération de la dévise.",
+    "type": "text",
+    "placeholders": {}
+  }
+}

@@ -125,12 +125,13 @@ class _Verification2State extends State<Verification2> {
     final espace = (MediaQuery.of(context).size.height - 533.3333333333334)<0?0.0:MediaQuery.of(context).size.height - 533.3333333333334;
     final pas = (MediaQuery.of(context).size.height - 533.3333333333334)<0?0.0:42.0;
     return new Scaffold(
+      backgroundColor: GRIS,
       key: _scaffoldKey,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(55.0),
         child: new AppBar(
           elevation: 0.0,
-          backgroundColor: couleur_appbar,
+          backgroundColor: GRIS,
           flexibleSpace: barreTop,
           leading: IconButton(
               onPressed: (){
@@ -214,7 +215,7 @@ class _Verification2State extends State<Verification2> {
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure
@@ -283,7 +284,10 @@ class _Verification2State extends State<Verification2> {
                           ),
                           borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        child: Center(child:isLoading ==false? new Text("Valider", style: new TextStyle(fontSize: taille_champ+3, color: Colors.white),):CupertinoActivityIndicator()),
+                        child: Center(child:isLoading ==false? new Text("Valider", style: new TextStyle(fontSize: taille_champ+3, color: Colors.white),):
+                        Theme(
+                            data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                            child: CupertinoActivityIndicator(radius: 20,)),),
                       ),
                     ),
                   ),

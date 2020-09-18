@@ -1,11 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:services/composants/components.dart';
 import 'package:services/monprofile.dart';
+import 'package:services/paiement/transferO.dart';
 import 'confirma.dart';
 import 'echec.dart';
 import 'transfert2.dart';
@@ -28,11 +27,11 @@ class _Transfert3State extends State<Transfert3> {
   _Transfert3State(this._code);
   String _code;
   bool isLoading = false;
-  String _name, _to, _username, fromLastname, _password, montant, amount, devisebenef, description, deviseLocale, fees, _lieu, _adresse, _fromCountryISO, _fromCardType, _fromCardNumber, _fromCardIssuingDate, _fromCardExpirationDate, _fromPays, _pays;
+  String _name, _to, _username,toLastname,toFirstname,fromFirstname, fromLastname,_nomf,iso,bankName,lieu_naiss, accountNumber,_prenomf,_villef, _addressf,_villed, _password, montant, amount, devisebenef, description, deviseLocale, fees, _lieu, _adresse, _fromCountryISO, _fromCardType, _fromCardNumber, _fromCardIssuingDate, _fromCardExpirationDate, _fromPays, _pays;
   var _formKey = GlobalKey<FormState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
-  String url, _id, _payst, _urlc, nomPays, codeIso2;
-  var _feesController, _montantController, _motifController, _nameController, _toController, _descriptionController, _deviseLocaleController, _adresseController, _fromCountryISOController, _fromCardTypeController, _fromCardNumberController, _fromCardIssuingDateController, _fromCardExpirationDateController, _fromPaysController, _fromPaysNameController;
+  String url, _id, _payst, _urlc, nomPays, codeIso2, type;
+  var _feesController, _montantController,_typeController,_lieuController, _nomfController,_prenomController, _adressfController, _motifController,_villedController,_villefController, _nameController, _toController, _descriptionController, _deviseLocaleController, _adresseController, _fromCountryISOController, _fromCardTypeController, _fromCardNumberController, _fromCardIssuingDateController, _fromCardExpirationDateController, _fromPaysController, _fromPaysNameController, _accountNumberController, _bankNameController;
   int temps = 200;
   final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -44,6 +43,14 @@ class _Transfert3State extends State<Transfert3> {
     url = '$base_url/transfert/wallet';
     _urlc = "$base_url/user/soldeBeneficiaire/";
     _feesController = TextEditingController();
+    _accountNumberController = TextEditingController();
+    _bankNameController = TextEditingController();
+    _adressfController = TextEditingController();
+    _nomfController = TextEditingController();
+    _prenomController = TextEditingController();
+    _typeController = TextEditingController();
+    _villedController = TextEditingController();
+    _villefController = TextEditingController();
     _montantController = TextEditingController();
     _motifController = TextEditingController();
     _nameController = TextEditingController();
@@ -58,11 +65,21 @@ class _Transfert3State extends State<Transfert3> {
     _fromCardExpirationDateController = TextEditingController();
     _fromPaysController = TextEditingController();
     _fromPaysNameController = TextEditingController();
+    _lieuController = TextEditingController();
   }
 
   @override
   void dispose() {
     _feesController.dispose();
+    _accountNumberController.dispose();
+    _bankNameController.dispose();
+    _lieuController.dispose();
+    _adressfController.dispose();
+    _nomfController.dispose();
+    _prenomController.dispose();
+    _typeController.dispose();
+    _villefController.dispose();
+    _villedController.dispose();
     _montantController.dispose();
     _motifController.dispose();
     _nameController.dispose();
@@ -104,8 +121,28 @@ class _Transfert3State extends State<Transfert3> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _lieu = prefs.getString("lieu");
+      lieu_naiss = prefs.getString("naissancef");
+      _lieuController.text = lieu_naiss;
+      iso = prefs.getString("iso");
       _username = prefs.getString("username");
       fromLastname = prefs.getString("nom");
+      type = prefs.getString("type");
+      _typeController.text = type;
+      _villed = prefs.getString("villed");
+      _villedController.text = _villed;
+      _villef = prefs.getString("villef");
+      _villefController.text = _villef;
+      _nomf = prefs.getString("nomf");
+      _nomfController.text = _nomf;
+      _addressf = prefs.getString("adressef");
+      _adressfController.text = _addressf;
+      _prenomf = prefs.getString("prenomf");
+      _prenomController.text = _prenomf;
+      bankName = prefs.getString("bankName");
+      accountNumber = prefs.getString("accountNumber");
+      _bankNameController.text = bankName;
+      _accountNumberController.text = accountNumber;
+
       print("lieu $_lieu");
       montant = prefs.getString("montant");
       _montantController.text = montant;
@@ -116,6 +153,8 @@ class _Transfert3State extends State<Transfert3> {
       _name = prefs.getString("nomd")==null||prefs.getString("nomd").isEmpty||prefs.getString("nomd")==" "?null:prefs.getString("nomd");
       print("name: $_name");
       _nameController.text = _name;
+      toFirstname = prefs.getString("prenomt");
+      toLastname = prefs.getString("nomt");
       description = prefs.getString("motif");
       print("ma description: $description");
       _descriptionController.text = description;
@@ -189,7 +228,9 @@ class _Transfert3State extends State<Transfert3> {
       url = '$base_url/transfert/wari/sendMoney';
     }else if(_lieu == "4"){
       url = '$base_url/transfert/atps/sendMoney';
-    }else
+    }else if(_lieu == "5"){
+      url = '$base_url/transfert/brm/sendMoney';
+    } else
       url = '$base_url/transfert/eu/sendMoney';
     print(url);
     HttpClient client = new HttpClient();
@@ -356,19 +397,23 @@ class _Transfert3State extends State<Transfert3> {
     },
     home: new Scaffold(
       key: _scaffoldKey,
+      backgroundColor: GRIS,
       appBar: new AppBar(
         elevation: 0.0,
         title: Text('Vérification', style: TextStyle(
           color: couleur_description_champ,
           fontSize: taille_champ
         ),),
-        backgroundColor: couleur_appbar,
+        backgroundColor: GRIS,
         flexibleSpace: barreTop,
         leading: IconButton(
             onPressed: (){
               if(_lieu == "0"){
                 Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert22(_code)));
-              }else
+              }else if(_lieu == "4" || _lieu == "5"){
+                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: TransfertO(_code)));
+              }
+              else
                 Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert2(_code)));
             },
             icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
@@ -526,7 +571,7 @@ class _Transfert3State extends State<Transfert3> {
                         topLeft: Radius.circular(10.0),
                         topRight: Radius.circular(10.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                           color: couleur_bordure,
                           width: bordure
@@ -586,7 +631,7 @@ class _Transfert3State extends State<Transfert3> {
                         topLeft: Radius.circular(10.0),
                         topRight: Radius.circular(10.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                           color: couleur_bordure,
                           width: bordure
@@ -626,11 +671,76 @@ class _Transfert3State extends State<Transfert3> {
                 ),
                 Padding(padding: EdgeInsets.only(top: marge_champ_libelle),),
 
+                _lieu != "5"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Moyen via lequel le bénéficiaire recevra les fonds',
+                      style: TextStyle(
+                          color: couleur_libelle_champ,
+                          fontSize: taille_libelle_champ,
+                          fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                ),
+
+                _lieu != "5"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        bottomLeft: Radius.circular(10.0),
+                        bottomRight: Radius.circular(10.0),
+                        topLeft: Radius.circular(10.0),
+                        topRight: Radius.circular(10.0),
+                      ),
+                      color: Colors.white,
+                      border: Border.all(
+                          color: couleur_bordure,
+                          width: bordure
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 20.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller:type==null || type=="null"?null: _typeController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                color: couleur_libelle_champ,
+                                fontSize: taille_champ+3,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Moyen non renseigné',
+                                hintStyle: TextStyle(
+                                  color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+                _lieu != "4" && _lieu !="5"?Container():Padding(padding: EdgeInsets.only(top: marge_champ_libelle),),
+
                 Padding(
                   padding: EdgeInsets.only(left: 20.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(_lieu=="3"|| _lieu=="4"?"Informations sur le bénéficiaire":'Identité & contact',
+                    child: Text(_lieu=="3"|| _lieu=="4" || _lieu =="5"?"Informations sur le bénéficiaire":'Identité & contact',
                       style: TextStyle(
                           color: couleur_libelle_champ,
                           fontSize: taille_libelle_champ,
@@ -649,7 +759,7 @@ class _Transfert3State extends State<Transfert3> {
                         topLeft: Radius.circular(10.0),
                         topRight: Radius.circular(10.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -694,12 +804,12 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                _lieu!="3" && _lieu!="4"?Container():Padding(
+                _lieu!="3" && _lieu!="4" && _lieu != "5"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -744,6 +854,56 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
+                _lieu != "5" && _lieu != "4"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.location_city, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _villedController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Ville',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 Padding(
                   padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
@@ -755,7 +915,7 @@ class _Transfert3State extends State<Transfert3> {
                         topRight: Radius.circular(_name==null?10.0:0.0),
                         topLeft: Radius.circular(_name==null?10.0:0.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -799,9 +959,9 @@ class _Transfert3State extends State<Transfert3> {
                   ),
                 ),
 
-                _lieu=="3" || _lieu =="4"?Padding(padding: EdgeInsets.only(top: marge_champ_libelle),):Container(),
+                _lieu=="3" || _lieu =="4" || _lieu == "5"?Padding(padding: EdgeInsets.only(top: marge_champ_libelle),):Container(),
 
-                _lieu!="3" && _lieu !="4"?Container():Padding(
+                _lieu!="3" && _lieu !="4" && _lieu != "5"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0),
                   child: Align(
                     alignment: Alignment.centerLeft,
@@ -825,7 +985,7 @@ class _Transfert3State extends State<Transfert3> {
                         topLeft: Radius.circular(10.0),
                         topRight: Radius.circular(10.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -875,7 +1035,7 @@ class _Transfert3State extends State<Transfert3> {
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -925,7 +1085,7 @@ class _Transfert3State extends State<Transfert3> {
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -975,7 +1135,7 @@ class _Transfert3State extends State<Transfert3> {
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -1020,16 +1180,16 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
-                _lieu!="3"&& _lieu !="4"?Container():Padding(
+                _lieu!="3"?Container():Padding(
                   padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
                   child: Container(
                     margin: EdgeInsets.only(top: 0.0),
                     decoration: new BoxDecoration(
                       borderRadius: new BorderRadius.only(
-                        bottomLeft: Radius.circular(10.0),
-                        bottomRight: Radius.circular(10.0),
+                        bottomLeft: Radius.circular(_lieu =="4"?0: 10.0),
+                        bottomRight: Radius.circular(_lieu =="4"?0: 10.0),
                       ),
-                      color: Colors.transparent,
+                      color: Colors.white,
                       border: Border.all(
                         width: bordure,
                         color: couleur_bordure,
@@ -1074,6 +1234,342 @@ class _Transfert3State extends State<Transfert3> {
                     ),
                   ),
                 ),
+                _lieu != "4"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.location_city, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _lieuController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Lieu de naissance',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                _lieu!="5" && _lieu != "4"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        topLeft: Radius.circular(_lieu =="4"?0:10.0),
+                        topRight: Radius.circular(_lieu =="4"?0:10.0),
+                      ),
+                      color: Colors.white,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.person, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _nomfController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Nom',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _lieu != "5" && _lieu != "4"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        bottomRight: Radius.circular(_lieu == "4"?10.0: 0.0),
+                        bottomLeft: Radius.circular(_lieu == "4"?10.0: 0.0),
+                      ),
+                      color: Colors.white,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.location_on, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _adressfController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Adresse',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                _lieu != "5"?Container():Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        bottomRight: Radius.circular(10.0),
+                        bottomLeft: Radius.circular(10.0),
+                      ),
+                      color: Colors.white,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.location_city, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _villefController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Ville',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                _lieu =="5" && type.toLowerCase() == "account"?Padding(
+                  padding: EdgeInsets.only(left: 20.0, top: 20),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Informations sur la banque",
+                      style: TextStyle(
+                          color: couleur_libelle_champ,
+                          fontSize: taille_libelle_champ,
+                          fontWeight: FontWeight.bold
+                      ),),
+                  ),
+                ):Container(),
+
+                _lieu =="5" && type.toLowerCase() == "account"?Padding(padding: EdgeInsets.only(top: marge_libelle_champ),):Container(),
+                _lieu =="5" && type.toLowerCase() == "account"?Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        topLeft: Radius.circular(10.0),
+                        topRight: Radius.circular(10.0),
+                      ),
+                      color: Colors.white,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.business_center, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _bankNameController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Nom de la banque',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ):Container(),
+                _lieu == "5" && type.toLowerCase() =="account"?Padding(
+                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 0.0),
+                    decoration: new BoxDecoration(
+                      borderRadius: new BorderRadius.only(
+                        bottomRight: Radius.circular(10.0),
+                        bottomLeft: Radius.circular(10.0),
+                      ),
+                      color: Colors.white,
+                      border: Border.all(
+                        width: bordure,
+                        color: couleur_bordure,
+                      ),
+                    ),
+                    height: hauteur_champ,
+                    child: Row(
+                      children: <Widget>[
+                        new Expanded(
+                          flex:2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: new Icon(Icons.account_balance_wallet, color: couleur_description_champ,),
+                          ),
+                        ),
+                        new Expanded(
+                          flex:10,
+                          child: Padding(
+                            padding: EdgeInsets.only(left:0.0),
+                            child: new TextFormField(
+                              enabled: false,
+                              controller: _accountNumberController,
+                              keyboardType: TextInputType.text,
+                              style: TextStyle(
+                                fontSize: taille_champ+3,
+                                color: couleur_libelle_champ,
+                              ),
+                              validator: (String value){
+                                return null;
+                              },
+                              decoration: InputDecoration.collapsed(
+                                hintText: 'Numéro de compte',
+                                hintStyle: TextStyle(color: couleur_libelle_champ,
+                                  fontSize: taille_champ+3,
+                                ),
+                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ):Container(),
 
                 Padding(
                   padding:  EdgeInsets.only(top: marge_champ_libelle, bottom: 20),
@@ -1085,13 +1581,14 @@ class _Transfert3State extends State<Transfert3> {
                         }else{
                           _to = _to.replaceAll(" ", "");
                           if(_lieu == "3") {
+                            print("****************** voilà toFirstname: $toFirstname");
                             var _wariTrans = new wariTrans(
                                 to: this._to,
                                 amount: int.parse(this.montant),//
                                 fees: double.parse(fees),//
                                 description: this.description,//
                                 deviseLocale: this.deviseLocale,//
-                                toFirstname: ".",
+                                toFirstname: toFirstname.isEmpty?".":toFirstname,
                                 toCountryCode: this._payst,
                                 fromCardExpirationDate: _fromCardExpirationDate,
                                 fromCardIssuingDate: _fromCardIssuingDate,
@@ -1099,7 +1596,7 @@ class _Transfert3State extends State<Transfert3> {
                                 fromCardType: _fromCardType,
                                 fromCountryISO: _fromCountryISO,
                                 toAdress: _adresse,
-                                toLastname: this._name
+                                toLastname: toLastname
                             );
                             print(json.encode(_wariTrans));
                             checkConnection(json.encode(_wariTrans));
@@ -1110,18 +1607,66 @@ class _Transfert3State extends State<Transfert3> {
                                 fees: double.parse(fees),//
                                 description: this.description,//
                                 deviseLocale: this.deviseLocale,//
-                                toFirstname: ".",
+                                toFirstname: toFirstname.isEmpty?".":toFirstname,
                                 toCountryCode: this._payst,
                                 fromCardExpirationDate: _fromCardExpirationDate,
                                 fromCardIssuingDate: _fromCardIssuingDate,
                                 fromCardNumber: _fromCardNumber,
                                 fromCardType: _fromCardType,
-                                type: "account",
+                                fromPlaceOfBith: lieu_naiss,
+                                fromAdress: _addressf,
+                                fromFirstname: _prenomf.isEmpty?".":_prenomf,
+                                fromLastname: _nomf,
+                                toTown: _villed,
                                 toAdress: _adresse,
-                                toLastname: this._name
+                                toLastname: toLastname
                             );
                             print(json.encode(atpsTrans));
                             checkConnection(json.encode(atpsTrans));
+                          }else if(_lieu =="5" && type.toLowerCase() == "account") {
+                            var brmTrans = new BRMAccountTrans(
+                                to: this._to,
+                                fromCountryCode: this.iso,
+                                amount: int.parse(this.montant),//
+                                fees: double.parse(fees),//
+                                description: this.description,//
+                                deviseLocale: this.deviseLocale,//
+                                toFirstname: toFirstname.isEmpty?".":toFirstname,
+                                toCountryCode: this.codeIso2,
+                                type: type.toLowerCase(),
+                                toAdress: _adresse,
+                                toLastname: toLastname,
+                                fromAdress: _addressf,
+                                fromFirstname: _prenomf.isEmpty?".":_prenomf,
+                                fromLastname: _nomf,
+                                fromTown: _villef,
+                                toTown: _villed,
+                              accountNumber: accountNumber,
+                              bankName: bankName,
+                            );
+                            print(json.encode(brmTrans));
+                            checkConnection(json.encode(brmTrans));
+                          }else if(_lieu =="5" && type.toLowerCase() == "cash") {
+                            var brmTrans = new BRMCashTrans(
+                                to: this._to,
+                                fromCountryCode: this.iso,
+                                amount: int.parse(this.montant),//
+                                fees: double.parse(fees),//
+                                description: this.description,//
+                                deviseLocale: this.deviseLocale,//
+                                toFirstname: toFirstname.isEmpty?".":toFirstname,
+                                toCountryCode: this.codeIso2,
+                                type: type.toLowerCase(),
+                                toAdress: _adresse,
+                                toLastname: toLastname,
+                                fromAdress: _addressf,
+                                fromFirstname: _prenomf.isEmpty?".":_prenomf,
+                                fromLastname: _nomf,
+                                fromTown: _villef,
+                                toTown: _villed
+                            );
+                            print(json.encode(brmTrans));
+                            checkConnection(json.encode(brmTrans));
                           } else if(_lieu == "1"){//sendMoney
                             var walletTr = new eucTrans(
                               to:this._to,
@@ -1132,8 +1677,8 @@ class _Transfert3State extends State<Transfert3> {
                               toFirstname: this._name,
                               toCountryCode: this._payst,
                               from: _username,
-                              fromFirstname: null,
-                              fromLastname: fromLastname
+                              fromFirstname: _prenomf == null?".":_prenomf,
+                              fromLastname: _nomf == null?"$_name":_nomf
                             );
                             print(json.encode(walletTr));
                             checkConnection(json.encode(walletTr));
@@ -1159,13 +1704,15 @@ class _Transfert3State extends State<Transfert3> {
                       decoration: new BoxDecoration(
                         color: couleur_fond_bouton,
                         border: new Border.all(
-                          color: Colors.transparent,
+                          color: Colors.white,
                           width: 0.0,
                         ),
                         borderRadius: new BorderRadius.circular(10.0),
                       ),
-                      child: Center(child: isLoading == false? new Text('valider le transfert', style: new TextStyle(fontSize: taille_text_bouton+3, color: Colors.white),):
-                          CupertinoActivityIndicator()
+                      child: Center(child: isLoading == false? new Text('Valider le transfert', style: new TextStyle(fontSize: taille_text_bouton+3, color: Colors.white),):
+                      Theme(
+                          data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                          child: CupertinoActivityIndicator(radius: 20,)),
                       ),
                     ),
                   ),

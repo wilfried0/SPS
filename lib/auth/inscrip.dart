@@ -24,7 +24,7 @@ class _InscripState extends State<Inscrip> {
   var _categorie = ['Madame', 'Monsieur', 'Mademoiselle'];
   var _nature = ['Particulier', 'Entreprise', 'PME', 'Etablissement', 'Association'];
   var _formKey = GlobalKey<FormState>();
-  var _annee = ['1960'];
+  var _annee = ['1930'];
   var _mois = ['01'];
   var _jour = ['01'];
   bool isLoding =false, _loadImage = false, isClicked = false;
@@ -44,7 +44,7 @@ class _InscripState extends State<Inscrip> {
   }
 
   ChargeAnnee(){
-    for(int i=1961;i<=DateTime.now().year+30;i++){
+    for(int i=1931;i<=DateTime.now().year+30;i++){
       _annee.add(i.toString());
     }
     print(_annee);
@@ -250,778 +250,784 @@ class _InscripState extends State<Inscrip> {
       },*/
       home: Scaffold(
         key: _scaffoldKey,
+        backgroundColor: GRIS,
         body: SingleChildScrollView(
           child: Form(
             key: _formKey,
-            child: Column(
-              children: <Widget>[
-                Stack(
-                  children: <Widget>[
-                    SizedBox(
-                      height: 330,
-                      width: MediaQuery.of(context).size.width,
-                      child: DrawerHeader(
-                        decoration: BoxDecoration(
-                            color: couleur_fond_bouton
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.only(top: 20),
-                          child: Column(
-                            //crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              _image == null?Container(
-                                height: 230,
-                                width: 230,
-                                decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                        image: AssetImage("images/ellipse1.png"),
-                                        fit: BoxFit.cover
-                                    )
-                                ),
-                              ):Container(
-                                height: 230,
-                                width: 230,
-                                decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      image: _image==null? AssetImage("images/ellipse1.png"):NetworkImage(_image),
-                                      fit: BoxFit.cover,
-                                    )
-                                ),
-                                child: Image.network(_image, fit: BoxFit.contain,
-                                    loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
-                                      if (loadingProgress == null) return Container();
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value: loadingProgress.expectedTotalBytes != null ?
-                                          loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
-                                              : null,
-                                        ),
-                                      );
-                                    }
-                                ),
-                              ),
-                            ],
+            child: Container(
+              color: GRIS,
+              child: Column(
+                children: <Widget>[
+                  Stack(
+                    children: <Widget>[
+                      SizedBox(
+                        height: 330,
+                        width: MediaQuery.of(context).size.width,
+                        child: DrawerHeader(
+                          decoration: BoxDecoration(
+                              color: couleur_fond_bouton
                           ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: new EdgeInsets.only(
-                        top: 50,
-                          right:0.0,
-                          left: MediaQuery.of(context).size.width-70),
-                      child: InkWell(
-                        onTap: () async {
-                          setState(() {
-                            _loadImage = true;
-                          });
-                          getImage();
-                        },
-                        child:_loadImage==false? Icon(Icons.camera_alt,size: 50, color: Colors.white,):
-                        CupertinoActivityIndicator(radius: 25,),
-                      ),
-                    ),
-                  ],
-                ),
-
-                /*Align(
-                  alignment: Alignment.topLeft,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0),
-                    child: Text("L'adresse email est facultative", style: TextStyle(
-                      color: couleur_libelle_champ,
-                    ),textAlign: TextAlign.left,),
-                  ),
-                ),*/
-
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
-                  child: Container(
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        topLeft: Radius.circular(10.0),
-                        topRight: Radius.circular(10.0),
-                      ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                          color: couleur_bordure,
-                          width: bordure
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
                           child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.group, color: couleur_decription_page,),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 10,
-                          child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                icon: Padding(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: new Icon(Icons.arrow_drop_down_circle,
-                                    color: couleur_fond_bouton,),
-                                ),
-                                isDense: false,
-                                elevation: 1,
-                                isExpanded: true,
-                                onChanged: (String selected){
-                                  setState(() {
-                                    _current = selected;
-                                    print(_current);
-                                    gender = getGender(_current);
-                                    print(gender);
-                                  });
-                                },
-                                value: _current,
-                                hint: Text('Mme/M/Mlle',
-                                  style: TextStyle(
-                                    color: couleur_libelle_champ,
-                                    fontSize:taille_champ+ad,
-                                  ),),
-                                items: _categorie.map((String name){
-                                  return DropdownMenuItem<String>(
-                                    value: name,
-                                    child: Text(name,
-                                      style: TextStyle(
-                                        color: couleur_libelle_champ,
-                                        fontSize:taille_champ+ad,
-                                      ),),
-                                  );
-                                }).toList(),
-                              )
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                  child: Container(
-                    decoration: new BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                          color: couleur_bordure,
-                          width: bordure
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.assignment_ind, color: couleur_decription_page,),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 10,
-                          child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                icon: Padding(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: new Icon(Icons.arrow_drop_down_circle,
-                                    color: couleur_fond_bouton,),
-                                ),
-                                isDense: false,
-                                elevation: 1,
-                                isExpanded: true,
-                                onChanged: (String selected){
-                                  setState(() {
-                                    nature = selected;
-                                  });
-                                },
-                                value: nature,
-                                hint:Text('Sélectionner votre nature',
-                                  style: TextStyle(
-                                    color: couleur_libelle_champ,
-                                    fontSize:taille_champ+ad,
-                                  ),),
-                                items: _nature.map((String name){
-                                  return DropdownMenuItem<String>(
-                                    value: name,
-                                    child: Text(name,
-                                      style: TextStyle(
-                                        color: couleur_libelle_champ,
-                                        fontSize:taille_champ+ad,
-                                      ),),
-                                  );
-                                }).toList(),
-                              )
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.person, color: couleur_decription_page,),//
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: Padding(
-                            padding: EdgeInsets.only(left:0.0),
-                            child: new TextFormField(
-                              keyboardType: TextInputType.text,
-                              style: TextStyle(
-                                fontSize: taille_champ+ad,
-                                color: couleur_libelle_champ,
-                              ),
-                              validator: (String value){
-                                if(value.isEmpty){
-                                  firstname = "";
-                                  return null;
-                                }else{
-                                  firstname = value;
-                                  return null;
-                                }
-                              },
-                              decoration: InputDecoration.collapsed(
-                                hintText: 'Prénom(s)',
-                                hintStyle: TextStyle(color: couleur_libelle_champ,
-                                    fontSize: taille_champ+ad
-                                ),
-                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.person, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: Padding(
-                            padding: EdgeInsets.only(left:0.0),
-                            child: new TextFormField(
-                              keyboardType: TextInputType.text,
-                              style: TextStyle(
-                                fontSize: taille_champ+ad,
-                                color: couleur_libelle_champ,
-                              ),
-                              validator: (String value){
-                                if(value.isEmpty){
-                                  return "Champ nom vide !";
-                                }else{
-                                  lastname = value;
-                                  return null;
-                                }
-                              },
-                              decoration: InputDecoration.collapsed(
-                                hintText: 'Nom(s)',
-                                hintStyle: TextStyle(color: couleur_libelle_champ,
-                                    fontSize: taille_champ+ad
-                                ),
-                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.email, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: Padding(
-                            padding: EdgeInsets.only(left:0.0),
-                            child: new TextFormField(
-                              keyboardType: TextInputType.emailAddress,
-                              style: TextStyle(
-                                fontSize: taille_champ+ad,
-                                color: couleur_libelle_champ,
-                              ),
-                              validator: (String value){
-                                if(value.isEmpty){
-                                  return "Champ email vide!";
-                                }else{
-                                  email = value;
-                                  return null;
-                                }
-                              },
-                              decoration: InputDecoration.collapsed(
-                                hintText: 'Email',
-                                hintStyle: TextStyle(color: couleur_libelle_champ,
-                                    fontSize: taille_champ+ad
-                                ),
-                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                /*Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.add_location, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: Padding(
-                            padding: EdgeInsets.only(left:0.0),
-                            child: new TextFormField(
-                              keyboardType: TextInputType.text,
-                              style: TextStyle(
-                                fontSize: taille_champ+ad,
-                                color: couleur_libelle_champ,
-                              ),
-                              validator: (String value){
-                                if(value.isEmpty){
-                                  return "Champ ville vide !";
-                                }else{
-                                  town = value;
-                                  return null;
-                                }
-                              },
-                              decoration: InputDecoration.collapsed(
-                                hintText: 'Ville',
-                                hintStyle: TextStyle(color: couleur_libelle_champ,
-                                    fontSize: taille_champ+ad
-                                ),
-                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),*/
-
-                /*Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.location_on, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: Padding(
-                            padding: EdgeInsets.only(left:0.0),
-                            child: new TextFormField(
-                              keyboardType: TextInputType.text,
-                              style: TextStyle(
-                                fontSize: taille_champ+ad,
-                                color: couleur_libelle_champ,
-                              ),
-                              validator: (String value){
-                                if(value.isEmpty){
-                                  return "Champ adresse vide !";
-                                }else{
-                                  adress = value;
-                                  return null;
-                                }
-                              },
-                              decoration: InputDecoration.collapsed(
-                                hintText: 'Adresse/Quartier',
-                                hintStyle: TextStyle(color: couleur_libelle_champ,
-                                    fontSize: taille_champ+ad
-                                ),
-                                //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),*/
-
-                isClicked == true?Container():Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        bottomRight: Radius.circular(10.0),
-                        bottomLeft: Radius.circular(10.0),
-                      ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
-                      ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.calendar_today, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
-                          ),
-                        ),
-                        new Expanded(
-                          flex:10,
-                          child: GestureDetector(
-                            onTap: (){
-                              setState(() {
-                                isClicked = true;
-                              });
-                            },
-                            child: Container(
-                              margin: EdgeInsets.only(top: 0.0),
-                              decoration: new BoxDecoration(
-                                color: Colors.transparent,
-                                border: Border.all(
-                                  width: bordure,
-                                  color: Colors.transparent,
-                                ),
-                              ),
-                              height: hauteur_champ,
-                              child: Row(
-                                children: <Widget>[
-                                  new Expanded(
-                                    flex:12,
-                                    child: new TextFormField(
-                                      keyboardType: TextInputType.text,
-                                      enabled: false,
-                                      style: TextStyle(
-                                        fontSize: taille_champ+ad,
-                                        color: couleur_libelle_champ,
-                                      ),
-                                      validator: (String value){
-                                        if(value.isEmpty){
-                                          return null;
-                                        }else{
-                                          _birthday = value;
-                                          return null;
-                                        }
-
-                                      },
-                                      decoration: InputDecoration.collapsed(
-                                        hintText: _birthday.isEmpty?'Date de naissance':_birthday,
-                                        hintStyle: TextStyle(color: couleur_libelle_champ,
-                                          fontSize: taille_champ+ad,
-                                        ),
-                                        //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
-                                      ),
-                                    ),
+                            padding: EdgeInsets.only(top: 20),
+                            child: Column(
+                              //crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                _image == null?Container(
+                                  height: 230,
+                                  width: 230,
+                                  decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                          image: AssetImage("images/ellipse1.png"),
+                                          fit: BoxFit.cover
+                                      )
                                   ),
-                                ],
-                              ),
+                                ):Container(
+                                  height: 230,
+                                  width: 230,
+                                  decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        image: _image==null? AssetImage("images/ellipse1.png"):NetworkImage(_image),
+                                        fit: BoxFit.cover,
+                                      )
+                                  ),
+                                  child: Image.network(_image, fit: BoxFit.contain,
+                                      loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
+                                        if (loadingProgress == null) return Container();
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null ?
+                                            loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes
+                                                : null,
+                                          ),
+                                        );
+                                      }
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
-                      ],
+                      ),
+                      Padding(
+                        padding: new EdgeInsets.only(
+                          top: 50,
+                            right:0.0,
+                            left: MediaQuery.of(context).size.width-70),
+                        child: InkWell(
+                          onTap: () async {
+                            setState(() {
+                              _loadImage = true;
+                            });
+                            getImage();
+                          },
+                          child:_loadImage==false? Icon(Icons.camera_alt,size: 50, color: Colors.white,):
+                          CupertinoActivityIndicator(radius: 25,),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  /*Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0),
+                      child: Text("L'adresse email est facultative", style: TextStyle(
+                        color: couleur_libelle_champ,
+                      ),textAlign: TextAlign.left,),
+                    ),
+                  ),*/
+
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 10.0),
+                    child: Container(
+                      decoration: new BoxDecoration(
+                        borderRadius: new BorderRadius.only(
+                          topLeft: Radius.circular(10.0),
+                          topRight: Radius.circular(10.0),
+                        ),
+                        color: Colors.white,
+                        border: Border.all(
+                            color: couleur_bordure,
+                            width: bordure
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.group, color: couleur_decription_page,),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 10,
+                            child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  icon: Padding(
+                                    padding: EdgeInsets.only(right: 10),
+                                    child: new Icon(Icons.arrow_drop_down_circle,
+                                      color: couleur_fond_bouton,),
+                                  ),
+                                  isDense: false,
+                                  elevation: 1,
+                                  isExpanded: true,
+                                  onChanged: (String selected){
+                                    setState(() {
+                                      _current = selected;
+                                      print(_current);
+                                      gender = getGender(_current);
+                                      print(gender);
+                                    });
+                                  },
+                                  value: _current,
+                                  hint: Text('Mme/M/Mlle',
+                                    style: TextStyle(
+                                      color: couleur_libelle_champ,
+                                      fontSize:taille_champ+ad,
+                                    ),),
+                                  items: _categorie.map((String name){
+                                    return DropdownMenuItem<String>(
+                                      value: name,
+                                      child: Text(name,
+                                        style: TextStyle(
+                                          color: couleur_libelle_champ,
+                                          fontSize:taille_champ+ad,
+                                        ),),
+                                    );
+                                  }).toList(),
+                                )
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-
-                isClicked == false?Container():Padding(
-                  padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
-                  child: Container(
-                    margin: EdgeInsets.only(top: 0.0),
-                    decoration: new BoxDecoration(
-                      borderRadius: new BorderRadius.only(
-                        bottomRight: Radius.circular(10.0),
-                        bottomLeft: Radius.circular(10.0),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                    child: Container(
+                      decoration: new BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(
+                            color: couleur_bordure,
+                            width: bordure
+                        ),
                       ),
-                      color: Colors.transparent,
-                      border: Border.all(
-                        width: bordure,
-                        color: couleur_bordure,
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.assignment_ind, color: couleur_decription_page,),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 10,
+                            child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  icon: Padding(
+                                    padding: EdgeInsets.only(right: 10),
+                                    child: new Icon(Icons.arrow_drop_down_circle,
+                                      color: couleur_fond_bouton,),
+                                  ),
+                                  isDense: false,
+                                  elevation: 1,
+                                  isExpanded: true,
+                                  onChanged: (String selected){
+                                    setState(() {
+                                      nature = selected;
+                                    });
+                                  },
+                                  value: nature,
+                                  hint:Text('Sélectionner votre nature',
+                                    style: TextStyle(
+                                      color: couleur_libelle_champ,
+                                      fontSize:taille_champ+ad,
+                                    ),),
+                                  items: _nature.map((String name){
+                                    return DropdownMenuItem<String>(
+                                      value: name,
+                                      child: Text(name,
+                                        style: TextStyle(
+                                          color: couleur_libelle_champ,
+                                          fontSize:taille_champ+ad,
+                                        ),),
+                                    );
+                                  }).toList(),
+                                )
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    height: hauteur_champ,
-                    child: Row(
-                      children: <Widget>[
-                        new Expanded(
-                          flex:2,
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: new Icon(Icons.calendar_today, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
-                          ),
-                        ),
-                        Expanded(
-                          flex:3,
-                          child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isDense: true,
-                                elevation: 1,
-                                isExpanded: true,
-                                onChanged: (String selected){
-                                  setState(() {
-                                    jr = selected;
-                                  });
-                                },
-                                value: jr,
-                                hint: Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Jour',
-                                    style: TextStyle(
-                                      color: couleur_libelle_champ,
-                                      fontSize:taille_champ+3,
-                                    ),),
-                                ),
-                                items: _jour.map((String name){
-                                  return DropdownMenuItem<String>(
-                                    value: name,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(left: 20),
-                                      child: Text(name,
-                                        style: TextStyle(
-                                            color: couleur_libelle_champ,
-                                            fontSize:taille_champ+3,
-                                            fontWeight: FontWeight.normal
-                                        ),),
-                                    ),
-                                  );
-                                }).toList(),
-                              )
-                          ),
-                        ),
-                        Expanded(
-                          flex:3,
-                          child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isDense: true,
-                                elevation: 1,
-                                isExpanded: true,
-                                onChanged: (String selected){
-                                  setState(() {
-                                    mo = selected;
-                                  });
-                                },
-                                value: mo,
-                                hint: Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Mois',
-                                    style: TextStyle(
-                                      color: couleur_libelle_champ,
-                                      fontSize:taille_champ+3,
-                                    ),),
-                                ),
-                                items: _mois.map((String name){
-                                  return DropdownMenuItem<String>(
-                                    value: name,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(left: 20),
-                                      child: Text(name,
-                                        style: TextStyle(
-                                            color: couleur_libelle_champ,
-                                            fontSize:taille_champ+3,
-                                            fontWeight: FontWeight.normal
-                                        ),),
-                                    ),
-                                  );
-                                }).toList(),
-                              )
-                          ),
-                        ),
-                        Expanded(
-                          flex:4,
-                          child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isDense: true,
-                                elevation: 1,
-                                isExpanded: true,
-                                onChanged: (String selected){
-                                  setState(() {
-                                    an = selected;
-                                  });
-                                },
-                                value: an,
-                                hint: Padding(
-                                  padding: EdgeInsets.only(left: 20),
-                                  child: Text('Année',
-                                    style: TextStyle(
-                                      color: couleur_libelle_champ,
-                                      fontSize:taille_champ+3,
-                                    ),),
-                                ),
-                                items: _annee.map((String name){
-                                  return DropdownMenuItem<String>(
-                                    value: name,
-                                    child: Padding(
-                                      padding: EdgeInsets.only(left: 20),
-                                      child: Text(name,
-                                        style: TextStyle(
-                                            color: couleur_libelle_champ,
-                                            fontSize:taille_champ+3,
-                                            fontWeight: FontWeight.normal
-                                        ),),
-                                    ),
-                                  );
-                                }).toList(),
-                              )
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 0.0),
+                      decoration: new BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(
+                          width: bordure,
+                          color: couleur_bordure,
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.person, color: couleur_decription_page,),//
+                            ),
+                          ),
+                          new Expanded(
+                            flex:10,
+                            child: Padding(
+                              padding: EdgeInsets.only(left:0.0),
+                              child: new TextFormField(
+                                keyboardType: TextInputType.text,
+                                style: TextStyle(
+                                  fontSize: taille_champ+ad,
+                                  color: couleur_libelle_champ,
+                                ),
+                                validator: (String value){
+                                  if(value.isEmpty){
+                                    firstname = "";
+                                    return null;
+                                  }else{
+                                    firstname = value;
+                                    return null;
+                                  }
+                                },
+                                decoration: InputDecoration.collapsed(
+                                  hintText: 'Prénom(s)',
+                                  hintStyle: TextStyle(color: couleur_libelle_champ,
+                                      fontSize: taille_champ+ad
+                                  ),
+                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
-                Padding(
-                  padding: EdgeInsets.only(top: 10.0, bottom: 10),
-                  child: new GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if(_formKey.currentState.validate()){
-                          if(isEmail(email)==true){
-                            if(jr != null && mo != null && an != null){
-                              _birthday = "$an-$mo-$jr";
-                              if(gender != null){
-                                if(nature != null){
-                                  var createAccount = new createMemberAccount(
-                                      id_user: this.idUser,
-                                      firstname: this.firstname,
-                                      lastname: this.lastname,
-                                      town: "",
-                                      birthday: this._birthday,
-                                      email: this.email==null?"":this.email,
-                                      nature: this.nature,
-                                      gender: this.gender,
-                                      adress: "",
-                                      userImage: "$_image",
-                                      newPassword: this.newPassword,
-                                      typeMember: "MSP",
-                                      roleId: 1
-                                  );
-                                  print(json.encode(createAccount));
-                                  this.checkConnection(json.encode(createAccount));
+                  Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 0.0),
+                      decoration: new BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(
+                          width: bordure,
+                          color: couleur_bordure,
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.person, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                            ),
+                          ),
+                          new Expanded(
+                            flex:10,
+                            child: Padding(
+                              padding: EdgeInsets.only(left:0.0),
+                              child: new TextFormField(
+                                keyboardType: TextInputType.text,
+                                style: TextStyle(
+                                  fontSize: taille_champ+ad,
+                                  color: couleur_libelle_champ,
+                                ),
+                                validator: (String value){
+                                  if(value.isEmpty){
+                                    return "Champ nom vide !";
+                                  }else{
+                                    lastname = value;
+                                    return null;
+                                  }
+                                },
+                                decoration: InputDecoration.collapsed(
+                                  hintText: 'Nom(s)',
+                                  hintStyle: TextStyle(color: couleur_libelle_champ,
+                                      fontSize: taille_champ+ad
+                                  ),
+                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 0.0),
+                      decoration: new BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(
+                          width: bordure,
+                          color: couleur_bordure,
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.email, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                            ),
+                          ),
+                          new Expanded(
+                            flex:10,
+                            child: Padding(
+                              padding: EdgeInsets.only(left:0.0),
+                              child: new TextFormField(
+                                keyboardType: TextInputType.emailAddress,
+                                style: TextStyle(
+                                  fontSize: taille_champ+ad,
+                                  color: couleur_libelle_champ,
+                                ),
+                                validator: (String value){
+                                  if(value.isEmpty){
+                                    return "Champ email vide!";
+                                  }else{
+                                    email = value;
+                                    return null;
+                                  }
+                                },
+                                decoration: InputDecoration.collapsed(
+                                  hintText: 'Email',
+                                  hintStyle: TextStyle(color: couleur_libelle_champ,
+                                      fontSize: taille_champ+ad
+                                  ),
+                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  /*Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 0.0),
+                      decoration: new BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border.all(
+                          width: bordure,
+                          color: couleur_bordure,
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.add_location, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                            ),
+                          ),
+                          new Expanded(
+                            flex:10,
+                            child: Padding(
+                              padding: EdgeInsets.only(left:0.0),
+                              child: new TextFormField(
+                                keyboardType: TextInputType.text,
+                                style: TextStyle(
+                                  fontSize: taille_champ+ad,
+                                  color: couleur_libelle_champ,
+                                ),
+                                validator: (String value){
+                                  if(value.isEmpty){
+                                    return "Champ ville vide !";
+                                  }else{
+                                    town = value;
+                                    return null;
+                                  }
+                                },
+                                decoration: InputDecoration.collapsed(
+                                  hintText: 'Ville',
+                                  hintStyle: TextStyle(color: couleur_libelle_champ,
+                                      fontSize: taille_champ+ad
+                                  ),
+                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),*/
+
+                  /*Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 0.0),
+                      decoration: new BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border.all(
+                          width: bordure,
+                          color: couleur_bordure,
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.location_on, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                            ),
+                          ),
+                          new Expanded(
+                            flex:10,
+                            child: Padding(
+                              padding: EdgeInsets.only(left:0.0),
+                              child: new TextFormField(
+                                keyboardType: TextInputType.text,
+                                style: TextStyle(
+                                  fontSize: taille_champ+ad,
+                                  color: couleur_libelle_champ,
+                                ),
+                                validator: (String value){
+                                  if(value.isEmpty){
+                                    return "Champ adresse vide !";
+                                  }else{
+                                    adress = value;
+                                    return null;
+                                  }
+                                },
+                                decoration: InputDecoration.collapsed(
+                                  hintText: 'Adresse/Quartier',
+                                  hintStyle: TextStyle(color: couleur_libelle_champ,
+                                      fontSize: taille_champ+ad
+                                  ),
+                                  //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),*/
+
+                  isClicked == true?Container():Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 0.0),
+                      decoration: new BoxDecoration(
+                        borderRadius: new BorderRadius.only(
+                          bottomRight: Radius.circular(10.0),
+                          bottomLeft: Radius.circular(10.0),
+                        ),
+                        color: Colors.white,
+                        border: Border.all(
+                          width: bordure,
+                          color: couleur_bordure,
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.calendar_today, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                            ),
+                          ),
+                          new Expanded(
+                            flex:10,
+                            child: GestureDetector(
+                              onTap: (){
+                                setState(() {
+                                  isClicked = true;
+                                });
+                              },
+                              child: Container(
+                                margin: EdgeInsets.only(top: 0.0),
+                                decoration: new BoxDecoration(
+                                  color: Colors.transparent,
+                                  border: Border.all(
+                                    width: bordure,
+                                    color: Colors.transparent,
+                                  ),
+                                ),
+                                height: hauteur_champ,
+                                child: Row(
+                                  children: <Widget>[
+                                    new Expanded(
+                                      flex:12,
+                                      child: new TextFormField(
+                                        keyboardType: TextInputType.text,
+                                        enabled: false,
+                                        style: TextStyle(
+                                          fontSize: taille_champ+ad,
+                                          color: couleur_libelle_champ,
+                                        ),
+                                        validator: (String value){
+                                          if(value.isEmpty){
+                                            return null;
+                                          }else{
+                                            _birthday = value;
+                                            return null;
+                                          }
+
+                                        },
+                                        decoration: InputDecoration.collapsed(
+                                          hintText: _birthday.isEmpty?'Date de naissance':_birthday,
+                                          hintStyle: TextStyle(color: couleur_libelle_champ,
+                                            fontSize: taille_champ+ad,
+                                          ),
+                                          //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  isClicked == false?Container():Padding(
+                    padding: EdgeInsets.only(left: 20.0, right: 20.0, top: 0.0),
+                    child: Container(
+                      margin: EdgeInsets.only(top: 0.0),
+                      decoration: new BoxDecoration(
+                        borderRadius: new BorderRadius.only(
+                          bottomRight: Radius.circular(10.0),
+                          bottomLeft: Radius.circular(10.0),
+                        ),
+                        color: Colors.white,
+                        border: Border.all(
+                          width: bordure,
+                          color: couleur_bordure,
+                        ),
+                      ),
+                      height: hauteur_champ,
+                      child: Row(
+                        children: <Widget>[
+                          new Expanded(
+                            flex:2,
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: new Icon(Icons.calendar_today, color: couleur_decription_page,),//Image.asset('images/Groupe177.png'),
+                            ),
+                          ),
+                          Expanded(
+                            flex:3,
+                            child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isDense: true,
+                                  elevation: 1,
+                                  isExpanded: true,
+                                  onChanged: (String selected){
+                                    setState(() {
+                                      jr = selected;
+                                    });
+                                  },
+                                  value: jr,
+                                  hint: Padding(
+                                    padding: EdgeInsets.only(left: 20),
+                                    child: Text('Jour',
+                                      style: TextStyle(
+                                        color: couleur_libelle_champ,
+                                        fontSize:taille_champ+3,
+                                      ),),
+                                  ),
+                                  items: _jour.map((String name){
+                                    return DropdownMenuItem<String>(
+                                      value: name,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(left: 20),
+                                        child: Text(name,
+                                          style: TextStyle(
+                                              color: couleur_libelle_champ,
+                                              fontSize:taille_champ+3,
+                                              fontWeight: FontWeight.normal
+                                          ),),
+                                      ),
+                                    );
+                                  }).toList(),
+                                )
+                            ),
+                          ),
+                          Expanded(
+                            flex:3,
+                            child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isDense: true,
+                                  elevation: 1,
+                                  isExpanded: true,
+                                  onChanged: (String selected){
+                                    setState(() {
+                                      mo = selected;
+                                    });
+                                  },
+                                  value: mo,
+                                  hint: Padding(
+                                    padding: EdgeInsets.only(left: 20),
+                                    child: Text('Mois',
+                                      style: TextStyle(
+                                        color: couleur_libelle_champ,
+                                        fontSize:taille_champ+3,
+                                      ),),
+                                  ),
+                                  items: _mois.map((String name){
+                                    return DropdownMenuItem<String>(
+                                      value: name,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(left: 20),
+                                        child: Text(name,
+                                          style: TextStyle(
+                                              color: couleur_libelle_champ,
+                                              fontSize:taille_champ+3,
+                                              fontWeight: FontWeight.normal
+                                          ),),
+                                      ),
+                                    );
+                                  }).toList(),
+                                )
+                            ),
+                          ),
+                          Expanded(
+                            flex:4,
+                            child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  isDense: true,
+                                  elevation: 1,
+                                  isExpanded: true,
+                                  onChanged: (String selected){
+                                    setState(() {
+                                      an = selected;
+                                    });
+                                  },
+                                  value: an,
+                                  hint: Padding(
+                                    padding: EdgeInsets.only(left: 20),
+                                    child: Text('Année',
+                                      style: TextStyle(
+                                        color: couleur_libelle_champ,
+                                        fontSize:taille_champ+3,
+                                      ),),
+                                  ),
+                                  items: _annee.map((String name){
+                                    return DropdownMenuItem<String>(
+                                      value: name,
+                                      child: Padding(
+                                        padding: EdgeInsets.only(left: 20),
+                                        child: Text(name,
+                                          style: TextStyle(
+                                              color: couleur_libelle_champ,
+                                              fontSize:taille_champ+3,
+                                              fontWeight: FontWeight.normal
+                                          ),),
+                                      ),
+                                    );
+                                  }).toList(),
+                                )
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(top: 10.0, bottom: 10),
+                    child: new GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if(_formKey.currentState.validate()){
+                            if(isEmail(email)==true){
+                              if(jr != null && mo != null && an != null){
+                                _birthday = "$an-$mo-$jr";
+                                if(gender != null){
+                                  if(nature != null){
+                                    var createAccount = new createMemberAccount(
+                                        id_user: this.idUser,
+                                        firstname: this.firstname,
+                                        lastname: this.lastname,
+                                        town: "",
+                                        birthday: this._birthday,
+                                        email: this.email==null?"":this.email,
+                                        nature: this.nature,
+                                        gender: this.gender,
+                                        adress: "",
+                                        userImage: "$_image",
+                                        newPassword: this.newPassword,
+                                        typeMember: "MSP",
+                                        roleId: 1
+                                    );
+                                    print(json.encode(createAccount));
+                                    this.checkConnection(json.encode(createAccount));
+                                  }else{
+                                    showInSnackBar("Sélectionner la nature du client");
+                                  }
                                 }else{
-                                  showInSnackBar("Sélectionner la nature du client");
+                                  showInSnackBar("Sélectionner un genre Mme/M/Mlle");
                                 }
                               }else{
-                                showInSnackBar("Sélectionner un genre Mme/M/Mlle");
+                                showInSnackBar("Date de naissance vide!");
                               }
                             }else{
-                              showInSnackBar("Date de naissance vide!");
+                              showInSnackBar("Email invalide!");
                             }
-                          }else{
-                            showInSnackBar("Email invalide!");
                           }
-                        }
-                      });
-                    },
-                    child: new Container(
-                      height: hauteur_champ,
-                      width: MediaQuery.of(context).size.width - 40,
-                      decoration: new BoxDecoration(
-                        color: couleur_fond_bouton,
-                        border: new Border.all(
-                          color: Colors.transparent,
-                          width: 0.0,
+                        });
+                      },
+                      child: new Container(
+                        height: hauteur_champ,
+                        width: MediaQuery.of(context).size.width - 40,
+                        decoration: new BoxDecoration(
+                          color: couleur_fond_bouton,
+                          border: new Border.all(
+                            color: Colors.transparent,
+                            width: 0.0,
+                          ),
+                          borderRadius: new BorderRadius.circular(10.0),
                         ),
-                        borderRadius: new BorderRadius.circular(10.0),
-                      ),
-                      child: new Center(
-                          child: isLoding == false? new Text('Valider', style: new TextStyle(fontSize: taille_text_bouton+ad, color: couleur_text_bouton),):
-                              CupertinoActivityIndicator()
+                        child: new Center(
+                            child: isLoding == false? new Text('Valider', style: new TextStyle(fontSize: taille_text_bouton+ad, color: couleur_text_bouton),):
+                            Theme(
+                                data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                child: CupertinoActivityIndicator(radius: 20,)),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

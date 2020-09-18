@@ -1,0 +1,82 @@
+{
+  "@@locale": "en",
+  "@@last_modified": "2020-06-30T09:57:05.856036",
+  "suivant": "Next",
+  "@suivant": {
+    "description": "Bouton de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "bienvenue": "Welcome",
+  "@bienvenue": {
+    "description": "Bienvenue  de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "bienvenu_text": "on the first financial services interoperability platform",
+  "@bienvenu_text": {
+    "description": "Texte de bienvenue de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "souvenir": "Remember me",
+  "@souvenir": {
+    "description": "Se souvenir de la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "phone": "Phone number",
+  "@phone": {
+    "description": "numéro de téléphone",
+    "type": "text",
+    "placeholders": {}
+  },
+  "exit": "Exit application ?",
+  "@exit": {
+    "description": "Fermer l'application depuis la page de connexion",
+    "type": "text",
+    "placeholders": {}
+  },
+  "non": "No",
+  "@non": {
+    "description": "non",
+    "type": "text",
+    "placeholders": {}
+  },
+  "oui": "Yes",
+  "@oui": {
+    "description": "oui",
+    "type": "text",
+    "placeholders": {}
+  },
+ "empty_phone": "Empty phone field!",
+ "@empty_phone": {
+   "description": "champ téléphone vide",
+   "type": "text",
+   "placeholders": {}
+ },
+ "invalid_phone": "Invalid phone number !",
+ "@invalid_phone": {
+   "description": "téléphone invalide",
+   "type": "text",
+   "placeholders": {}
+ },
+ "service_indis": "Service unavailable!",
+ "@service_indis": {
+   "description": "service indisponible",
+   "type": "text",
+   "placeholders": {}
+ },
+ "check_conn": "Check your internet connection.",
+ "@check_conn": {
+   "description": "vérifier la connexion internet",
+   "type": "text",
+   "placeholders": {}
+ },
+ "error_get_dev": "An error occurred while retrieving the currency!",
+ "@error_get_dev": {
+   "description": "Page de connexion erreru lors de la récuération de la dévise.",
+   "type": "text",
+   "placeholders": {}
+ }
+}

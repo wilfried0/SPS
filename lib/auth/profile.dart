@@ -4,16 +4,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:page_transition/page_transition.dart';
 import 'package:services/auth/conditions.dart';
 import 'package:services/auth/connexion.dart';
+import 'package:services/community/lib/cagnotte.dart';
 import 'package:services/composants/components.dart';
 import 'package:services/marketplace/lib/Home.dart';
 import 'package:services/monprofile.dart';
+import 'package:services/paiement/carte1.dart';
 import 'package:services/paiement/encaisser1.dart';
 import 'package:services/paiement/historique.dart';
 import 'package:services/paiement/payst.dart';
 import 'package:services/paiement/retrait1.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:async';
 
 
@@ -30,7 +31,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   String _code;
   PageController pageController;
   int currentPage = 0, choix;
-  String solde,urlPath = "", local, idUser, userImage, _pathImage, _nom, _ville, _quartier, _pays, _username, _password, deviseLocale, devise;
+  String solde,urlPath = "",iso3, local, idUser, token, userImage, _pathImage, _nom, _ville, _quartier, _pays, _username, _password, deviseLocale, devise;
   bool isLoding = false, loadImage = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb, nbNotif = 0;
@@ -149,6 +150,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       _nom = prefs.getString("nom");
       _ville = prefs.getString("ville");
       _quartier = prefs.getString("quartier");
+      iso3 = prefs.getString("iso3");
       _pathImage = prefs.getString("avatar");
       print("mon avatar: $_pathImage");
     });
@@ -169,8 +171,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     request.headers.set('Authorization', 'Basic $credentials');
     HttpClientResponse response = await request.close();
     String reply = await response.transform(utf8.decoder).join();
-    print("statusCode ${response.statusCode}");
-    print("body $reply");
+    //print("statusCode ${response.statusCode}");
+    //print("body $reply");
     if(response.statusCode == 200){
       var responseJson = json.decode(reply);
       setState(() {
@@ -233,6 +235,8 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       nbNotif = listSms.length;
     }
   }
+
+
   @override
   void dispose() {
     super.dispose();
@@ -243,7 +247,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     lireNotif();
-    //this.getSolde();
+    this.getSolde();
     final _large = MediaQuery.of(context).size.width;
     final _haut = MediaQuery.of(context).size.height;
     double ad=100;
@@ -263,6 +267,24 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
       top34 = 288;
       haut=5;
       topi = 2;
+      enl = 2;
+      ad = 3;
+    }else if(_large>=1000){
+      bottomsolde = 400;
+      sold = 330;
+      _taill = taille_description_champ;
+      top1 = 75+ad;
+      top = 100;
+      topo1 = 172;
+      top2 = 240+ad;
+      top3 = 410;
+      top4 = 410+ad;
+      top33 = 285;
+      top34 = 395;
+      topo2 = 150;
+      topo22 = 100;
+      haut=20;
+      topi = 0;
       enl = 2;
       ad = 3;
     }else if(_large>320 && _large<=360 && _haut==738){
@@ -358,11 +380,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
     }
 
 
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primaryColor: Colors.white, accentColor: Color(0xFF2A2A42), fontFamily: 'Poppins'),
-      home: new Scaffold(
+    return Scaffold(
         key: _scaffoldKey,
         backgroundColor: bleu_F,
         appBar: new AppBar(
@@ -460,11 +478,11 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
-                            image: _pathImage==null || _pathImage=="null"? AssetImage("images/ellipse1.png"):NetworkImage(_pathImage), //AssetImage("images/ellipse1.png"),
+                            image: _pathImage==null || _pathImage=="null" || _pathImage.startsWith("file")? AssetImage("images/ellipse1.png"):NetworkImage(_pathImage), //AssetImage("images/ellipse1.png"),
                             fit: BoxFit.cover
                         )
                     ),
-                    child:_pathImage==null || _pathImage=="null"?Container(): Image.network(_pathImage, fit: BoxFit.contain,
+                    child:_pathImage==null || _pathImage=="null" || _pathImage.startsWith("file")?Container(): Image.network(_pathImage, fit: BoxFit.contain,
                         loadingBuilder: (BuildContext ctx, Widget child, ImageChunkEvent loadingProgress){
                           if (loadingProgress == null) return Container();
                           return Center(
@@ -480,12 +498,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                 ),
               ),
               Padding(
-                padding: EdgeInsets.only(top: 110, ),//solde du compte
+                padding: EdgeInsets.only(top:MediaQuery.of(context).size.width>=1000?70: 110, ),//solde du compte
                 child:deviseLocale=='EUR'? Column(
                   children: <Widget>[
                     Text('SOLDE', style: TextStyle(
                         color: Colors.white,
-                        fontSize: taille_libelle_etape,
+                        fontSize:MediaQuery.of(context).size.width>=1000?30: taille_libelle_etape,
                         fontWeight: FontWeight.bold
                     ),),
                     Row(
@@ -495,12 +513,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                             data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
                             child: CupertinoActivityIndicator(radius: 20,)):Text("${getMillis('$solde')}", style: TextStyle(//Montant du solde
                             color: orange_F,
-                            fontSize: taille_titre-5,
+                            fontSize:MediaQuery.of(context).size.width>=1000?30: taille_titre-5,
                             fontWeight: FontWeight.bold
                         ),),
                         devise==null?Container():Text(" $devise", style: TextStyle(//Montant du solde
                             color: orange_F,
-                            fontSize: taille_titre-5,
+                            fontSize:MediaQuery.of(context).size.width>=1000?30: taille_titre-5,
                             fontWeight: FontWeight.bold
                         ),),
                       ],
@@ -516,7 +534,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                         children: <Widget>[
                           Text('SOLDE', style: TextStyle(
                               color: Colors.white,
-                              fontSize: taille_libelle_etape,
+                              fontSize:MediaQuery.of(context).size.width>=1000?30: taille_libelle_etape,
                               fontWeight: FontWeight.bold
                           ),),
                           Row(
@@ -526,12 +544,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                   data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
                                   child: CupertinoActivityIndicator(radius: 20,)):Text("${getMillis('$solde')}", style: TextStyle(//Montant du solde
                                   color: orange_F,
-                                  fontSize: taille_titre-5,
+                                  fontSize:MediaQuery.of(context).size.width>=1000?30: taille_titre-5,
                                   fontWeight: FontWeight.bold
                               ),),
                               devise==null?Container():Text(" $devise", style: TextStyle(//Montant du solde
                                   color: orange_F,
-                                  fontSize: taille_titre-5,
+                                  fontSize:MediaQuery.of(context).size.width>=1000?30: taille_titre-5,
                                   fontWeight: FontWeight.bold
                               ),),
                             ],
@@ -546,7 +564,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                         children: <Widget>[
                           Text('MONNAIE LOCALE', style: TextStyle(
                               color: Colors.white,
-                              fontSize: taille_libelle_etape,
+                              fontSize:MediaQuery.of(context).size.width>=1000?30: taille_libelle_etape,
                               fontWeight: FontWeight.bold
                           ),),
                           Row(
@@ -556,12 +574,12 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                   data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
                                   child: CupertinoActivityIndicator(radius: 20,)):Text(getMillis('$local'), style: TextStyle(//Montant du solde
                                   color: orange_F,
-                                  fontSize: taille_titre-5,
+                                  fontSize:MediaQuery.of(context).size.width>=1000?30: taille_titre-5,
                                   fontWeight: FontWeight.bold
                               ),),
                               deviseLocale==null?Container():Text(" $deviseLocale", style: TextStyle(//Montant du solde
                                   color: orange_F,
-                                  fontSize: taille_titre-5,
+                                  fontSize:MediaQuery.of(context).size.width>=1000?30: taille_titre-5,
                                   fontWeight: FontWeight.bold
                               ),),
                             ],
@@ -577,7 +595,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                 child: Container(
                   height: MediaQuery.of(context).size.height,
                   width: MediaQuery.of(context).size.width,
-                  color: Colors.white,
+                  color: GRIS,
                 ),
               ),
               Row(
@@ -610,19 +628,20 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                             child: GestureDetector(
                               onTap: (){
                                 setState(() {
+                                  iso3 != "CMR"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
                                   Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1('$_code')));
                                 });
                               },
                               child: Column(
                                 children: <Widget>[
                                   Container(
-                                      height: 50,
-                                      width: 50,
+                                      height:MediaQuery.of(context).size.width>=1000?90: 50,
+                                      width:MediaQuery.of(context).size.width>=1000?90: 50,
                                       child: new Image.asset('images/growth.png')),
                                   Text('Recharger mon compte',
                                     style: TextStyle(
                                         color: couleur_libelle_etape,
-                                        fontSize: _taill,
+                                        fontSize:MediaQuery.of(context).size.width>=1000?20: _taill,
                                         fontWeight: FontWeight.bold
                                     ),)
                                 ],
@@ -662,20 +681,20 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                             child: GestureDetector(
                               onTap: (){
                                 setState(() {
-                                  deviseLocale != "XAF"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
+                                  iso3 != "CMR" && iso3 != "COG"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
                                   Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1('$_code')));
                                 });
                               },
                               child: Column(
                                 children: <Widget>[
                                   Container(
-                                      height: 50,
-                                      width: 50,
+                                      height:MediaQuery.of(context).size.width>=1000?90: 50,
+                                      width:MediaQuery.of(context).size.width>=1000?90: 50,
                                       child: new Image.asset('images/hand.png')),
                                   Text('Faire un retrait',
                                     style: TextStyle(
                                         color: couleur_libelle_etape,
-                                        fontSize: _taill,
+                                        fontSize:MediaQuery.of(context).size.width>=1000?20: _taill,
                                         fontWeight: FontWeight.bold
                                     ),)
                                 ],
@@ -733,13 +752,13 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                               child: Column(
                                 children: <Widget>[
                                   Container(
-                                      height: 50,
-                                      width: 50,
+                                      height:MediaQuery.of(context).size.width>=1000?90: 50,
+                                      width:MediaQuery.of(context).size.width>=1000?90: 50,
                                       child: new Image.asset('images/exchange.png')),
                                   Text('Mes transactions',
                                     style: TextStyle(
                                         color: couleur_libelle_etape,
-                                        fontSize: _taill,
+                                        fontSize:MediaQuery.of(context).size.width>=1000?20: _taill,
                                         fontWeight: FontWeight.bold
                                     ),)
                                 ],
@@ -786,13 +805,13 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                               child: Column(
                                 children: <Widget>[
                                   Container(
-                                      height: 50,
-                                      width: 50,
+                                      height:MediaQuery.of(context).size.width>=1000?90: 50,
+                                      width:MediaQuery.of(context).size.width>=1000?90: 50,
                                       child: new Image.asset('images/payment-method.png')),
                                   Text('Transfert d\'argent',
                                     style: TextStyle(
                                         color: couleur_libelle_etape,
-                                        fontSize: _taill,
+                                        fontSize:MediaQuery.of(context).size.width>=1000?20: _taill,
                                         fontWeight: FontWeight.bold
                                     ),)
                                 ],
@@ -843,18 +862,18 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                             padding: EdgeInsets.only(top: haut),
                             child: GestureDetector(
                               onTap: (){
-                                showInSnackBar("Pas encore disponible.");
+                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Cagnotte('z')));
                               },
                               child: Column(
                                 children: <Widget>[
                                   Container(
-                                      height: 50,
-                                      width: 100,
+                                      height:MediaQuery.of(context).size.width>=1000?90: 50,
+                                      width:MediaQuery.of(context).size.width>=1000?180: 100,
                                       child: new Image.asset('images/logo_sprint.png')),
                                   Text("Community",
                                     style: TextStyle(
                                         color: couleur_libelle_etape,
-                                        fontSize: _taill,
+                                        fontSize:MediaQuery.of(context).size.width>=1000?20: _taill,
                                         fontWeight: FontWeight.bold
                                     ),)
                                 ],
@@ -901,13 +920,16 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                                   Container(
                                       height: 50,
                                       width: 100,
-                                      child: new Icon(Icons.add_shopping_cart, color: couleur_fond_bouton,size: 50,)),//Image.asset('images/ellipse1.png')),
-                                  Text('MarketPlace',
-                                    style: TextStyle(
-                                        color: couleur_libelle_etape,
-                                        fontSize: _taill,
-                                        fontWeight: FontWeight.bold
-                                    ),)
+                                      child: new Icon(Icons.add_shopping_cart, color: couleur_fond_bouton,size:MediaQuery.of(context).size.width>=1000?90: 50,)),//Image.asset('images/ellipse1.png')),
+                                  Padding(
+                                    padding: EdgeInsets.only(top: MediaQuery.of(context).size.width>=1000?40:0),
+                                    child: Text('MarketPlace',
+                                      style: TextStyle(
+                                          color: couleur_libelle_etape,
+                                          fontSize:MediaQuery.of(context).size.width>=1000?20: _taill,
+                                          fontWeight: FontWeight.bold
+                                      ),),
+                                  )
                                 ],
                               ),
                             ),
@@ -1033,8 +1055,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
           ),
         ),
         bottomNavigationBar: bottomNavigate(context, enl, _scaffoldKey),
-      ),
-    );
+      );
   }
 
   _drawer(BuildContext context, GlobalKey<ScaffoldState> scaffoldKey){
@@ -1055,7 +1076,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                     width: 70,
                     decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: LinearGradient(
+                        /*gradient: LinearGradient(
                             begin: FractionalOffset.topCenter,
                             end: FractionalOffset.bottomCenter,
                             colors: [
@@ -1066,7 +1087,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
                               0.0,
                               1.0
                             ]
-                        ),
+                        ),*/
                         image:_pathImage != null && _pathImage != "null"?
                         DecorationImage(
                             image: NetworkImage(_pathImage),
@@ -1169,6 +1190,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
+              iso3 != "CMR"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Encaisser1(_code)));
             },
           ),
@@ -1204,7 +1226,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
-              deviseLocale != "XAF"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
+              iso3 != "CMR" && iso3 != "COG"?showInSnackBar("Service pas encore disponible pour le pays $_pays"):
               Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Retrait1(_code)));
             },
           ),
@@ -1346,13 +1368,46 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               ),
             ),
             onTap: () {
-              scaffoldKey.currentState.openEndDrawer();
-              showInSnackBar("Service pas encore disponible");
-              //Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Payst()));
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Cagnotte('')));
             },
           ),
 
-          Padding(
+    Padding(
+            padding: EdgeInsets.only(left: 20),
+            child: new Divider(
+              color: couleur_champ,
+            ),
+          ),
+
+          new ListTile(
+            title: Padding(
+              padding: EdgeInsets.only(left: 0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    flex:1,
+                    child: Icon(Icons.credit_card, color: couleur_fond_bouton,),//Image.asset("images/ic_conditions.png")
+                  ),
+                  Expanded(
+                    flex:11,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: new Text('Carte prépayée',style: TextStyle(
+                          color: couleur_fond_bouton,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: police_titre
+                      ),),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            onTap: () {
+              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Carte1()));
+            },
+          ),
+
+          /*Padding(
             padding: EdgeInsets.only(left: 20),
             child: new Divider(
               color: couleur_champ,
@@ -1386,7 +1441,7 @@ class _ProfileState extends State<Profile> with SingleTickerProviderStateMixin {
               scaffoldKey.currentState.openEndDrawer();
               showInSnackBar("Service pas encore disponible");
             },
-          ),
+          ),*/
 
           Padding(
             padding: EdgeInsets.only(left: 20),

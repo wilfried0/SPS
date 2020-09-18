@@ -84,12 +84,12 @@ class Replay extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-            gradient: LinearGradient(
+            /*gradient: LinearGradient(
                 colors: [
                   Colors.black.withOpacity(.0),//0.3
                   Colors.black.withOpacity(.0),//0.3
                 ]
-            )
+            )*/
         ),
       ),
     );

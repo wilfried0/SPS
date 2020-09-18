@@ -281,3 +281,23 @@ Widget getMoyen2(int index, BuildContext context, int indik) {
     ),
   );
 }
+
+Future<void> notConnection(BuildContext context) {
+  return showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Oops!'),
+        content: Text("Vérifier votre connexion internet."),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Ok'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}

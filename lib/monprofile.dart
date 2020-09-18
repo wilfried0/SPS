@@ -3,6 +3,8 @@ import 'package:async/async.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:dio/adapter.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +15,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'composants/components.dart';
 
 
@@ -36,6 +39,7 @@ class _MonprofileState extends State<Monprofile> {
   var _cat = ['Facture d\'eau', 'Facture d\'electricite', 'Bulletin de paye', 'Facture de telephone', 'Autre justificatif de revenu'];
   // ignore: non_constant_identifier_names
   String kittyImage,pieceName, monstatus, momo_url, data, _email, ref, kittyId, country, firstnameBenef, url,momo, card, monnaie, paie_url, endDate, startDate, title, suggested_amount, amount, description, number, nom, email, tel, mot, _nom, _ville, _quartier, _pays;
+  Dio dio = new Dio();
 
   @override
   void initState() {
@@ -307,6 +311,61 @@ class _MonprofileState extends State<Monprofile> {
     }
   }*/
 
+  /*Future _getImage(int q) async {
+    var image = await ImagePickerGC.pickImage(
+      context: context,
+      source: q==0||q==1||q==2||q ==3?ImgSource.Gallery:ImgSource.Camera,
+      cameraIcon: Icon(
+        Icons.camera_alt,
+        color: Colors.red,
+      ),//cameraIcon and galleryIcon can change. If no icon provided default icon will be present
+    );
+    if(q == 0){
+      setState(() {
+        _isAvatar = true;
+      });
+    }else if(q == 1){
+      setState(() {
+        _isSelfie = true;
+      });
+    }else if(q == 2){
+      setState(() {
+        _isRecto = true;
+      });
+    }else if(q == 3){
+      setState(() {
+        _isVerso = true;
+      });
+    }else if(q == 4){
+      print("q vaut: $q");
+      setState(() {
+        _isAvatar = true;
+      });
+    }else if(q == 5){
+      setState(() {
+        _isSelfie = true;
+      });
+    }else if(q == 6){
+      setState(() {
+        _isRecto = true;
+      });
+    }else if(q == 7){
+      setState(() {
+        _isVerso = true;
+      });
+    }
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%% $image");
+    if(image == null){
+      setState(() {
+        _isAvatar = false;
+        _isSelfie = false;
+        _isRecto = false;
+        _isVerso = false;
+      });
+    }else
+      Upload(image, q);
+  }*/
+
   Future<String> getImage(int q) async {
     var image;
     if(q == 0){
@@ -365,7 +424,7 @@ class _MonprofileState extends State<Monprofile> {
     return null;
   }
 
-  void Upload(File imageFile, int q) async {
+  void UploadFile(File imageFile, int q) async {
     var _header = {
       "content-type" :  "multipart/form-data",
     };
@@ -435,6 +494,95 @@ class _MonprofileState extends State<Monprofile> {
     }
   }
 
+  // ignore: non_constant_identifier_names
+  Upload(File image, int q) async{
+    (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (client) {
+      print("This code is not runnable! ${image.path.split('/').last}");
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+        return true;
+      };
+    };
+    Response response;
+    try{
+      String filename = image.path.split('/').last;
+      var formData = new FormData.fromMap({
+        "file": await MultipartFile.fromFile(image.path, filename: filename, contentType: MediaType('image', 'jpg')),
+      });
+      response = await dio.post("$base",data: formData, options: Options(
+        headers: {
+          'Content-type': 'multipart/form-data',
+          'Accept': 'application/json'
+        }
+      ));
+      if(response.statusCode == 200){
+        if(q == 0 || q == 4){
+          setState(() {
+            _image = response.data['url'];
+            _isAvatar = false;
+          });
+          _save();
+        }else if(q == 1 || q == 5){
+          setState(() {
+            _selfie = response.data['url'];
+            _isSelfie = false;
+          });
+        }else if(q == 2 || q == 6){
+          setState(() {
+            _recto = response.data['url'];
+            _isRecto = false;
+          });
+        }else if(q == 3 || q == 7){
+          setState(() {
+            _verso = response.data['url'];
+            print("Mon verso $_verso");
+            _isVerso = false;
+          });
+        }
+        showInSnackBar("Téléchargement de l'image réussi avec succès.", _scaffoldKey, 5);
+      }else{
+        if(q == 0 || q == 4){
+          setState(() {
+            _isAvatar = false;
+          });
+        }else if(q == 1 || q == 5){
+          setState(() {
+            _isSelfie = false;
+          });
+        }else if(q == 2 || q == 6){
+          setState(() {
+            _isRecto = false;
+          });
+        }else if(q == 3 || q == 7){
+          setState(() {
+            _isVerso = false;
+          });
+        }
+        showInSnackBar("Service indisponible, reessayez plus tard!", _scaffoldKey, 5);
+      }
+    }catch(e){
+      print("l'erreur dio: $e");
+      if(q == 0 || q == 4){
+        setState(() {
+          _isAvatar = false;
+        });
+      }else if(q == 1 || q == 5){
+        setState(() {
+          _isSelfie = false;
+        });
+      }else if(q == 2 || q == 6){
+        setState(() {
+          _isRecto = false;
+        });
+      }else if(q == 3 || q == 7){
+        setState(() {
+          _isVerso = false;
+        });
+      }
+      print("voici l'url de base: $base");
+      showInSnackBar("Service indisponible, reessayez plus tard!", _scaffoldKey, 5);
+    }
+  }
+
   /*Future<File> compressNow(File _imageFile, int q) async {
 
     print("FILE SIZE BEFORE: " + _imageFile.lengthSync().toString());
@@ -458,6 +606,7 @@ class _MonprofileState extends State<Monprofile> {
       home: new DefaultTabController(
         length: 1,
         child: new Scaffold(
+          backgroundColor: GRIS,
           key: _scaffoldKey,
           body: _buildCarousel(context),
         ),
@@ -474,7 +623,7 @@ class _MonprofileState extends State<Monprofile> {
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: GRIS,
               //borderRadius: BorderRadius.circular(10.0)
             ),
             child: Stack(
@@ -495,8 +644,8 @@ class _MonprofileState extends State<Monprofile> {
                               _ackAlert(context, 0);
                             },
                             child: Container(
-                              height: 150,
-                              width: 150,
+                              height: 140,
+                              width: 140,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 image: DecorationImage(
@@ -558,22 +707,22 @@ class _MonprofileState extends State<Monprofile> {
                   ),
                 ),
                 Padding(
-                  padding: new EdgeInsets.only(
-                      top: 150,
-                      right:0.0,
-                      left: MediaQuery.of(context).size.width-70),
+                  padding: new EdgeInsets.only(top: 150, right:0.0, left: MediaQuery.of(context).size.width-70),
                   child: _isAvatar == false? InkWell(
                       onTap: (){
                         _ackAlert(context, 0);
                       },
                       child: Icon(Icons.camera_alt,size: 50, color: Colors.white,)):
-                  Container(
-                      decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10)
-                      ),
-                      child: CupertinoActivityIndicator(radius: 20,)
-                  ),
+                  Theme(
+                      data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                      child: Column(
+                        children: [
+                          CupertinoActivityIndicator(radius: 20,),
+                          Text("En cours...", style: TextStyle(
+                            color: Colors.white
+                          ),)
+                        ],
+                      ))
                 ),
 
                 GestureDetector(
@@ -617,7 +766,7 @@ class _MonprofileState extends State<Monprofile> {
           bottomRight: Radius.circular(10.0),
           bottomLeft: Radius.circular(10.0),
         ),
-        //color: couleur_fond_bouton,
+        color: Colors.white,
         border: Border.all(
             color: couleur_fond_bouton,
             width: 2
@@ -704,7 +853,7 @@ class _MonprofileState extends State<Monprofile> {
                             topLeft: Radius.circular(10.0),
                             topRight: Radius.circular(10.0),
                           ),
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                             width: .5,
                             color: couleur_fond_bouton,
@@ -759,7 +908,7 @@ class _MonprofileState extends State<Monprofile> {
                       child: Container(
                         margin: EdgeInsets.only(top: 0.0),
                         decoration: new BoxDecoration(
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                             width: .5,
                             color: couleur_fond_bouton,
@@ -814,7 +963,7 @@ class _MonprofileState extends State<Monprofile> {
                       child: Container(
                         margin: EdgeInsets.only(top: 0.0),
                         decoration: new BoxDecoration(
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                             width: .5,
                             color: couleur_fond_bouton,
@@ -869,7 +1018,7 @@ class _MonprofileState extends State<Monprofile> {
                       child: Container(
                         margin: EdgeInsets.only(top: 0.0),
                         decoration: new BoxDecoration(
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                             width: .5,
                             color: couleur_fond_bouton,
@@ -928,7 +1077,7 @@ class _MonprofileState extends State<Monprofile> {
                             bottomLeft: Radius.circular(10.0),
                             bottomRight: Radius.circular(10.0),
                           ),
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                             width: .5,
                             color: couleur_fond_bouton,
@@ -987,7 +1136,7 @@ class _MonprofileState extends State<Monprofile> {
                             bottomLeft: Radius.circular(10.0),
                             bottomRight: Radius.circular(10.0),
                           ),
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                             width: .5,
                             color: couleur_fond_bouton,
@@ -1050,7 +1199,7 @@ class _MonprofileState extends State<Monprofile> {
                           decoration: new BoxDecoration(
                             color: couleur_fond_bouton,
                             border: new Border.all(
-                              color: Colors.transparent,
+                              color: Colors.white,
                               width: 0.0,
                             ),
                             borderRadius: new BorderRadius.only(
@@ -1137,7 +1286,7 @@ class _MonprofileState extends State<Monprofile> {
                             bottomRight: Radius.circular(10.0),
                             bottomLeft: Radius.circular(10.0),
                           ),
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                               color: couleur_bordure,
                               width: bordure
@@ -1197,7 +1346,7 @@ class _MonprofileState extends State<Monprofile> {
                             bottomRight: Radius.circular(10.0),
                             bottomLeft: Radius.circular(10.0),
                           ),
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                               color: couleur_bordure,
                               width: bordure
@@ -1442,7 +1591,7 @@ class _MonprofileState extends State<Monprofile> {
                             bottomLeft: Radius.circular(10.0),
                             bottomRight: Radius.circular(10.0),
                           ),
-                          color: Colors.transparent,
+                          color: Colors.white,
                           border: Border.all(
                             width: .5,
                             color: couleur_fond_bouton,
@@ -1513,7 +1662,7 @@ class _MonprofileState extends State<Monprofile> {
                           decoration: new BoxDecoration(
                             color: couleur_fond_bouton,
                             border: new Border.all(
-                              color: Colors.transparent,
+                              color: Colors.white,
                               width: 0.0,
                             ),
                             borderRadius: new BorderRadius.only(
@@ -1543,7 +1692,7 @@ class _MonprofileState extends State<Monprofile> {
                               topLeft: Radius.circular(10.0),
                               topRight: Radius.circular(10.0),
                             ),
-                            color: Colors.transparent,
+                            color: Colors.white,
                             border: Border.all(
                               width: .5,
                               color: couleur_fond_bouton,
@@ -1607,7 +1756,7 @@ class _MonprofileState extends State<Monprofile> {
                         child: Container(
                           margin: EdgeInsets.only(top: 0.0),
                           decoration: new BoxDecoration(
-                            color: Colors.transparent,
+                            color: Colors.white,
                             border: Border.all(
                               width: .5,
                               color: couleur_fond_bouton,
@@ -1672,7 +1821,7 @@ class _MonprofileState extends State<Monprofile> {
                               bottomLeft: Radius.circular(10.0),
                               bottomRight: Radius.circular(10.0),
                             ),
-                            color: Colors.transparent,
+                            color: Colors.white,
                             border: Border.all(
                               width: .5,
                               color: couleur_fond_bouton,
@@ -1755,7 +1904,7 @@ class _MonprofileState extends State<Monprofile> {
                             decoration: new BoxDecoration(
                               color: couleur_fond_bouton,
                               border: new Border.all(
-                                color: Colors.transparent,
+                                color: Colors.white,
                                 width: 0.0,
                               ),
                               borderRadius: new BorderRadius.only(

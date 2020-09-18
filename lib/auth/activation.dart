@@ -236,11 +236,12 @@ class _ActivationState extends State<Activation> {
     //double sp = MediaQuery.of(context).size.height;
     return new Scaffold(
       key: _scaffoldKey,
+      backgroundColor: GRIS,
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(55.0),
         child: new AppBar(
           elevation: 0.0,
-          backgroundColor: couleur_appbar,
+          backgroundColor: GRIS,
           flexibleSpace: barreTop,
           leading: IconButton(
               onPressed: (){
@@ -309,7 +310,7 @@ class _ActivationState extends State<Activation> {
                           topLeft: Radius.circular(10.0),
                           topRight: Radius.circular(10.0),
                         ),
-                        color: Colors.transparent,
+                        color: Colors.white,
                         border: Border.all(
                             color: couleur_bordure,
                             width: bordure

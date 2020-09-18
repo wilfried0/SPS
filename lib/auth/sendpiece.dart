@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:dio/adapter.dart';
+import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity/connectivity.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,6 +13,7 @@ import 'package:services/composants/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:async/async.dart';
 import 'connexion.dart';
+import 'package:http_parser/http_parser.dart';
 
 class Sendpiece extends StatefulWidget {
   @override
@@ -23,6 +26,7 @@ class _SendpieceState extends State<Sendpiece> {
   bool isLoding = false, isLoadPiece = false, _isSelfie = false, _isRecto = false, _isVerso = false;
   String _selfie, _recto, _verso, _username, _password, pieceName;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  Dio dio = new Dio();
 
   void checkConnection(var body) async {
     var connectivityResult = await (Connectivity().checkConnectivity());
@@ -79,6 +83,56 @@ class _SendpieceState extends State<Sendpiece> {
       }
       return null;
   }
+
+  /*Future getImage(int q) async {
+    var image = await ImagePickerGC.pickImage(
+        context: context,
+        source: q==1||q==2||q ==3?ImgSource.Gallery:ImgSource.Camera,
+        cameraIcon: Icon(
+          Icons.camera_alt,
+          color: Colors.red,
+        ),//cameraIcon and galleryIcon can change. If no icon provided default icon will be present
+    );
+    if(q == 1){
+      setState(() {
+        _isSelfie = true;
+      });
+    }else if(q == 2){
+      setState(() {
+        _isRecto = true;
+      });
+    }else if(q == 3){
+      setState(() {
+        _isVerso = true;
+      });
+    }else if(q == 4){
+      print("q vaut: $q");
+      setState(() {
+        //_isAvatar = true;
+      });
+    }else if(q == 5){
+      setState(() {
+        _isSelfie = true;
+      });
+    }else if(q == 6){
+      setState(() {
+        _isRecto = true;
+      });
+    }else if(q == 7){
+      setState(() {
+        _isVerso = true;
+      });
+    }
+    print("%%%%%%%%%%%%%%%%%%%%%%%%%% $image");
+    if(image == null){
+      setState(() {
+        _isSelfie = false;
+        _isRecto = false;
+        _isVerso = false;
+      });
+    }else
+      Upload(image, q);
+  }*/
 
 
   Future<String> getImage(int q) async {
@@ -198,7 +252,7 @@ class _SendpieceState extends State<Sendpiece> {
     Upload(_imageFile, q);
   }*/
 
-    void Upload(File imageFile, int q) async {
+    void _Upload(File imageFile, int q) async {
       var _header = {
         "content-type" :  "multipart/form-data",
       };
@@ -259,9 +313,83 @@ class _SendpieceState extends State<Sendpiece> {
       }
     }
 
+  // ignore: non_constant_identifier_names
+  Upload(File image, int q) async{
+    (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate = (client) {
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+        return true;
+      };
+    };
+    Response response;
+    try{
+      String filename = image.path.split('/').last;
+      var formData = new FormData.fromMap({
+        "file": await MultipartFile.fromFile(image.path, filename: filename, contentType: MediaType('image', 'jpg')),
+      });
+      response = await dio.post("$base",data: formData, options: Options(
+          headers: {
+            'Content-type': 'multipart/form-data',
+            'Accept': 'application/json'
+          }
+      ));
+      if(response.statusCode == 200){
+        if(q == 1 || q == 5){
+          setState(() {
+            _selfie = response.data['url'];
+            _isSelfie = false;
+          });
+        }else if(q == 2 || q == 6){
+          setState(() {
+            _recto = response.data['url'];
+            _isRecto = false;
+          });
+        }else if(q == 3 || q == 7){
+          setState(() {
+            _verso = response.data['url'];
+            print("Mon verso $_verso");
+            _isVerso = false;
+          });
+        }
+        showInSnackBar("Téléchargement de l'image réussi avec succès.", _scaffoldKey, 5);
+      }else{
+        if(q == 1 || q == 5){
+          setState(() {
+            _isSelfie = false;
+          });
+        }else if(q == 2 || q == 6){
+          setState(() {
+            _isRecto = false;
+          });
+        }else if(q == 3 || q == 7){
+          setState(() {
+            _isVerso = false;
+          });
+        }
+        showInSnackBar("Service indisponible, reessayez plus tard!", _scaffoldKey, 5);
+      }
+    }catch(e){
+      print("l'erreur dio: $e");
+      if(q == 1 || q == 5){
+        setState(() {
+          _isSelfie = false;
+        });
+      }else if(q == 2 || q == 6){
+        setState(() {
+          _isRecto = false;
+        });
+      }else if(q == 3 || q == 7){
+        setState(() {
+          _isVerso = false;
+        });
+      }
+      showInSnackBar("Service indisponible, reessayez plus tard!", _scaffoldKey, 5);
+    }
+  }
+
     @override
     Widget build(BuildContext context) {
       return Scaffold(
+        backgroundColor: GRIS,
         key: _scaffoldKey,
         appBar: new AppBar(
           title: Center(child: Text("Envoyer vos pièces",style: TextStyle(
@@ -269,7 +397,7 @@ class _SendpieceState extends State<Sendpiece> {
               fontSize: taille_champ+3
           ),)),
           elevation: 0.0,
-          backgroundColor: couleur_appbar,
+          backgroundColor: GRIS,
           flexibleSpace: barreTop,
           iconTheme: new IconThemeData(color: couleur_fond_bouton),
           leading: IconButton(
@@ -361,7 +489,7 @@ class _SendpieceState extends State<Sendpiece> {
                       bottomRight: Radius.circular(10.0),
                       bottomLeft: Radius.circular(10.0),
                     ),
-                    color: Colors.transparent,
+                    color: Colors.white,
                     border: Border.all(
                         color: couleur_bordure,
                         width: bordure
@@ -561,7 +689,9 @@ class _SendpieceState extends State<Sendpiece> {
                     height: 50,
                     child: Center(
                         child:isLoadPiece==false? Text("Valider mes pièces", style: TextStyle(color: Colors.white, fontSize: taille_champ+3),):
-                        CupertinoActivityIndicator()
+                        Theme(
+                            data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                            child: CupertinoActivityIndicator(radius: 20,)),
                     ),
                   ),
                 ),
@@ -572,7 +702,7 @@ class _SendpieceState extends State<Sendpiece> {
                 },
                 child: Padding(
                   padding: EdgeInsets.only(top: 10, bottom: 20),
-                  child: Text("Passer",style: TextStyle(
+                  child: Text("Passer >>",style: TextStyle(
                       color: couleur_fond_bouton,
                       fontSize: taille_champ+3,
                       fontWeight: FontWeight.bold

@@ -26,7 +26,7 @@ class _ConfirmState extends State<Confirm> {
   final Merchant _merchant;
   final CommonServiceItem _selectedServiceItem;
   final Transaction _transaction;
-  String _ville, _quartier, _pharmacy, coched, _currency;
+  String _ville, _quartier, _type, coched, _currency;
 
   _ConfirmState(this._merchant, this._selectedServiceItem, this._transaction);
   @override
@@ -53,7 +53,7 @@ class _ConfirmState extends State<Confirm> {
       _transaction.currency = "$_currency";
       _ville = prefs.getString(Data.CITY.toString());
       _quartier = prefs.getString(Data.DISTRICT.toString());
-      _pharmacy = prefs.getString(Data.PHARMACY.toString());
+      _type = prefs.getString(Data.TYPE.toString());
     });
   }
 
@@ -123,7 +123,7 @@ class _ConfirmState extends State<Confirm> {
                           style: TextStyle(color: couleur_libelle_champ),
                         ),
                       ),
-                      _merchant.category == Services.PHARMACY_CATEGORY
+                      _merchant.category == Services.PHARMACY_CATEGORY || _merchant.category == Services.QUINCAILLERY_CATEGORY
                           ? Padding(
                         padding: EdgeInsets.only(top: 5, bottom: 5),
                         child: Text(
@@ -133,7 +133,7 @@ class _ConfirmState extends State<Confirm> {
                         ),
                       )
                           : Container(),
-                      _merchant.category == Services.PHARMACY_CATEGORY
+                      _merchant.category == Services.PHARMACY_CATEGORY || _merchant.category == Services.PHARMACY_CATEGORY
                           ? Padding(
                         padding: EdgeInsets.only(top: 5, bottom: 5),
                         child: Text(
@@ -147,7 +147,17 @@ class _ConfirmState extends State<Confirm> {
                           ? Padding(
                         padding: EdgeInsets.only(top: 5, bottom: 5),
                         child: Text(
-                          "Pharmacie: $_pharmacy",
+                          "Pharmacie: $_type",
+                          style: TextStyle(
+                              color: couleur_libelle_champ),
+                        ),
+                      )
+                          : Container(),
+                      _merchant.category == Services.QUINCAILLERY_CATEGORY?
+                      Padding(
+                        padding: EdgeInsets.only(top: 5, bottom: 5),
+                        child: Text(
+                          "Quincaillerie: $_type",
                           style: TextStyle(
                               color: couleur_libelle_champ),
                         ),
@@ -158,8 +168,7 @@ class _ConfirmState extends State<Confirm> {
                         padding: EdgeInsets.only(top: 5, bottom: 5),
                         child: Column(
                           children: <Widget>[
-                            _merchant.category ==
-                                Services.PHARMACY_CATEGORY
+                            _merchant.category == Services.PHARMACY_CATEGORY || _merchant.category == Services.PHARMACY_CATEGORY
                                 ? Text(
                               "Nom du récepteur: ${_transaction.beneficiaryEmail}",
                               style: TextStyle(

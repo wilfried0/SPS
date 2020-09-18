@@ -8,6 +8,7 @@ class TransactionController extends BaseController {
 
   Future pay(Transaction transaction, Function onSuccess, Function onFailure,
       Function onRequestComplete) async {
+    print("Mon url de paiement pay: ${Route.pay}");
     try {
       _responseValidator = await post(Route.pay, transaction.toJson());
       if (this.statusCode == 200) {
@@ -31,6 +32,7 @@ class TransactionController extends BaseController {
 
   Future spConfirm(SpVerify spVerify, Function onSuccess, Function onFailure,
       Function onRequestComplete) async {
+    print("Mon url de paiement spConfirm: ${Route.pay}");
     try {
       _responseValidator = await post(Route.spConfirm, spVerify.toJson());
       if (this.statusCode == 200) {

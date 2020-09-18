@@ -26,7 +26,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   _DetailState(this._code);
   String _code;
   int currentPage = 0, choix;
-  String solde, idUser, _lieu, fromMember,exp, _typeOper, expName,_toMember, codeIso2, nomPays, iso, namePays, _url, toMember, userImage, deviseLocale, _serviceName, _name, _nomd, _amount, _fees, _status, _transactionid, _date, _payst, _paysf, _username;
+  String solde, idUser, _lieu, fromMember,exp,numero, banque,_villed, _villef, _typeOper, expName,_toMember, codeIso2, nomPays, iso, namePays, _url, toMember, userImage, deviseLocale, _serviceName, _name, _nomd, _amount, _fees, _status, _transactionid, _date, _payst, _paysf, _username;
   bool isLoding = false, replay = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   int recenteLenght = 3, archiveLenght = 3, populaireLenght =3, nb;
@@ -109,6 +109,15 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
   save() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString("lieu", _lieu);
+    prefs.setString("bankName", "$banque");
+    prefs.setString("accountNumber", "$numero");
+    prefs.setString("villed", "$_villed");
+    prefs.setString("villef", "$_villef");
+    //prefs.setString("villed", "$_villed");
+    if(_serviceName == "WALLET_TO_BRM" && banque == null)
+      prefs.setString("type", "Cash");
+    else if(_serviceName == "WALLET_TO_BRM" && banque != null)
+      prefs.setString("type", "Account");
   }
 
   Future<void> getTrans() async {
@@ -144,6 +153,12 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
           prefs.setString("nomd",responseJson['toFirstName']);
         } else
           prefs.setString("nomd", responseJson['toFirstName'] + responseJson['toLastName']);
+        prefs.setString("nomt", responseJson['toLastName']);
+        prefs.setString("prenomt", responseJson['toFirstName']);
+        prefs.setString("prenomf", responseJson['fromFirstName']);
+        prefs.setString("nomf", responseJson['fromLastName']);
+        prefs.setString("naissancef", responseJson['fromPlaceOfBith']);
+        prefs.setString("adressef", responseJson['fromAdress']);
 
         prefs.setString("fromCardIssuingDate", responseJson['fromCardIssuingDate'].toString().split("T")[0].replaceAll("-", "/"));
         prefs.setString("fromCardExpirationDate", responseJson['fromCardExpirationDate'].toString().split("T")[0].replaceAll("-", "/"));
@@ -151,6 +166,11 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
         iso = responseJson['fromCountryISO'].toString();
         fromMember = responseJson['fromMemeber'];
         exp = responseJson['username'];
+        //numero, banque
+        numero = responseJson['accountNumber'];
+        banque = responseJson['bankName'];
+        _villed = responseJson['toTown'];
+        _villef = responseJson['fromTown'];
         print("exp exp exp $exp");
       });
       this.geUserByPhone(exp);
@@ -189,7 +209,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
 
   String getNature(String nature, String typeOper){
     String _nature = "";
-    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "AGENT_TO_USER"){
+    if(nature == "WALLET_TO_WALLET" || nature == "WALLET_TO_WARI" || nature == "WALLET_TO_EU" || nature == "AGENT_TO_USER" || nature == "WALLET_TO_ATPS" || nature == "WALLET_TO_BRM"){
       _nature = "Transfert d'argent";
     }else if(nature == "EU_TO_WALLET" || nature == "CARD_TO_WALLET" || nature == "PAYPAL_TO_WALLET" || nature == "OM_TO_WALLET" || nature == "MOMO_TO_WALLET" || nature == "WALLET_TO_YUP"){
       _nature = "Recharge d'argent";
@@ -253,11 +273,19 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       _code = "4";
       _lieu = "-2";
     }else if(nature == "WALLET_TO_WARI"){
-      _natures = "Wallet -> Wari";
+      _natures = "Wallet -> WARI";
       _code = "";
       _lieu = "3";
       //this.getTransactionById();
       //this.loadMap(0);
+    }else if(nature == "WALLET_TO_ATPS"){
+      _natures = "Wallet -> ATPS";
+      _code = "";
+      _lieu = "4";
+    }else if(nature == "WALLET_TO_BRM"){
+      _natures = "Wallet -> BRM";
+      _code = "";
+      _lieu = "5";
     }
     return _natures;
   }
@@ -287,6 +315,12 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
       //showInSnackBar("Les transferts ne sont pas encore disponible!");
       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
     }else if(code == "" && lieu == "3"){
+      //showInSnackBar("Les transferts ne sont pas encore disponible!");
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
+    }else if(code == "" && lieu == "4"){
+      //showInSnackBar("Les transferts ne sont pas encore disponible!");
+      Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
+    }else if(code == "" && lieu == "5"){
       //showInSnackBar("Les transferts ne sont pas encore disponible!");
       Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Transfert3(_code)));
     }
@@ -426,14 +460,6 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                               },
                               icon: Icon(Icons.arrow_back_ios,color: couleur_fond_bouton,)
                           ),
-
-                          /*GestureDetector(
-                              onTap: (){
-                                Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Historique('$_code')));
-                                //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Detail(_code)));
-                              },
-                              child: Icon(Icons.arrow_back_ios,color: Colors.white,)
-                          ),*/
                         ),
                         Expanded(
                           flex: 3,
@@ -535,7 +561,7 @@ class _DetailState extends State<Detail> with SingleTickerProviderStateMixin {
                                 width: 5,
                                 height: topo2+25,
                                 decoration: BoxDecoration(
-                                    color: Colors.green,
+                                    color:_status == "PROCESSED"? Colors.green:Colors.red,
                                     borderRadius: BorderRadius.only(
                                         bottomRight: Radius.circular(10),
                                         topRight: Radius.circular(10)

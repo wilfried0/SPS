@@ -1,0 +1,165 @@
+[
+  {
+  "kitty":
+    {
+      "id_kitty": 0,
+      "title": "string",
+      "startDate": "2019-08-01T12:46:38.657Z",
+      "dateUpdate": "2019-08-01T12:46:38.657Z",
+      "endDate": "2020-08-01T12:46:38.657Z",
+      "description": "string",
+      "firstnameBenef": "string",
+      "lastnameBenef": "string",
+      "number": "string",
+      "kittyImage": "https://pbs.twimg.com/media/ES13X72WsAA43tu.jpg",
+      "currency": "XAF",
+      "visibility": true,
+      "previsional_amount": 100000.0,
+      "suggested_amount": 0.0,
+      "amount": 0,
+      "participants_num": 10,
+      "amount_collected": 5000.0,
+      "status": true,
+      "hide_amount_kitty": true,
+      "hide_amount_contribution": true,
+      "suggest_amount_to_guest": true,
+      "notify_of_participation": true,
+      "notify_of_comments": true,
+      "notify_participants_when_spending": true,
+      "user": {
+        "id_user": 0,
+        "firstname": "string",
+        "lastname": "string",
+        "town": "string",
+        "birthday": "2019-08-01T12:46:38.657Z",
+        "country": "string",
+        "email": "string",
+        "username": "string",
+        "password": "string",
+        "userImage": null,
+        "enabled": true,
+        "isDelete": true,
+        "role": {
+          "id_role": 0,
+          "roleName": "string"
+        }
+      },
+      "type": {
+        "id_type": 0,
+        "wording": "string"
+      }
+    }
+  },
+  {
+  "kitty": {
+      "id_kitty": 2,
+      "title": "Anniversaire",
+      "startDate": "2019-08-21",
+      "dateUpdate": "2019-08-21",
+      "endDate": "2028-02-28",
+      "description": "haha bala bala bala bala",
+      "firstnameBenef": "hah",
+      "lastnameBenef": "poiu abmamama",
+      "number": "2371402258",
+      "kittyImage": "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcQSo3gxPp2_xJCDdJqMFoRKFfP4tkLIYcf3ob9YDkBVIHEOuM1E&usqp=CAU",
+      "currency": "XAF",
+      "visibility": true,
+      "previsional_amount": 690000.0,
+      "suggested_amount": 0.0,
+    "amount": 0,
+    "participants_num": 10,
+    "amount_collected": 10000.0,
+      "status": false,
+      "hide_amount_kitty": true,
+      "hide_amount_contribution": false,
+      "suggest_amount_to_guest": false,
+      "notify_of_participation": false,
+      "notify_of_comments": false,
+      "notify_participants_when_spending": true,
+      "user": {
+        "id_user": 16479,
+        "firstname": "KOUAM",
+        "lastname": "Brice",
+        "town": "Douala",
+        "birthday": "1991-08-27",
+        "country": "CMR",
+        "email": "gamalielpassang@gmail.com",
+        "username": "237696744476",
+        "password": "RA1hHRiNb2NEGuQjnk9iIA==",
+        "userImage": null,
+        "activateCode": "AZERTY",
+        "secretCode": "2708",
+        "enabled": true,
+        "isDelete": false,
+        "role": {
+          "idRole": 2,
+          "roleName": "ROLE_CUSTUMER"
+        },
+        "project": {
+          "code": "SPC",
+          "projectName": "Sprint-Pay Community"
+        }
+      },
+      "type": {
+        "idType": 2,
+        "wording": "Baptême"
+      }
+    }
+  },
+  {
+    "kitty": {
+      "id_kitty": 3,
+      "title": "Mariage",
+      "startDate": "2019-08-21",
+      "dateUpdate": "2019-08-21",
+      "endDate": "2022-02-28",
+      "description": "haha bala bala bala bala",
+      "firstnameBenef": "hah",
+      "lastnameBenef": "poiu abmamama",
+      "number": "2371402258",
+      "kittyImage": "https://i.pinimg.com/originals/f1/2e/08/f12e08d516208335bcc91c3955908af4.jpg",
+      "currency": "XAF",
+      "visibility": true,
+      "previsional_amount": 100000.0,
+      "suggested_amount": 0.0,
+      "amount": 0,
+      "participants_num": 100,
+      "amount_collected": 1000.0,
+      "status": false,
+      "hide_amount_kitty": true,
+      "hide_amount_contribution": false,
+      "suggest_amount_to_guest": false,
+      "notify_of_participation": false,
+      "notify_of_comments": false,
+      "notify_participants_when_spending": true,
+      "user": {
+        "id_user": 16479,
+        "firstname": "KOUAM",
+        "lastname": "Brice",
+        "town": "Douala",
+        "birthday": "1991-08-27",
+        "country": "CMR",
+        "email": "gamalielpassang@gmail.com",
+        "username": "237696744476",
+        "password": "RA1hHRiNb2NEGuQjnk9iIA==",
+        "userImage": null,
+        "activateCode": "AZERTY",
+        "secretCode": "2708",
+        "enabled": true,
+        "isDelete": false,
+        "role": {
+          "idRole": 2,
+          "roleName": "ROLE_CUSTUMER"
+        },
+        "project": {
+          "code": "SPC",
+          "projectName": "Sprint-Pay Community"
+        }
+      },
+      "type": {
+        "idType": 2,
+        "wording": "Baptême"
+      }
+    }
+  }
+]

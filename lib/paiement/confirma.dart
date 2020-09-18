@@ -39,6 +39,16 @@ class _ConfirmaState extends State<Confirma> {
       notif = "Votre retrait s'est effectué avec succès!";
       img = "hand.png";
       this.save();
+    }else if(_code == "cartep"){//retrait
+      text = "commande";
+      notif = "Votre commande s'est effectué avec succès!";
+      img = "credit-card-2.png";
+      this.save();
+    }else if(_code == "cartev"){//retrait
+      text = "commande";
+      notif = "Votre commande s'est effectué avec succès!";
+      img = "credit-card.png";
+      this.save();
     }else{
       text = "Votre opération s'est effectuée avec succès!";
       img = "exchange.png";
@@ -70,14 +80,13 @@ class _ConfirmaState extends State<Confirma> {
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(55.0),
         child: new AppBar(
-          title: Text('Confirmation',style: TextStyle(
+          title: Text('',style: TextStyle(
             color: couleur_titre,
             fontSize: taille_libelle_etape,
           ),),
           elevation: 0.0,
           backgroundColor: couleur_appbar,
           flexibleSpace: barreTop,
-
           leading: Container(),
         ),
       ),
@@ -144,6 +153,7 @@ class _ConfirmaState extends State<Confirma> {
                     child: new GestureDetector(
                       onTap: (){
                         setState(() {
+                          init();
                           Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Profile(_code)));
                           //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Confirma(_code)));
                         });
@@ -171,5 +181,18 @@ class _ConfirmaState extends State<Confirma> {
       ),
       bottomNavigationBar: barreBottom,
     );
+  }
+
+  init() async{
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString("prenomt", null);
+    prefs.setString("prenomf", null);
+    prefs.setString("nomt", null);
+    prefs.setString("nomf", null);
+    prefs.setString("adressed", null);
+    prefs.setString("adressef", null);
+    prefs.setString("villef", null);
+    prefs.setString("villed", null);
+    prefs.setString("nomd", null);
   }
 }

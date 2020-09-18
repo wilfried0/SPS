@@ -102,10 +102,11 @@ class _PaystState extends State<Payst> {
   Widget build(BuildContext context) {
     final marge = (14*MediaQuery.of(context).size.width)/414;
     return Scaffold(
+      backgroundColor: GRIS,
       key: _scaffoldKey,
         appBar: new AppBar(
           elevation: 0.0,
-          backgroundColor: couleur_appbar,
+          backgroundColor: GRIS,
           flexibleSpace: barreTop,
           leading: IconButton(
               onPressed: (){
@@ -140,10 +141,10 @@ class _PaystState extends State<Payst> {
                     topLeft: Radius.circular(10.0),
                     topRight: Radius.circular(10.0),
                   ),
-                  color: couleur_champ,
+                  color: Colors.white,
                   border: Border.all(
                       width: .1,
-                      color: couleur_champ
+                      color: couleur_bordure
                   ),
                 ),
                 height: 50.0,

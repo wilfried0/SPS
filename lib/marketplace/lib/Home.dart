@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:page_transition/page_transition.dart';
@@ -12,12 +13,12 @@ import 'api/ServerResponseValidator.dart';
 import 'colors.dart';
 import 'models/CommonServiceItem.dart';
 import 'models/Services.dart';
-import 'operator.dart';
 import 'recu.dart';
+import 'screen/dialog/PharmacyBox.dart';
+import 'screen/dialog/QuincailleryBox.dart';
 import 'screen/item/ItemSubService.dart';
-import 'system/AppState.dart';
 import 'utils/SysSnackBar.dart';
-import 'validation.dart';
+
 
 class Home extends StatefulWidget {
   @override
@@ -33,78 +34,15 @@ class _HomeState extends State<Home> {
   HashSet<String> _cities = new HashSet<String>();
   var donnees, _data;
   List _pharmacies = new List();
+  List _quincailleries = new List();
   List<CommonServiceItem> _listOfServices = new List();
+  bool isLoadPharmacies = false;
+  bool isLoadQuincailleries = false;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _url = "$baseUrl/merchants?category=PHARMACY";
-    //this.getData(url);
-    _cities.add("ville non repertoriée");
-  }
-
-  Future<String> getData(String my_url) async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-
-      HttpClient client = new HttpClient();
-      client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
-      HttpClientRequest request = await client.getUrl(Uri.parse(my_url));
-      request.headers.set('accept', 'application/json');
-      request.headers.set('content-type', 'application/json');
-      HttpClientResponse response = await request.close();
-      String reply = await response.transform(utf8.decoder).join();
-
-      /*var response = await http.get(
-        Uri.encodeFull(my_url),
-        headers: _header,
-      );*/
-      print('statuscode ${response.statusCode}');
-      print('url $my_url');
-      if (response.statusCode == 200) {
-        if (my_url == "$_url") {
-          setState(() {
-            //donnees = json.decode(utf8.decode(response.bodyBytes));
-            donnees = json.decode(reply);
-          });
-
-          print("liste: ${donnees.toString()}");
-          this.ckAlert(context);
-        } else {
-          setState(() {
-            //_data = json.decode(utf8.decode(response.bodyBytes));
-            _data = json.decode(reply);
-          });
-          print("liste: ${_data.toString()}");
-        }
-      } else
-        print(reply);
-    } else {
-      ackAlert(context);
-    }
-    return "success";
-  }
-
-  searchData(str) {
-    var strExist = str.length > 0 ? true : false;
-    if (strExist) {
-      var filterData = [];
-      for (var i = 0; i < unfilterData.length; i++) {
-        String titre = unfilterData[i]['info']['titre'].toUpperCase();
-        if (titre.contains(str.toUpperCase())) {
-          filterData.add(unfilterData[i]);
-        }
-      }
-      setState(() {
-        this.data = filterData;
-      });
-    } else {
-      setState(() {
-        this.data = this.unfilterData;
-      });
-    }
   }
 
   @override
@@ -254,21 +192,42 @@ class _HomeState extends State<Home> {
               ),
               GestureDetector(
                 onTap: () {
-                  //SysSnackBar().show(_scaffoldKey, "Service pas encore disponible !");
-                  this.getPharmacies();
+                  this.checkConnection(0);
+                  //getPharmacies();
                 },
                 child: Card(
                   elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage("marketimages/pharmacie.png"),
-                          )),
-                    ),
-                  ),
+                  child: isLoadPharmacies == false? Container(
+                    height: 70,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage("marketimages/pharmacie.png"),
+                        )),
+                  ):CupertinoActivityIndicator(radius: 30,),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(top: 20),
+                child: Text(
+                  "Quincailleries",
+                  style: TextStyle(
+                      fontSize: taille_libelle_etape,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  this.checkConnection(1);
+                },
+                child: Card(
+                  elevation: 4,
+                  child: isLoadQuincailleries == false? Container(
+                    height: 70,
+                    decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage("marketimages/quincaillerie.jpg"),
+                        )),
+                  ):CupertinoActivityIndicator(radius: 30,),
                 ),
               ),
             ],
@@ -277,33 +236,23 @@ class _HomeState extends State<Home> {
         data: Theme.of(context).copyWith(
             canvasColor: Colors.white,
             primaryColor: Colors.white,
-            textTheme: Theme.of(context)
-                .textTheme
-                .copyWith(caption: new TextStyle(color: Colors.white))),
+            textTheme: Theme.of(context).textTheme.copyWith(caption: new TextStyle(color: Colors.white))),
         child: BottomNavigationBar(
           elevation: 4,
           items: [
             BottomNavigationBarItem(
               icon: GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                        context,
-                        PageTransition(
-                            type: PageTransitionType.fade, child: Recu()));
+                    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Recu()));
                   },
-                  child: Icon(
-                    Icons.receipt,
+                  child: Icon(Icons.receipt,
                     color: orange_F,
                   )),
               title: GestureDetector(
                   onTap: () {
-                    Navigator.push(
-                        context,
-                        PageTransition(
-                            type: PageTransitionType.fade, child: Recu()));
+                    Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Recu()));
                   },
-                  child: Text(
-                    'Mes Reçus',
+                  child: Text('Mes Reçus',
                     style: TextStyle(color: orange_F),
                   )),
             ),
@@ -317,55 +266,23 @@ class _HomeState extends State<Home> {
     );
   }
 
-  int _selectedIndex = 0;
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    _selectedIndex == 1
-        ? Navigator.push(context,
-        PageTransition(type: PageTransitionType.fade, child: Validation()))
-        : Navigator.push(context,
-        PageTransition(type: PageTransitionType.fade, child: Recu()));
-  }
-
-  Future<void> ckAlert(BuildContext context) {
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return Center(
-          child: SingleChildScrollView(
-            child: MyDialogContent(
-              cities: _cities,
-              //selectedDistricts: _districts,
-              //selectedPharmacies: _pharmacies,
-              listOfServices: _listOfServices,
-              pharmacies: _pharmacies,
-              data: donnees,
-              scaffoldKey: _scaffoldKey,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   getPharmacies() {
     if (donnees != null) {
-      ckAlert(context);
+      PharmacyAlert(context);
     } else {
       SysSnackBar().show(
           _scaffoldKey, "Un instant recupération de la liste des pharmacies");
       _cities.clear();
       PharmacyController().getList((List<dynamic> json) {
         donnees = json;
+        print("************************ Les fameuses données: $donnees");
         json.forEach((city) => {
           _cities.add(city["merchant"]['address']),
           _pharmacies.add(city["merchant"]),
           _listOfServices.add(CommonServiceItem.fromJson(city))
         });
-        print(_pharmacies);
-        ckAlert(context);
+        print("voilà _listOfPharmacieServices ${_listOfServices.toString()}");
+        PharmacyAlert(context);
         LinkedHashSet<String>.from(_cities).toList();
       }, (ServerResponseValidator validator) {
         print(validator.isError());
@@ -378,445 +295,171 @@ class _HomeState extends State<Home> {
       });
     }
   }
-}
 
-// ignore: must_be_immutable
-class MyDialogContent extends StatefulWidget {
-  MyDialogContent(
-      {Key key,
-        this.pharmacies,
-        this.data,
-        this.cities,
-        this.scaffoldKey,
-        this.listOfServices})
-      : super(key: key);
-
-  final HashSet<String> cities;
-  final List<CommonServiceItem> listOfServices;
-  HashSet<String> selectedDistricts = new HashSet(),
-      selectedPharmacies = new HashSet();
-  List pharmacies;
-  var data;
-  GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
-
-  @override
-  _MyDialogContentState createState() => new _MyDialogContentState();
-}
-
-class _MyDialogContentState extends State<MyDialogContent> {
-  var _formKey = GlobalKey<FormState>();
-  String _current = null,
-      _current1 = null,
-      _current2 = null,
-      _url;
-  int _id, pharmacyId;
-  CommonServiceItem selectedServiceItem;
-
-  @override
-  void initState() {
-    super.initState();
-    print("cities ${widget.cities}");
-    widget.selectedDistricts.add("quartier non repertorié");
-    widget.selectedPharmacies.add("aucune pharmacie");
-  }
-
-  getDistricts(String ville) {
-    widget.selectedDistricts.clear();
-    for (int i = 0; i < widget.pharmacies.length; i++) {
-      if (widget.pharmacies[i]['address'] == "$ville")
-        widget.selectedDistricts.add(widget.pharmacies[i]['neighborhood']);
-    }
-  }
-
-  getPharmacies(String ville, String quartier) {
-    widget.selectedPharmacies.clear();
-    for (int i = 0; i < widget.data.length; i++) {
-      if (widget.pharmacies[i]['address'] == "$ville" &&
-          widget.pharmacies[i]['neighborhood'] == "$quartier") {
-        widget.selectedPharmacies.add(widget.pharmacies[i]['name']);
-        pharmacyId = widget.pharmacies[i]['id'];
-        AppState.putInt(Data.MERCHANT_ID, pharmacyId);
-        print("Pharmacy id : $pharmacyId");
-        selectedServiceItem = widget.listOfServices[i];
-        print(selectedServiceItem.name);
-      }
-    }
-  }
-
-  List<String> listSort(List<String> list) {
-    print("Entry list $list");
-    if (list.length > 1)
-      for (int i = 0; i < list.length - 1; i++) {
-        int next = i + 1;
-        if (sort(list[i], list[next]) > 0) {
-          String temp = list[i];
-          list[i] = list[next];
-          list[next] = temp;
-        }
-      }
-    print("Exit list $list");
-    return list;
-  }
-
-  int sort(String a, String b) {
-    int length = a.length > b.length ? b.length : a.length;
-
-    for (int i = 0; i < length; i++) {
-      print("${a[i]} => ${b[i]} = ${a[i].compareTo(b[i])}");
-      if (a[i].compareTo(b[i]) != 0) return a[i].compareTo(b[i]);
-    }
-    return a.length.compareTo(b.length);
-  }
-
-  int getId() {
-    for (int i = 0; i < widget.data.length; i++) {
-      if (widget.data[i]['merchant']['id'] == pharmacyId) {
-        _id = widget.data[i]['id'];
-        break;
-      }
-    }
-    AppState.putInt(Data.SELLABLE_ITEM, _id);
-    print("Service id : $_id");
-    return _id;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Text(
-            'Choisissez une pharmacie!',
-            style: TextStyle(color: Colors.green, fontSize: taille_champ + 3),
-            textAlign: TextAlign.center,
-          ),
-          Container(
-            color: Colors.green,
-            height: 2,
-            width: MediaQuery
-                .of(context)
-                .size
-                .width,
-          ),
-        ],
-      ),
-      content: Column(
-        children: <Widget>[
-          Form(
-            key: _formKey,
-            child: Column(
-              children: <Widget>[
-                Container(
-                  decoration: new BoxDecoration(
-                    borderRadius: new BorderRadius.only(
-                      topLeft: Radius.circular(10.0),
-                      topRight: Radius.circular(10.0),
-                    ),
-                    color: Colors.transparent,
-                    border: Border.all(color: couleur_bordure, width: bordure),
-                  ),
-                  height: hauteur_champ,
-                  child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        icon: Padding(
-                          padding: EdgeInsets.only(right: 10),
-                          child: new Icon(
-                            Icons.arrow_drop_down_circle,
-                            color: Colors.green,
-                          ),
-                        ),
-                        isDense: true,
-                        elevation: 1,
-                        isExpanded: true,
-                        onChanged: (String selected) {
-                          setState(() {
-                            _current = selected;
-                            _current1 = null;
-                            _current2 = null;
-                            this.getDistricts(selected);
-                          });
-                        },
-                        value: null,
-                        hint: Padding(
-                          padding: EdgeInsets.only(left: 20),
-                          child: Text(
-                            _current == null ? "Ville" : _current,
-                            style: TextStyle(
-                              color: couleur_libelle_champ,
-                              fontSize: taille_libelle_champ,
-                            ),
-                          ),
-                        ),
-                        items: listSort(widget.cities.toList()).map((
-                            String name) {
-                          return DropdownMenuItem<String>(
-                            value: name,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text(
-                                name,
-                                style: TextStyle(
-                                    color: couleur_fond_bouton,
-                                    fontSize: taille_libelle_champ,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      )),
-                ),
-                Container(
-                  decoration: new BoxDecoration(
-                    color: Colors.transparent,
-                    border: Border.all(color: couleur_bordure, width: bordure),
-                  ),
-                  height: hauteur_champ,
-                  child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        icon: Padding(
-                          padding: EdgeInsets.only(right: 10),
-                          child: new Icon(
-                            Icons.arrow_drop_down_circle,
-                            color: Colors.green,
-                          ),
-                        ),
-                        isDense: true,
-                        elevation: 1,
-                        isExpanded: true,
-                        onChanged: (String selected) {
-                          setState(() {
-                            _current1 = selected;
-                            _current2 = null;
-                            this.getPharmacies(_current, _current1);
-                          });
-                        },
-                        value: null,
-                        hint: Padding(
-                          padding: EdgeInsets.only(left: 20),
-                          child: Text(
-                            _current1 == null ? "Quartier" : _current1,
-                            style: TextStyle(
-                              color: couleur_libelle_champ,
-                              fontSize: taille_libelle_champ,
-                            ),
-                          ),
-                        ),
-                        items: listSort(widget.selectedDistricts.toList())
-                            .map((String name) {
-                          return DropdownMenuItem<String>(
-                            value: name,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text(
-                                name,
-                                style: TextStyle(
-                                    color: couleur_fond_bouton,
-                                    fontSize: taille_libelle_champ,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      )),
-                ),
-                Container(
-                  decoration: new BoxDecoration(
-                    borderRadius: new BorderRadius.only(
-                      bottomLeft: Radius.circular(10.0),
-                      bottomRight: Radius.circular(10.0),
-                    ),
-                    color: Colors.transparent,
-                    border: Border.all(color: couleur_bordure, width: bordure),
-                  ),
-                  height: hauteur_champ,
-                  child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        icon: Padding(
-                          padding: EdgeInsets.only(right: 10),
-                          child: new Icon(
-                            Icons.arrow_drop_down_circle,
-                            color: Colors.green,
-                          ),
-                        ),
-                        isDense: true,
-                        elevation: 1,
-                        isExpanded: true,
-                        onChanged: (String selected) {
-                          setState(() {
-                            _current2 = selected;
-                          });
-                        },
-                        value: null,
-                        hint: Padding(
-                          padding: EdgeInsets.only(left: 20),
-                          child: Text(
-                            _current2 == null ? "Votre pharmacie" : _current2,
-                            style: TextStyle(
-                              color: couleur_libelle_champ,
-                              fontSize: taille_libelle_champ,
-                            ),
-                          ),
-                        ),
-                        items: listSort(widget.selectedPharmacies.toList())
-                            .map((String name) {
-                          return DropdownMenuItem<String>(
-                            value: name,
-                            child: Padding(
-                              padding: EdgeInsets.only(left: 20),
-                              child: Text(
-                                name,
-                                style: TextStyle(
-                                    color: couleur_fond_bouton,
-                                    fontSize: taille_libelle_champ,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      )),
-                ),
-                Padding(
-                  padding: EdgeInsets.only(top: 20),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        flex: 1,
-                        child: Padding(
-                          padding: EdgeInsets.only(right: 5),
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: new Container(
-                              height: hauteur_champ,
-                              width: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width - 80,
-                              decoration: new BoxDecoration(
-                                color: couleur_libelle_champ,
-                                border: new Border.all(
-                                  color: Colors.transparent,
-                                  width: 0.0,
-                                ),
-                                borderRadius: new BorderRadius.circular(10.0),
-                              ),
-                              child: new Center(
-                                  child: Text(
-                                    'Annuler',
-                                    style: new TextStyle(
-                                        fontSize: taille_text_bouton,
-                                        color: couleur_text_bouton),
-                                  )),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Padding(
-                          padding: EdgeInsets.only(left: 5),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                stopSnackBar();
-                                if (_current == null &&
-                                    _current1 == null &&
-                                    _current2 == null) {
-                                  showInSnackBar(
-                                      "Veuillez sélectionner une ville, un quartier ainsi qu'une pharmacie");
-                                  stopSnackBar();
-                                } else if (_current != null &&
-                                    _current1 == null &&
-                                    _current2 == null) {
-                                  this.showInSnackBar(
-                                      "Veuillez sélectionner un quartier ainsi qu'une pharmacie");
-                                  stopSnackBar();
-                                } else if (_current != null &&
-                                    _current1 != null &&
-                                    _current2 == null) {
-                                  this.showInSnackBar(
-                                      "Veuillez sélectionner une pharmacie");
-                                  stopSnackBar();
-                                } else if (_current == null ||
-                                    _current1 == null ||
-                                    _current2 == null) {
-                                  this.showInSnackBar(
-                                      "Veuillez renseigner tous les champs");
-                                  stopSnackBar();
-                                } else {
-                                  AppState.putInt(Data.SERVICE_NUMBER, getId());
-                                  AppState.putString(Data.MERCHANT_ID, "$_id");
-                                  AppState.putString(Data.CITY, "$_current");
-                                  AppState.putString(
-                                      Data.DISTRICT, "$_current1");
-                                  AppState.putString(
-                                      Data.PHARMACY, "$_current2");
-                                  Navigator.pop(context, true);
-                                  Navigator.push(
-                                      context,
-                                      PageTransition(
-                                          type: PageTransitionType.fade,
-                                          child: Operator(
-                                              Services().getMerchant(10),
-                                              selectedServiceItem)));
-                                }
-                              });
-                            },
-                            child: new Container(
-                              height: hauteur_champ,
-                              width: MediaQuery
-                                  .of(context)
-                                  .size
-                                  .width - 80,
-                              decoration: new BoxDecoration(
-                                color: Colors.green,
-                                border: new Border.all(
-                                  color: Colors.transparent,
-                                  width: 0.0,
-                                ),
-                                borderRadius: new BorderRadius.circular(10.0),
-                              ),
-                              child: new Center(
-                                  child: Text(
-                                    'Valider',
-                                    style: new TextStyle(
-                                        fontSize: taille_text_bouton,
-                                        color: couleur_text_bouton),
-                                  )),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+  Future<void> PharmacyAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(
+          child: SingleChildScrollView(
+            child: PharmacyBox(
+              cities: _cities,
+              listOfServices: _listOfServices,
+              pharmacies: _pharmacies,
+              data: donnees,
+              scaffoldKey: _scaffoldKey,
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  void showInSnackBar(String value) {
-    widget.scaffoldKey.currentState.showSnackBar(new SnackBar(
-      content: new Text(
-        value,
-        style: TextStyle(color: Colors.white, fontSize: taille_champ),
-        textAlign: TextAlign.center,
-      ),
-      backgroundColor: couleur_fond_bouton,
-      duration: Duration(seconds: 5),
-    ));
+  Future<void> QuincailleryAlert(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return Center(
+          child: SingleChildScrollView(
+            child: QuicailleryBox(
+              cities: _cities,
+              listOfServices: _listOfServices,
+              quincailleries: _quincailleries,
+              data: donnees,
+              scaffoldKey: _scaffoldKey,
+            ),
+          ),
+        );
+      },
+    );
   }
 
-  void stopSnackBar() {
-    Future.delayed(const Duration(seconds: 5), () {
-      setState(() {
-        widget.scaffoldKey.currentState.hideCurrentSnackBar();
-      });
-    });
+  void checkConnection(int q) async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    if (connectivityResult == ConnectivityResult.mobile) {
+      if(q == 0){
+        setState(() {
+          isLoadPharmacies = true;
+        });
+      } else{
+        setState(() {
+          isLoadQuincailleries = true;
+        });
+      }
+      this.getElements(q);
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+      if(q == 0){
+        setState(() {
+          isLoadPharmacies = true;
+        });
+      } else{
+        setState(() {
+          isLoadQuincailleries = true;
+        });
+      }
+      this.getElements(q);
+    } else {
+      notConnection(context);
+    }
+  }
+
+  getElements(int q) async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url;
+    if(q == 0){
+      url = "$baseUrl/merchants?category=PHARMACY&countryCode=CMR";
+    }else{
+      url ="$baseUrl/merchants?category=HARDWARESTORE&countryCode=CMR";
+    }
+    print("$url");
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print(response.statusCode);
+    print(reply);
+    if(response.statusCode == 200){
+      if(reply.isEmpty){
+        setState(() {
+          if(q == 0)
+            isLoadPharmacies = false;
+          else
+            isLoadQuincailleries = false;
+        });
+        SysSnackBar().show(_scaffoldKey, "Aucune pharmacie repertoriée");
+      }else{
+        var responseJson = json.decode(reply);
+        for(int i=0; i<responseJson["data"]["merchants"].length; i++){
+          _cities.add(responseJson["data"]["merchants"][i]['city']);
+          if(q == 0)
+            _pharmacies.add(responseJson["data"]["merchants"][i]);
+          else
+            _quincailleries.add(responseJson["data"]["merchants"][i]);
+        }
+        getData(q);
+      }
+    }else{
+      print(response.statusCode);
+      if(q == 0)
+        isLoadPharmacies = false;
+      else
+        isLoadQuincailleries = false;
+      SysSnackBar().show(_scaffoldKey, "Service indisponible");
+    }
+  }
+
+  getData(int q) async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url;
+    if(q == 0)
+      url ="$baseUrl/items?category=PHARMACY";
+    else
+      url ="$baseUrl/items?category=HARDWARESTORE";
+    print("$url");
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print(response.statusCode);
+    print(reply);
+    if(response.statusCode == 200){
+      //ServerResponseValidator
+        var responseJson = ServerResponseValidator.fromJson(json.decode(reply));
+        List _items = responseJson.getJson()["items"];
+        if(_items.length <= 0){
+          setState(() {
+            if(q == 0){
+              isLoadPharmacies = false;
+              SysSnackBar().show(_scaffoldKey, "Aucune pharmacie repertoriée");
+            } else{
+              isLoadQuincailleries = false;
+              SysSnackBar().show(_scaffoldKey, "Aucune quincaillerie repertoriée");
+            }
+          });
+        }else{
+          print("effectivement c'est une liste de taille: ${_items.length}\n et ayant pour valeurs ${_items.toString()}");
+          _listOfServices.clear();
+          for(int i=0; i<_items.length; i++){
+            CommonServiceItem item = CommonServiceItem.fromJson(_items[i]);
+            print("voilà l'objet à ajouter': $item");
+            _listOfServices.add(item);
+          }
+          print("liste finale dont la taille est: ${_items.length} et les valeurs: ${_items.toString()}");
+          setState(() {
+            if(q == 0){
+              isLoadPharmacies = false;
+              this.PharmacyAlert(context);
+            } else{
+              isLoadQuincailleries = false;
+              this.QuincailleryAlert(context);
+            }
+          });
+        }
+    }else{
+      print(response.statusCode);
+      SysSnackBar().show(_scaffoldKey, "Service indisponible");
+    }
   }
 }

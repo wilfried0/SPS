@@ -15,8 +15,10 @@ class DyanmicList extends State<ListDisplay> {
   @override
   Widget build (BuildContext context) {
     return new Scaffold(
+      backgroundColor: GRIS,
         appBar: new AppBar(title: new Text("Service client"),
           elevation: 0.0,
+          backgroundColor: GRIS,
           leading: IconButton(
               onPressed: (){
                 Navigator.pop(context);
@@ -37,10 +39,14 @@ class DyanmicList extends State<ListDisplay> {
                       hour = "${DateTime.now().hour}";
                       minute = "${DateTime.now().minute}";
                       return Padding(
-                        padding: EdgeInsets.only(top: 10, left: 20, right: 20),
+                        padding: EdgeInsets.only(top: 10, left:Index%2 == 0? MediaQuery.of(context).size.width/4:20, right: Index%2 != 0? MediaQuery.of(context).size.width/4:20),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.greenAccent,
+                            color:Index%2 == 0? couleur_champ:Colors.white,
+                            border: Border.all(
+                                color: couleur_champ,
+                                width: bordure
+                            ),
                             borderRadius: new BorderRadius.only(
                               topLeft: Radius.circular(10.0),
                               topRight: Radius.circular(10.0),
@@ -53,14 +59,16 @@ class DyanmicList extends State<ListDisplay> {
                             child: Row(
                               children: <Widget>[
                                 Expanded(
-                                    flex:10,
+                                    flex:11,
                                     child: Padding(
                                       padding: EdgeInsets.only(left: 10),
                                       child: new Text(litems[Index]),
                                     )),
                                 Expanded(
                                     flex:2,
-                                    child: new Text("$hour:$minute")),
+                                    child: new Text("$hour:$minute", style: TextStyle(
+                                      color:Index%2 == 0? Colors.white:couleur_champ
+                                    ),)),
                               ],
                             ),
                           ),
@@ -78,6 +86,7 @@ class DyanmicList extends State<ListDisplay> {
                   child: Form(
                     key: _formKey,
                     child: Container(
+                      height: taille_champ+40,
                       decoration: new BoxDecoration(
                         borderRadius: new BorderRadius.only(
                           topLeft: Radius.circular(20.0),
@@ -85,14 +94,14 @@ class DyanmicList extends State<ListDisplay> {
                           bottomLeft: Radius.circular(20.0),
                           bottomRight: Radius.circular(20.0),
                         ),
-                        color: couleur_champ,
+                        color: Colors.white,
                         border: Border.all(
-                            color: Colors.white,
+                            color: couleur_champ,
                             width: bordure
                         ),
                       ),
                       child: Padding(
-                        padding: EdgeInsets.only(left: 20, right: 0),
+                        padding: EdgeInsets.only(left: 20, right: 0, top: 12),
                         child: new TextFormField(
                             controller: eCtrl,
                             decoration: new InputDecoration.collapsed(
@@ -125,7 +134,7 @@ class DyanmicList extends State<ListDisplay> {
                             }
                           });
                         },
-                        icon: Icon(Icons.play_arrow, color: couleur_decription_page,)),
+                        icon: Icon(Icons.play_arrow, color: couleur_champ,)),
                   ),
                 )
               ],

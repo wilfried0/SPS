@@ -22,8 +22,7 @@ class Operator extends StatefulWidget {
   final Merchant _merchant;
   final CommonServiceItem selectedServiceItem;
   @override
-  _OperatorState createState() =>
-      _OperatorState(this._merchant, selectedServiceItem);
+  _OperatorState createState() => _OperatorState(this._merchant, selectedServiceItem);
 }
 
 class GroupModel {
@@ -104,9 +103,7 @@ class _OperatorState extends State<Operator> {
 
   Future<String> getData(String route) async {
     var connectivityResult = await (Connectivity().checkConnectivity());
-    if (connectivityResult == ConnectivityResult.mobile ||
-        connectivityResult == ConnectivityResult.wifi) {
-
+    if (connectivityResult == ConnectivityResult.mobile || connectivityResult == ConnectivityResult.wifi) {
       HttpClient client = new HttpClient();
       client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
       HttpClientRequest request = await client.getUrl(Uri.parse(route));
@@ -114,26 +111,16 @@ class _OperatorState extends State<Operator> {
       request.headers.set('content-type', 'application/json');
       HttpClientResponse response = await request.close();
       String reply = await response.transform(utf8.decoder).join();
-
-      /*var response = await http.get(
-        Uri.encodeFull(route),
-        headers: _header,
-      );*/
-      print('statuscode ${response.statusCode} ' +reply
-          /*utf8.decode(response.bodyBytes)*/);
-      print('url $route');
+      print('statuscode ${response.statusCode} ' +reply);
+      print('ma route: url $route');
       if (response.statusCode == 200) {
         try {
-          var responseValidator = ServerResponseValidator.fromJson(json.decode(reply)
-              /*jsonDecode(utf8.decode(response.bodyBytes))*/);
-
+          var responseValidator = ServerResponseValidator.fromJson(json.decode(reply));
           if (responseValidator.isError()) {
-            showInSnackBar(
-                "Impossible de traiter votre requete, veuillez verifiez votre connexion intenet");
+            showInSnackBar("Impossible de traiter votre requête, veuillez verifiez votre connexion intenet");
           }
           donnees = responseValidator.getJson()['items'];
           data = responseValidator.getJson()['items'];
-          //print("donnes: ${data[0]['priceAmount']}");
           if (_merchant.category == Services.UTILITY_CATEGORY) {
             if (donnees.isEmpty) {
               setState(() {
@@ -156,8 +143,7 @@ class _OperatorState extends State<Operator> {
                 _isContratNumberValid = true;
               });
               serviceItems.clear();
-              data.forEach((service) =>
-                  serviceItems.add(CommonServiceItem.fromJson(service)));
+              data.forEach((service) => serviceItems.add(CommonServiceItem.fromJson(service)));
               //if (serviceItems.length == 1)
                 selectedServiceItem = serviceItems[0];
               List<String> list = new List();
@@ -177,8 +163,7 @@ class _OperatorState extends State<Operator> {
               showInSnackBar("Numéro d'abonnement inexistant!");
             } else {
               serviceItems.clear();
-              data.forEach((service) =>
-                  serviceItems.add(CommonServiceItem.fromJson(service)));
+              data.forEach((service) => serviceItems.add(CommonServiceItem.fromJson(service)));
               List<String> list = new List();
               for (int i = 0; i < donnees.length; i++) {
                 list.add(donnees[i]['description']);
@@ -191,13 +176,12 @@ class _OperatorState extends State<Operator> {
               });
             }
           } else if (_merchant.category == Services.TELCO_CATEGORY) {
-            data.forEach((service) =>
-                serviceItems.add(CommonServiceItem.fromJson(service)));
-            if (serviceItems.length == 1) selectedServiceItem = serviceItems[0];
+            data.forEach((service) => serviceItems.add(CommonServiceItem.fromJson(service)));
+            if (serviceItems.length >= 1)
+              selectedServiceItem = serviceItems[0];
           }
         } on Exception catch (e) {
-          showInSnackBar(
-              "Impossible de traiter votre requete, veuillez verifiez votre connexion intenet");
+          showInSnackBar("Impossible de traiter votre requête, veuillez verifier votre connexion internet");
         }
       }
     } else {
@@ -226,10 +210,8 @@ class _OperatorState extends State<Operator> {
                   Padding(
                     padding: EdgeInsets.only(top: 8),
                   ),
-                  _merchant.category == Services.TELCO_CATEGORY
-                      ? Padding(
-                    padding:
-                    EdgeInsets.only(left: 15, right: 15, top: 30),
+                  _merchant.category == Services.TELCO_CATEGORY ? Padding(
+                    padding: EdgeInsets.only(left: 15, right: 15, top: 30),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -255,8 +237,7 @@ class _OperatorState extends State<Operator> {
                                         child: CountryCodePicker(
                                           showFlag: true,
                                           textStyle: TextStyle(
-                                              color:
-                                              couleur_libelle_champ),
+                                          color: couleur_libelle_champ),
                                           onChanged: (code) {
                                             _code = code.dialCode;
                                             countryCible = code.codeIso;
@@ -275,12 +256,8 @@ class _OperatorState extends State<Operator> {
                                       if (value.isEmpty) {
                                         return 'Champs requis';
                                       } else {
-                                        _transaction
-                                            .beneficiaryPhoneNumber =
-                                            _code.replaceAll("+", "") +
-                                                value;
-                                        _transaction.serviceNumber =
-                                            value;
+                                        _transaction.beneficiaryPhoneNumber = _code.replaceAll("+", "") + value;
+                                        _transaction.serviceNumber = value;
                                         return null;
                                       }
                                     },
@@ -341,11 +318,169 @@ class _OperatorState extends State<Operator> {
                         ],
                       ),
                     ),
-                  )
-                      : Container(),
+                  ) : Container(),
                   Padding(
                     padding: EdgeInsets.only(left: 15, right: 15),
-                    child: _merchant.category == Services.PHARMACY_CATEGORY
+                    child: _merchant.category == Services.PHARMACY_CATEGORY || _merchant.category == Services.QUINCAILLERY_CATEGORY ? Form(
+                      key: _formKey,
+                      child: Column(
+                        children: <Widget>[
+                          Container(
+                            decoration: new BoxDecoration(
+                              borderRadius: new BorderRadius.only(
+                                topRight: Radius.circular(10.0),
+                                topLeft: Radius.circular(10.0),
+                                bottomLeft: Radius.circular(coched == false ? 10.0 : 0.0),
+                                bottomRight: Radius.circular(coched == false ? 10.0 : 0.0),
+                              ),
+                              border: Border.all(color: couleur_bordure, width: bordure),
+                            ),
+                            height: hauteur_champ,
+                            child: Center(
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 20),
+                                child: new TextFormField(
+                                  keyboardType: TextInputType.number,
+                                  style: TextStyle(
+                                    fontSize: taille_libelle_champ + 3,
+                                    color: couleur_libelle_champ,
+                                  ),
+                                  validator: (String value) {
+                                    if (value.isEmpty) {
+                                      return 'Champ montant vide !';
+                                    } else {
+                                      _transaction.amount = value;
+                                      _transaction.description = "Paiement d'une ordonnance";
+                                      print("Pharmacy transaction ${_transaction.toJson()}");
+                                      return null;
+                                    }
+                                  },
+                                  decoration: InputDecoration.collapsed(
+                                    hintText: 'Montant de l\'ordonnance',
+                                    hintStyle: TextStyle(
+                                      fontSize: taille_libelle_champ + 3,
+                                      color: couleur_libelle_champ,
+                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          coched == false ? Container()
+                              : Container(
+                            decoration: new BoxDecoration(
+                              color: Colors.transparent,
+                              border: Border.all(
+                                  color: couleur_bordure,
+                                  width: bordure),
+                            ),
+                            height: hauteur_champ,
+                            child: Center(
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 20),
+                                child: Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                        flex: 5,
+                                        child: CountryCodePicker(
+                                          showFlag: true,
+                                          textStyle: TextStyle(
+                                              color: couleur_libelle_champ),
+                                          onChanged: (code) {
+                                            _code = code.dialCode;
+                                          },
+                                        )),
+                                    Expanded(
+                                      flex: 10,
+                                      child: new TextFormField(
+                                        keyboardType:
+                                        TextInputType.text,
+                                        style: TextStyle(
+                                          fontSize: taille_libelle_champ + 3,
+                                          color: couleur_libelle_champ,
+                                        ),
+                                        validator: (String value) {
+                                          if (value.isEmpty) {
+                                            return 'Champ bénéficiaire vide !';
+                                          } else {
+                                            setState(() {
+                                              _transaction.beneficiaryPhoneNumber = _code.replaceAll("+", "") + value;
+                                            });
+                                            return null;
+                                          }
+                                        },
+                                        decoration: InputDecoration.collapsed(
+                                          hintText: 'Numéro du bénéficiaire',
+                                          hintStyle: TextStyle(
+                                            fontSize: taille_libelle_champ + 3,
+                                            color: couleur_libelle_champ,
+                                          ),
+                                          //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          coched == false ? Container()
+                              : Container(
+                            decoration: new BoxDecoration(
+                              borderRadius: new BorderRadius.only(
+                                bottomRight: Radius.circular(10.0),
+                                bottomLeft: Radius.circular(10.0),
+                              ),
+                              border: Border.all(
+                                  color: couleur_bordure,
+                                  width: bordure),
+                            ),
+                            height: hauteur_champ,
+                            child: Center(
+                              child: Padding(
+                                padding: EdgeInsets.only(left: 20),
+                                child: new TextFormField(
+                                  keyboardType: TextInputType.text,
+                                  style: TextStyle(
+                                    fontSize:
+                                    taille_libelle_champ + 3,
+                                    color: couleur_libelle_champ,
+                                  ),
+                                  validator: (String value) {
+                                    if (value.isEmpty) {
+                                      return 'Champ bénéficiaire vide !';
+                                    } else {
+                                      setState(() {
+                                        _transaction.beneficiaryEmail = value;
+                                      });
+                                      return null;
+                                    }
+                                  },
+                                  decoration:
+                                  InputDecoration.collapsed(
+                                    hintText:
+                                    'Nom complet du bénéficiaire',
+                                    hintStyle: TextStyle(
+                                      fontSize:
+                                      taille_libelle_champ + 3,
+                                      color: couleur_libelle_champ,
+                                    ),
+                                    //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    )
+                        : Container(),
+                  ),
+
+                  Padding(
+                    padding: EdgeInsets.only(left: 15, right: 15),
+                    child: _merchant.category == Services.QUINCAILLERY_CATEGORY
                         ? Form(
                       key: _formKey,
                       child: Column(
@@ -378,15 +513,13 @@ class _OperatorState extends State<Operator> {
                                       return 'Champ montant vide !';
                                     } else {
                                       _transaction.amount = value;
-                                      _transaction.description =
-                                      "Paiement d'une ordonnance";
-                                      print(
-                                          "Pharmacy transaction ${_transaction.toJson()}");
+                                      _transaction.description = "Paiement du matériel";
+                                      print("Quincaillery transaction ${_transaction.toJson()}");
                                       return null;
                                     }
                                   },
                                   decoration: InputDecoration.collapsed(
-                                    hintText: 'Montant de l\'ordonnance',
+                                    hintText: 'Montant de la facture',
                                     hintStyle: TextStyle(
                                       fontSize: taille_libelle_champ + 3,
                                       color: couleur_libelle_champ,
@@ -397,8 +530,7 @@ class _OperatorState extends State<Operator> {
                               ),
                             ),
                           ),
-                          coched == false
-                              ? Container()
+                          coched == false ? Container()
                               : Container(
                             decoration: new BoxDecoration(
                               color: Colors.transparent,
@@ -417,8 +549,7 @@ class _OperatorState extends State<Operator> {
                                         child: CountryCodePicker(
                                           showFlag: true,
                                           textStyle: TextStyle(
-                                              color:
-                                              couleur_libelle_champ),
+                                              color: couleur_libelle_champ),
                                           onChanged: (code) {
                                             _code = code.dialCode;
                                           },
@@ -429,22 +560,15 @@ class _OperatorState extends State<Operator> {
                                         keyboardType:
                                         TextInputType.text,
                                         style: TextStyle(
-                                          fontSize:
-                                          taille_libelle_champ +
-                                              3,
-                                          color:
-                                          couleur_libelle_champ,
+                                          fontSize: taille_libelle_champ + 3,
+                                          color: couleur_libelle_champ,
                                         ),
                                         validator: (String value) {
                                           if (value.isEmpty) {
                                             return 'Champ bénéficiaire vide !';
                                           } else {
                                             setState(() {
-                                              _transaction
-                                                  .beneficiaryPhoneNumber =
-                                                  _code.replaceAll(
-                                                      "+", "") +
-                                                      value;
+                                              _transaction.beneficiaryPhoneNumber = _code.replaceAll("+", "") + value;
                                             });
                                             return null;
                                           }
@@ -497,9 +621,7 @@ class _OperatorState extends State<Operator> {
                                       return 'Champ bénéficiaire vide !';
                                     } else {
                                       setState(() {
-                                        _transaction
-                                            .beneficiaryEmail =
-                                            value;
+                                        _transaction.beneficiaryEmail = value;
                                       });
                                       return null;
                                     }
@@ -524,38 +646,29 @@ class _OperatorState extends State<Operator> {
                     )
                         : Container(),
                   ),
-                  _merchant.category == Services.UTILITY_CATEGORY ||
-                      _merchant.category == Services.TV_CATEGORY
-                      ? Padding(
-                    padding:
-                    EdgeInsets.only(left: 15, right: 15, top: 30),
+
+                  _merchant.category == Services.UTILITY_CATEGORY || _merchant.category == Services.TV_CATEGORY ? Padding(
+                    padding: EdgeInsets.only(left: 15, right: 15, top: 30),
                     child: Column(
                       children: <Widget>[
                         Form(
                           key: _formKey2,
                           child: Padding(
                             padding: EdgeInsets.only(bottom: 20),
-                            child: _merchant.logoFileId.contains("tv.png")
-                                ? Container()
+                            child: _merchant.logoFileId.contains("tv.png") ? Container()
                                 : Row(
                               children: <Widget>[
                                 Expanded(
                                   flex: 8,
                                   child: Padding(
-                                    padding:
-                                    EdgeInsets.only(right: 5),
+                                    padding: EdgeInsets.only(right: 5),
                                     child: Container(
                                       decoration: new BoxDecoration(
-                                        borderRadius:
-                                        new BorderRadius.only(
-                                          bottomRight:
-                                          Radius.circular(10.0),
-                                          bottomLeft:
-                                          Radius.circular(10.0),
-                                          topRight:
-                                          Radius.circular(10.0),
-                                          topLeft:
-                                          Radius.circular(10.0),
+                                        borderRadius: new BorderRadius.only(
+                                          bottomRight: Radius.circular(10.0),
+                                          bottomLeft: Radius.circular(10.0),
+                                          topRight: Radius.circular(10.0),
+                                          topLeft: Radius.circular(10.0),
                                         ),
                                         color: Colors.transparent,
                                         border: Border.all(
@@ -565,65 +678,33 @@ class _OperatorState extends State<Operator> {
                                       height: hauteur_champ,
                                       child: Center(
                                         child: Padding(
-                                          padding: EdgeInsets.only(
-                                              left: 20),
+                                          padding: EdgeInsets.only(left: 20),
                                           child: new TextFormField(
-                                            controller:
-                                            _billInputController,
-                                            keyboardType:
-                                            TextInputType.text,
+                                            controller: _billInputController,
+                                            keyboardType: TextInputType.text,
                                             onEditingComplete: () {
-                                              _isContratNumberValid =
-                                              false;
+                                              _isContratNumberValid = false;
                                             },
                                             style: TextStyle(
-                                              fontSize:
-                                              taille_libelle_champ +
-                                                  3,
-                                              color:
-                                              couleur_libelle_champ,
+                                              fontSize: taille_libelle_champ + 3,
+                                              color: couleur_libelle_champ,
                                             ),
                                             validator:
                                                 (String value) {
                                               if (value.isEmpty) {
-                                                return _merchant
-                                                    .category ==
-                                                    Services
-                                                        .TV_CATEGORY
-                                                    ? (value.length > 0 &&
-                                                    value.length !=
-                                                        14 &&
-                                                    !value
-                                                        .substring(0,
-                                                        2)
-                                                        .contains("140")
-                                                    ? "Numéro d\'abonnement invalide"
-                                                    : 'Numéro d\'abonnement vide')
-                                                    :_merchant.id == 3? 'Numéro du contrat vide !':'Numéro de facture vide !';
+                                                return _merchant.category == Services.TV_CATEGORY ? (value.length > 0 && value.length != 14 && !value.substring(0, 2).contains("140") ? "Numéro d\'abonnement invalide" : 'Numéro d\'abonnement vide') :_merchant.id == 3? 'Numéro du contrat vide !':'Numéro de facture vide !';
                                               } else {
-                                                _serviceNumber =
-                                                    value;
-                                                _transaction
-                                                    .serviceNumber =
-                                                    value;
+                                                _serviceNumber = value;
+                                                _transaction.serviceNumber = value;
                                                 return null;
                                               }
                                             },
                                             decoration:
-                                            InputDecoration
-                                                .collapsed(
-                                              hintText: _merchant
-                                                  .category ==
-                                                  Services
-                                                      .TV_CATEGORY
-                                                  ? 'Numéro d\'abonnement'
-                                                  :_merchant.id == 3? 'Numéro de contrat':'Numéro de facture',
+                                            InputDecoration.collapsed(
+                                              hintText: _merchant.category == Services.TV_CATEGORY ? 'Numéro d\'abonnement' :_merchant.id == 3? 'Numéro de contrat':'Numéro de facture',
                                               hintStyle: TextStyle(
-                                                fontSize:
-                                                taille_libelle_champ +
-                                                    3,
-                                                color:
-                                                couleur_libelle_champ,
+                                                fontSize: taille_libelle_champ + 3,
+                                                color: couleur_libelle_champ,
                                               ),
                                               //contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
                                             ),
@@ -636,16 +717,13 @@ class _OperatorState extends State<Operator> {
                                 Expanded(
                                   flex: 4,
                                   child: Padding(
-                                    padding:
-                                    EdgeInsets.only(left: 5),
+                                    padding: EdgeInsets.only(left: 5),
                                     child: GestureDetector(
                                       onTap: () {
                                         setState(() {
-                                          if (_formKey2.currentState
-                                              .validate()) {
+                                          if (_formKey2.currentState.validate()) {
                                             _ischeck = 1;
-                                            _url =
-                                            "$baseUrl/items?merchantId=${_merchant.id}&serviceNumber=$_serviceNumber";
+                                            _url = "$baseUrl/items?merchantId=${_merchant.id}&serviceNumber=$_serviceNumber";
                                             this.getData(_url);
                                           }
                                         });
@@ -653,21 +731,14 @@ class _OperatorState extends State<Operator> {
                                       child: new Container(
                                         height: hauteur_champ,
                                         width:
-                                        MediaQuery.of(context)
-                                            .size
-                                            .width -
-                                            40,
-                                        decoration:
-                                        new BoxDecoration(
+                                        MediaQuery.of(context).size.width - 40,
+                                        decoration: new BoxDecoration(
                                           color: Colors.green,
                                           border: new Border.all(
-                                            color:
-                                            Colors.transparent,
+                                            color: Colors.transparent,
                                             width: 0.0,
                                           ),
-                                          borderRadius:
-                                          new BorderRadius
-                                              .circular(10.0),
+                                          borderRadius: new BorderRadius.circular(10.0),
                                         ),
                                         child: new Center(
                                             key: _btnVerifyKey,
@@ -714,44 +785,25 @@ class _OperatorState extends State<Operator> {
                                         int index = -1;
                                         setState(() {
                                           _current = selected;
-                                          if (_merchant.category ==
-                                              Services.TV_CATEGORY) {
-                                            index =
-                                                _category.indexOf(_current);
-                                            selectedServiceItem =
-                                            serviceItems[index];
-                                            print(
-                                                "Selected Item ${selectedServiceItem.toJson()}");
-
-                                            montant =
-                                            data[index]['priceAmount'];
-                                            currency =
-                                            data[index]['currency'];
-                                            commission = data[index]
-                                            ['spCommissionAmount'];
-
-                                            if (_merchant.logoFileId
-                                                .contains("tv.png") &&
-                                                selected.contains("autre")) {
+                                          if (_merchant.category == Services.TV_CATEGORY) {
+                                            index = _category.indexOf(_current);
+                                            selectedServiceItem = serviceItems[index];
+                                            print("Selected Item ${selectedServiceItem.toJson()}");
+                                            montant = data[index]['priceAmount'];
+                                            currency = data[index]['currency'];
+                                            commission = data[index]['spCommissionAmount'];
+                                            if (_merchant.logoFileId.contains("tv.png") && selected.contains("autre")) {
                                               _showOtherInput = true;
                                             } else {
                                               _showOtherInput = false;
                                             }
-                                          }else if(_merchant.category ==
-                                              Services.UTILITY_CATEGORY){
-                                            index =
-                                                _category.indexOf(_current);
-                                            selectedServiceItem =
-                                            serviceItems[index];
-                                            print(
-                                                "Selected Item ${selectedServiceItem.toJson()}");
-
-                                            montant =
-                                            data[index]['priceAmount'];
-                                            currency =
-                                            data[index]['currency'];
-                                            commission = data[index]
-                                            ['spCommissionAmount'];
+                                          }else if(_merchant.category == Services.UTILITY_CATEGORY){
+                                            index = _category.indexOf(_current);
+                                            selectedServiceItem = serviceItems[index];
+                                            print("Selected Item ${selectedServiceItem.toJson()}");
+                                            montant = data[index]['priceAmount'];
+                                            currency = data[index]['currency'];
+                                            commission = data[index]['spCommissionAmount'];
                                           }
                                         });
                                         _userTextController.text = "$montant";
@@ -1086,7 +1138,8 @@ class _OperatorState extends State<Operator> {
                   )
                       : Container(),
                   _merchant.logoFileId.contains("tv.png") ||
-                      _merchant.category == Services.PHARMACY_CATEGORY
+                      _merchant.category == Services.PHARMACY_CATEGORY ||
+                      _merchant.category == Services.QUINCAILLERY_CATEGORY
                       ? Row(
                     //mainAxisAlignment: MainAxisAlignment.center,  1fcc2ec18bc30a725c0dab9970d02291758426dc
                     children: <Widget>[
@@ -1130,9 +1183,7 @@ class _OperatorState extends State<Operator> {
                             print("bleuk");
                           }
                           print("Valid $serviceNumberValide");
-                          if (isForm1Valid &&
-                              isForm2Valid &&
-                              serviceNumberValide) {
+                          if (isForm1Valid && isForm2Valid && serviceNumberValide) {
                             AppState.putString(Data.CURRENCY, currency);
                             AppState.putString(Data.SERVICE_AMOUNT, "$montant");
                             if (!coched) {
@@ -1141,15 +1192,11 @@ class _OperatorState extends State<Operator> {
                             this._reg();
                             if (selectedServiceItem != null){
                               this.save();
-                              Navigator.push(
-                                  context,
-                                  PageTransition(
-                                      type: PageTransitionType.fade,
-                                      child: Confirm(_merchant,
-                                          selectedServiceItem, _transaction)));
-                            }else
-                              showInSnackBar(
-                                  "Service temporairement indisponible réessayer dans quelques secondes !!!");
+                              Navigator.push(context, PageTransition(type: PageTransitionType.fade, child: Confirm(_merchant, selectedServiceItem, _transaction)));
+                            }else{
+                              print("Elément sélectionné: $selectedServiceItem");
+                              showInSnackBar("Service temporairement indisponible réessayer dans quelques secondes !!!");
+                            }
                           }
                         });
                       },
@@ -1166,12 +1213,7 @@ class _OperatorState extends State<Operator> {
                         ),
                         child: new Center(
                           child: isLoading == false
-                              ? new Text(
-                            'Poursuivre l\'opération',
-                            style: new TextStyle(
-                                fontSize: taille_text_bouton + 3,
-                                color: couleur_text_bouton),
-                          )
+                              ? new Text('Poursuivre l\'opération', style: new TextStyle(fontSize: taille_text_bouton + 3, color: couleur_text_bouton),)
                               : CupertinoActivityIndicator(),
                         ),
                       ),
@@ -1208,7 +1250,6 @@ class _OperatorState extends State<Operator> {
   }
 
   String getText() {
-    print("actu == $_current");
     if (_merchant.logoFileId.contains("tv.png")) {
       return "Choisissez un service";
     } else if (_merchant.category == Services.TV_CATEGORY && _ischeck == 1 ||
@@ -1222,9 +1263,12 @@ class _OperatorState extends State<Operator> {
   }
 
   getItemData(String v) async {
-    if (_merchant.category == Services.TELCO_CATEGORY ||
-        _merchant.logoFileId.contains("tv.png"))
+    if (_merchant.category == Services.TELCO_CATEGORY || _merchant.logoFileId.contains("tv.png")){
       this.getData("$baseUrl/items?merchantId=${_merchant.id}");
+      //this.getData("$baseUrl/items?category=${_merchant.category}&merchantId=${_merchant.id}");
+    }else{
+      print("Pas du tout entré: ${_merchant.toJson()['id']}");
+    }
   }
 
   void _reg() async {
@@ -1236,6 +1280,7 @@ class _OperatorState extends State<Operator> {
   void save() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString('countryCible', "$countryCible");
+    prefs.setString('BENEFICIARY_COUNTRY', "$countryCible");
     print("saved $countryCible");
   }
 }

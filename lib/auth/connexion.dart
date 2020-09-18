@@ -8,10 +8,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:services/auth/connexion1.dart';
 import 'package:services/auth/inscription1.dart';
+import 'package:services/community/lib/utils/components.dart';
 import 'package:services/composants/components.dart';
-import 'package:services/composants/services.dart';
-import 'package:http/http.dart' as http;
+import 'package:services/lang/sit_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:toast/toast.dart';
 
 // ignore: must_be_immutable
 class Connexion extends StatefulWidget {
@@ -23,7 +24,7 @@ class Connexion extends StatefulWidget {
 class _ConnexionState extends State<Connexion> {
 
   _ConnexionState();
-  String _username, _url, iso3, pays, _mySelection,_sername;
+  String _username, _url, lang="FR",_value="1", currencyConnexion, currencySymbol, _url1, iso3, pays, _mySelection,_sername, iso="CM";
   var _formKey = GlobalKey<FormState>(), flagUri;
   final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   bool isLoding =false, coched = false;
@@ -33,29 +34,74 @@ class _ConnexionState extends State<Connexion> {
 
   @override
   void initState() {
+    print("l'iso est $iso");
     this.lire();
     super.initState();
     _url = '$base_url/member/getUser/';
+    _url1 = "$cagnotte_url/user/currencyUser/";
     _usernameController = TextEditingController();
     Timer(Duration(milliseconds: 100), () {
       FocusScope.of(context).requestFocus(searchFocus);
     });
   }
 
-  void checkConnection() async {
+
+  getCurrency(String f) async {
+    HttpClient client = new HttpClient();
+    client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
+    String url = "${this._url1}$f";
+    print("$url");
+    HttpClientRequest request = await client.getUrl(Uri.parse(url));
+    request.headers.set('Accept', 'application/json');
+    HttpClientResponse response = await request.close();
+    String reply = await response.transform(utf8.decoder).join();
+    print(response.statusCode);
+    print(reply);
+    if(response.statusCode == 200){
+      if(reply.isEmpty){
+        showToast(SitLocalizations.of(context).error_get_dev,duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+        checkConnection(1);
+      }else{
+        var responseJson = json.decode(reply);
+        currencyConnexion = responseJson['currency']['currencyCode'];
+        currencySymbol = responseJson['currency']['currencySymbol'];
+        print('currencyConnexion: $currencyConnexion');
+        checkConnection(1);
+      }
+    }else{
+      print(response.statusCode);
+      setState(() {
+        isLoding = false;
+      });
+      //showInSnackBar("Service indisponible!", _scaffoldKey, 5);
+    }
+  }
+
+  void showToast(String msg, {int duration, int gravity}) {
+    Toast.show(msg, context, duration: duration, gravity: gravity);
+  }
+
+
+  void checkConnection(int q) async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult == ConnectivityResult.mobile) {
       //print("Connected to Mobile");
       setState(() {
         isLoding = true;
       });
-      this.getUser();
+      if(q == 1)
+        this.getUser();
+      else
+        this.getCurrency(iso3);
     } else if (connectivityResult == ConnectivityResult.wifi) {
       //Navigator.of(context).push(SlideLeftRoute(enterWidget: Cagnotte(_code), oldWidget: Connexion(_code)));
       setState(() {
         isLoding = true;
       });
-      this.getUser();
+      if(q == 1)
+        this.getUser();
+      else
+        this.getCurrency(iso3);
     } else {
       _ackAlert(context);
     }
@@ -68,7 +114,7 @@ class _ConnexionState extends State<Connexion> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Oops!'),
-          content: Text("Vérifier votre connexion internet."),
+          content: Text(SitLocalizations.of(context).check_conn),
           actions: <Widget>[
             FlatButton(
               child: Text('Ok'),
@@ -86,6 +132,7 @@ class _ConnexionState extends State<Connexion> {
     HttpClient client = new HttpClient();
     client.badCertificateCallback = ((X509Certificate cert, String host, int port) => true);
     String url = "${this._url}$_username";
+    print("$url");
     HttpClientRequest request = await client.getUrl(Uri.parse(url));
     request.headers.set('Accept', 'application/json');
     HttpClientResponse response = await request.close();
@@ -110,42 +157,8 @@ class _ConnexionState extends State<Connexion> {
       setState(() {
         isLoding = false;
       });
-      showInSnackBar("Service indisponible!");
+      showInSnackBar(SitLocalizations.of(context).service_indis);
     }
-  }
-
-
-  Future<Login> getUser2() async {
-    var headers = {
-      "Accept": "application/json"
-    };
-    var url = "${this._url}$_username";
-    print(url);
-    http.Response response = await http.get(url, headers: headers);
-    final int statusCode = response.statusCode;
-    print("${response.body}");
-    if(statusCode == 200){
-      var responseJson = json.decode(response.body);
-      print(responseJson);
-      setState(() {
-        isLoding = false;
-      });
-      this._reg();
-      if(responseJson['isExist'] == false){
-        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Inscription1()));
-        //navigatorKey.currentState.pushNamed("/inscription");
-      }else{
-        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => new Connexion1()));
-        //navigatorKey.currentState.pushNamed("/connexion");
-      }
-    }else{
-      print(statusCode);
-      setState(() {
-        isLoding = false;
-      });
-      showInSnackBar("Service indisponible!");
-    }
-    return null;
   }
 
 
@@ -172,14 +185,14 @@ class _ConnexionState extends State<Connexion> {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Fermer l'application ?"),
+        title: Text(SitLocalizations.of(context).exit),
         actions: <Widget>[
           FlatButton(
-            child: Text("Non"),
+            child: Text(SitLocalizations.of(context).non),
               onPressed: () => Navigator.pop(context, false),
           ),
           FlatButton(
-            child: Text("Oui"),
+            child: Text(SitLocalizations.of(context).oui),
             onPressed: () => exit(0),
           )
         ],
@@ -190,6 +203,7 @@ class _ConnexionState extends State<Connexion> {
   @override
   void dispose() {
     super.dispose();
+    if(_usernameController != null)
     _usernameController.dispose();
   }
 
@@ -203,16 +217,88 @@ class _ConnexionState extends State<Connexion> {
       onWillPop: _onBackPressed,
       child: new Scaffold(
           key: _scaffoldKey,
+          backgroundColor: GRIS,
           appBar: PreferredSize(
             preferredSize: Size.fromHeight(55.0),
             child: new AppBar(
               elevation: 0.0,
-              backgroundColor: couleur_appbar,
+              backgroundColor: GRIS,
               flexibleSpace: barreTop,
               leading: GestureDetector(
                   onTap: (){},
                   //child: Icon(Icons.arrow_back_ios,)
               ),
+              /*actions: [
+                Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 0, right: 20),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(canvasColor: couleur_fond_bouton),
+                        child: DropdownButtonHideUnderline(
+                          child: new DropdownButton<String>(
+                            icon: new Icon(Icons.arrow_drop_down, color: Colors.black,),
+                            items: [
+                              DropdownMenuItem(
+                                value: "1",
+                                child: Row(
+                                  //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Container(
+                                        width: 30,
+                                        height: 30,
+                                        child: Image.asset('flags/fr.png')),
+                                    Padding(
+                                      padding: EdgeInsets.only(left: 10),
+                                      child: Text(
+                                        "Français",style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 13
+                                      ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: "2",
+                                child: Row(
+                                  //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: <Widget>[
+                                    Container(
+                                        width: 30,
+                                        height: 30,
+                                        child: Image.asset('flags/gb.png')),
+                                    Padding(
+                                      padding: EdgeInsets.only(left: 10),
+                                      child: Text(
+                                        "Anglais",style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 13
+                                      ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              setState(() {
+                                _value = value;
+                                print(_value);
+                              });
+                            },
+                            value: _value,
+
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],*/
               //iconTheme: new IconThemeData(color: couleur_fond_bouton),
             ),
           ),
@@ -240,7 +326,7 @@ class _ConnexionState extends State<Connexion> {
                           padding: EdgeInsets.only(left: 20.0),
                           child: Align(
                             alignment: Alignment.centerLeft,
-                            child: new Text("Bienvenue",
+                            child: new Text("Bienvenue",//SitLocalizations.of(context).bienvenue,
                             style: TextStyle(
                               color: couleur_titre,
                               fontSize: taille_titre,
@@ -252,7 +338,7 @@ class _ConnexionState extends State<Connexion> {
                           padding: EdgeInsets.only(left:20.0, top:20.0, right: 20.0),
                           child: Align(
                             alignment: Alignment.center,
-                            child: new Text("sur la première plateforme d'interopérabilité des services financiers.",
+                            child: new Text("sur la première plateforme d'interopérabilité des services financiers",//SitLocalizations.of(context).bienvenu_text,
                               style: TextStyle(
                                   color: couleur_titre,
                                   fontSize: taille_description_page,
@@ -271,7 +357,7 @@ class _ConnexionState extends State<Connexion> {
                                   bottomLeft: Radius.circular(10.0),
                                   bottomRight: Radius.circular(10.0),
                                 ),
-                              color: Colors.transparent,
+                              color: Colors.white,
                               border: Border.all(
                                 color: couleur_bordure,
                                 width: bordure
@@ -294,7 +380,8 @@ class _ConnexionState extends State<Connexion> {
                                          _mySelection = code.dialCode.toString();
                                          flagUri = "${code.flagUri}";
                                          iso3 = "${code.codeIso}";
-                                         //print(iso3);
+                                         iso = "${code.code}";
+                                         print(iso3);
                                          pays = "${code.name}";
                                        });
                                       },
@@ -311,7 +398,7 @@ class _ConnexionState extends State<Connexion> {
                                     ),
                                     validator: (String value){
                                       if(value.isEmpty){
-                                        return "Champ téléphone vide !";
+                                        return "Numéro de téléphone invalide !";//SitLocalizations.of(context).invalid_phone;
                                       }else{
                                         if(_mySelection == "+33" && value.startsWith("0")){
                                             _username = _mySelection.substring(1)+value.substring(1);
@@ -324,7 +411,7 @@ class _ConnexionState extends State<Connexion> {
                                       }
                                     },
                                     decoration: InputDecoration.collapsed(
-                                      hintText: "Numéro de téléphone",
+                                      hintText:"Numéro de téléphone",// SitLocalizations.of(context).phone,
                                       hintStyle: TextStyle(
                                           fontSize: taille_libelle_champ+ad,
                                           color: couleur_libelle_champ,
@@ -354,7 +441,8 @@ class _ConnexionState extends State<Connexion> {
                                   coched = !coched;
                                 });
                               },
-                              child: Text("Se souvenir de moi", style: TextStyle(
+                              child: Text("Se souvenir de moi",//SitLocalizations.of(context).souvenir,
+                                style: TextStyle(
                                   color: couleur_fond_bouton,
                                   fontWeight: FontWeight.bold,
                                   fontSize:taille_champ+ad
@@ -372,9 +460,9 @@ class _ConnexionState extends State<Connexion> {
                                   _username = _username.replaceAll(" ", "");
                                   print(_username);
                                   if(tryParse('${_username.replaceAll(" ", "")}')==false){
-                                    showInSnackBar("Numéro de téléphone invalide!");
+                                    showInSnackBar(SitLocalizations.of(context).invalid_phone);
                                   }else {
-                                    checkConnection();
+                                    checkConnection(0);
                                   }
                                 }
                               });
@@ -390,13 +478,17 @@ class _ConnexionState extends State<Connexion> {
                                 ),
                                 borderRadius: new BorderRadius.circular(10.0),
                               ),
-                              child: new Center(child: isLoding==false?new Text("Suivant", style: new TextStyle(fontSize: taille_text_bouton+ad, color: couleur_text_bouton),):
-                              CupertinoActivityIndicator(),),
+                              child: new Center(child: isLoding==false?new Text("Suivant",//SitLocalizations.of(context).suivant,
+                                style: new TextStyle(fontSize: taille_text_bouton+ad, color: couleur_text_bouton),):
+                              Theme(
+                                data: ThemeData(cupertinoOverrideTheme: CupertinoThemeData(brightness: Brightness.dark)),
+                                child: CupertinoActivityIndicator(radius: 20,)),
+                              ),
                             ),
                           ),
                         ),
 
-                      Padding(
+                      /*Padding(
                         padding: EdgeInsets.only(top:20.0),
                         child: GestureDetector(
                             onTap: (){
@@ -411,7 +503,7 @@ class _ConnexionState extends State<Connexion> {
                               ),textAlign: TextAlign.center,
                             )
                         ),
-                      )
+                      )*/
                       ],
                     ),
                   ),
@@ -428,8 +520,16 @@ class _ConnexionState extends State<Connexion> {
     prefs.setString('username', "$_username");
     prefs.setString('flag', "$flagUri");
     prefs.setString('iso3', "$iso3");
+    prefs.setString('iso', "$iso");
+    prefs.setString('lang', "$lang");
+    print("***********************Voilà ${prefs.getString("iso")}");
     prefs.setString('pays', "$pays");
     prefs.setString('dial', "$_mySelection");
+    prefs.setString('BUYER_COUNTRY', "$iso3");
+    prefs.setString('BENEFICIARY_COUNTRY', "$iso3");
+    prefs.setString(CURRENCYSYMBOL_CONNEXION, currencyConnexion);
+    prefs.setString(CURRENCYSYMBOL, currencySymbol);
+    prefs.setString('sername', "$_sername");
     if(coched == true) {
       prefs.setString('coched', "$_sername");
     }else{
@@ -437,6 +537,7 @@ class _ConnexionState extends State<Connexion> {
   }
 
   lire() async {
+    SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     print("*********************** ${prefs.getString("coched")}");
     if(prefs.getString("coched") == null || prefs.getString("coched") == "false"){
@@ -460,6 +561,11 @@ class _ConnexionState extends State<Connexion> {
         iso3 = prefs.getString("iso3");
       }
     print("iso3: $iso3");
+    if(prefs.getString("iso") == "null" || prefs.getString("iso") == null){
+      iso="CM";
+    }else{
+      iso = prefs.getString("iso");
+    }
     if(prefs.getString("flag") == null){
       flagUri="flags/cm.png";
     }else{
